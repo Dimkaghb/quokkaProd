@@ -3,18 +3,22 @@ import type { User } from '../stores/authStore'
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('quokka-auth-token')
+    const token = localStorage.getItem('quokka-auth-storage')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      const authData = JSON.parse(token)
+      if (authData.state?.token) {
+        config.headers.Authorization = `Bearer ${authData.state.token}`
+      }
     }
     return config
   },
@@ -138,17 +142,28 @@ export const authAPI = {
 
   // Utility functions
   setAuthToken: (token: string) => {
-    localStorage.setItem('quokka-auth-token', token)
+    const storageData = {
+      state: {
+        token,
+        isAuthenticated: true
+      }
+    }
+    localStorage.setItem('quokka-auth-storage', JSON.stringify(storageData))
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`
   },
 
   clearAuthToken: () => {
-    localStorage.removeItem('quokka-auth-token')
+    localStorage.removeItem('quokka-auth-storage')
     delete api.defaults.headers.common['Authorization']
   },
 
   getAuthToken: (): string | null => {
-    return localStorage.getItem('quokka-auth-token')
+    const storage = localStorage.getItem('quokka-auth-storage')
+    if (storage) {
+      const data = JSON.parse(storage)
+      return data.state?.token || null
+    }
+    return null
   },
 }
 

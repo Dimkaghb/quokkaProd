@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../shared/stores/authStore'
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
 export const Auth = () => {
   const [isLogin, setIsLogin] = useState(true)
@@ -11,10 +22,9 @@ export const Auth = () => {
     confirmPassword: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
 
   const navigate = useNavigate()
-  const { login, signup, error: authError } = useAuthStore()
+  const { login, setLoading, setError, clearError, isLoading, error: authError } = useAuthStore()
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -55,20 +65,71 @@ export const Auth = () => {
     
     if (!validateForm()) return
 
-    setIsLoading(true)
+    setLoading(true)
+    clearError()
     
     try {
       if (isLogin) {
-        await login(formData.email, formData.password)
+        // Login
+        const response = await api.post('/auth/login', {
+          email: formData.email,
+          password: formData.password
+        })
+        
+        const { access_token } = response.data
+        
+        // Get user info
+        const userResponse = await api.get('/auth/me', {
+          headers: { Authorization: `Bearer ${access_token}` }
+        })
+        
+        // Login with user data and token
+        login(userResponse.data, access_token)
+        
+        navigate('/dashboard')
+        
       } else {
-        await signup(formData.name, formData.email, formData.password)
+        // Signup
+        await api.post('/auth/signup', {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        })
+        
+        // Auto-login after signup
+        const loginResponse = await api.post('/auth/login', {
+          email: formData.email,
+          password: formData.password
+        })
+        
+        const { access_token } = loginResponse.data
+        
+        // Get user info
+        const userResponse = await api.get('/auth/me', {
+          headers: { Authorization: `Bearer ${access_token}` }
+        })
+        
+        // Login with user data and token
+        login(userResponse.data, access_token)
+        
+        navigate('/dashboard')
       }
-      // Navigate to dashboard after successful auth
-      navigate('/dashboard')
-    } catch (error) {
-      console.error('Auth error:', error)
+      
+    } catch (err: any) {
+      console.error('Auth error:', err)
+      
+      let errorMessage = 'An error occurred'
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Invalid email or password'
+      } else if (err.response?.status === 422) {
+        errorMessage = 'Please check your input and try again'
+      }
+      
+      setError(errorMessage)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -80,12 +141,18 @@ export const Auth = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
     }
+    
+    // Clear auth error
+    if (authError) {
+      clearError()
+    }
   }
 
   const toggleMode = () => {
     setIsLogin(!isLogin)
     setFormData({ email: '', password: '', name: '', confirmPassword: '' })
     setErrors({})
+    clearError()
   }
 
   return (

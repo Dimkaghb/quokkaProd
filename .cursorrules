@@ -1,0 +1,103 @@
+---
+description: Backend development rules and architecture guidelines for QuokkaAI intelligent data analysis assistant
+alwaysApply: true
+---
+# Context
+QuokkaAI is an intelligent data-analysis assistant.
+It offers:
+1. Retrieval-Augmented Generation (RAG) agent that ingests user-uploaded documents / datasets, stores them in a Chroma vector store, and answers questions with LangChain.
+2. Web-search agent that surfaces fresh, relevant information via Google CSE or Serper.
+3. Data-visualization agent that builds actionable charts from structured data.
+4. `root_agent.py` orchestrates the above tools with LangChain agents.
+The backend is built with **FastAPI** and **async-first Python ≥3.11**.
+MongoDB Atlas is optional; fall back to in-memory stores during dev.
+
+# Global Guidelines
+- ALWAYS write asynchronous code (`async def`, `await`) unless a sync API requires otherwise.
+- Follow **PEP 8** & **PEP 484** type hints. Run `ruff --fix` before committing.
+- Public functions/classes MUST have Google-style docstrings and inline comments for non-obvious logic.
+- Use f-strings for interpolation, never `%` or `format()`.
+- Keep every module <400 LOC. Split logically by responsibility (e.g. `service.py`, `utils.py`).
+- Use dependency injection with `Depends()` instead of global state.
+- Read secrets/config via `pydantic_settings.BaseSettings` (`settings.py`). Never hard-code API keys.
+- NEVER create Markdown/README/test files unless explicitly requested by the product team.
+
+# Project Layout Conventions
+```
+backend/
+  src/
+    <feature>/        # one directory per bounded context
+      api.py          # FastAPI routers
+      service.py      # business logic – thin layer, no I/O
+      crud.py         # DB access only (db-agnostic wrappers)
+      models.py       # Pydantic schemas & ORM models
+      utils.py        # pure helpers
+      tests/          # (create only when asked)
+```
+
+# FastAPI Rules
+- Mount routers in `main.py`; prefix with feature name (e.g. `/auth`, `/agents`).
+- Return Pydantic models or dicts; NEVER return raw DB objects.
+- Handle errors with `HTTPException`; avoid 500s by catching and logging.
+- Use `lifespan` events for DB connect/close.
+- Enable CORS for `frontend` origin only.
+
+# Agent Framework
+- Use **LangChain** primitives (`Tool`, `AgentExecutor`, `LLMChain`).
+- Default LLM: `openai=ChatOpenAI(model='gpt-4o-mini')` unless overridden.
+- Vector store: `Chroma(persist_directory='data/chroma', embedding_function=OpenAIEmbeddings())`.
+- Provide detailed system prompts (>=15 lines) describing agent identity, capabilities, format constraints.
+- `root_agent` decides which tool to call via `AgentType.OPENAI_FUNCTIONS` reasoning.
+
+## RAG Agent
+- Pipeline: `DocumentLoader` → `RecursiveCharacterTextSplitter` → `Chroma`.
+- Use `RetrieverTool` with `search_kwargs={'k': 5}`.
+- When answering, cite sources as markdown links `(source_name)` but strip markdown before sending to frontend.
+
+## Web Search Agent
+- Prefer Serper (`https://google.serper.dev`) with `X-API-KEY` header.
+- Fallback to Google Custom Search JSON API.
+- Normalize results into `[{'title','link','snippet'}]`.
+
+## Visualization Agent
+- Use `pandas` for data wrangling.
+- Use `plotly.express` for interactive charts; return `fig.to_json()` so frontend can render.
+- If input is a file path, load via `pandas.read_csv`/`read_excel`; if DataFrame already, operate directly.
+
+# Testing & Quality
+- Minimal unit tests only on critical pure logic (hashing, parsing). Skip integration tests unless required.
+- Lint with ruff and black; format on save.
+- Use pre-commit hook:
+  ```yaml
+  repos:
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.4.4
+      hooks: [ id: ruff ]
+  ```
+
+# Dependency Management
+- All backend deps live in `backend/requirements.txt`; pin versions (`package==x.y.*`).
+- Add new packages only after discussing with tech lead.
+- Prefer lightweight libs; avoid heavy ML frameworks unless mandatory.
+
+# Docker & Deployment
+- Images are built via `backend/dockerfile`; use multi-stage builds.
+- Run app with `uvicorn backend.src.main:app --host 0.0.0.0 --port 8000`.
+- Health endpoint: `GET /healthz` returns `{status:"ok"}`.
+- Store persistent data (Chroma, uploads) in `/data` mounted volume.
+
+# Logging & Monitoring
+- Use `logging` stdlib. Logger name = module path.
+- Default level INFO; DEBUG in dev.
+- Structure logs as JSON when `ENV=prod`.
+
+# Pull-Request Checklist (Backend)
+1. Follows directory conventions.
+2. Passes `ruff`.
+3. Adds/updates docstrings.
+4. Updates `.cursorrules` if architectural decision changes agent design.
+5. Secrets remain in `.env` or CI vault.
+
+# Helpful References
+@backend/src/auth/api.py – example FastAPI router.
+@backend/src/data_analize/agents/web_search_agent.py – example LangChain tool. 
