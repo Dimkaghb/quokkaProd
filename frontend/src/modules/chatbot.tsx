@@ -149,7 +149,8 @@ export const Chatbot: React.FC = () => {
         content: response.data.response,
         timestamp: new Date(response.data.timestamp),
         status: 'sent',
-        intermediateSteps: response.data.intermediate_steps
+        intermediateSteps: response.data.intermediate_steps,
+        visualization: response.data.visualization
       };
 
       addMessage(agentMessage);
@@ -438,6 +439,60 @@ export const Chatbot: React.FC = () => {
                   __html: formatMessageContent(message.content)
                 }}
               />
+              
+              {/* Show visualization if available */}
+              {message.visualization && (
+                <div className="mt-4">
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-600">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-gray-300">📊 Visualization</span>
+                      {message.visualization.url && (
+                        <a 
+                          href={`${API_BASE_URL}${message.visualization.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-400 hover:text-blue-300 underline"
+                        >
+                          Open in new tab
+                        </a>
+                      )}
+                    </div>
+                    
+                    {/* Use base64 data directly if available */}
+                    {message.visualization.base64 ? (
+                      <img 
+                        src={message.visualization.base64}
+                        alt="Data Visualization"
+                        className="w-full h-auto rounded border border-gray-700 bg-white"
+                        style={{ maxHeight: '500px', objectFit: 'contain' }}
+                      />
+                    ) : message.visualization.url ? (
+                      <img 
+                        src={`${API_BASE_URL}${message.visualization.url}`}
+                        alt="Data Visualization"
+                        className="w-full h-auto rounded border border-gray-700 bg-white"
+                        style={{ maxHeight: '500px', objectFit: 'contain' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const errorDiv = document.createElement('div');
+                          errorDiv.className = 'text-red-400 text-sm p-4 text-center';
+                          errorDiv.textContent = 'Failed to load visualization image';
+                          target.parentNode?.appendChild(errorDiv);
+                        }}
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-sm p-4 text-center">
+                        Visualization not available
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-gray-400 mt-2">
+                      Type: {message.visualization.type} • Format: {message.visualization.format || 'png'}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Show intermediate steps if enabled and available */}
               {showIntermediateSteps && message.intermediateSteps && message.intermediateSteps.length > 0 && (

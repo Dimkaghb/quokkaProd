@@ -2,14 +2,15 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 // Types
-export interface Message {
+export type Message = {
   id: string
   type: 'user' | 'agent' | 'system' | 'file'
   content: string
   timestamp: Date
-  status?: 'sending' | 'sent' | 'error'
+  status: 'sending' | 'sent' | 'error'
   error?: string
   intermediateSteps?: any[]
+  visualization?: Visualization
   file?: {
     name: string
     size: number
@@ -24,6 +25,15 @@ export interface UploadedFile {
   processed_at: string
   chunks_count: number
   summary: string
+}
+
+export type Visualization = {
+  url?: string;
+  path?: string;
+  type: string;
+  format?: string;
+  base64?: string; // Add base64 property for direct image display
+  error?: string;
 }
 
 interface ChatState {

@@ -198,12 +198,27 @@ class RootAgent:
                     # Create URL for the static file
                     visualization_url = f"/visualizations/{filename}"
                     
-                    result["visualization"] = {
-                        "url": visualization_url,
-                        "path": response.visualization_path,
-                        "type": "image",
-                        "format": "png"
-                    }
+                    # Add base64 encoded image for direct display in chat
+                    import base64
+                    try:
+                        with open(path, "rb") as img_file:
+                            img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                            
+                        result["visualization"] = {
+                            "url": visualization_url,
+                            "path": response.visualization_path,
+                            "type": "image",
+                            "format": "png",
+                            "base64": f"data:image/png;base64,{img_data}"
+                        }
+                    except Exception as e:
+                        logger.error(f"Error encoding image: {e}")
+                        result["visualization"] = {
+                            "url": visualization_url,
+                            "path": response.visualization_path,
+                            "type": "image",
+                            "format": "png"
+                        }
                 else:
                     result["visualization"] = {
                         "path": response.visualization_path,

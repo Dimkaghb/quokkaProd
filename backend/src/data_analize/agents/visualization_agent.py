@@ -289,7 +289,7 @@ class ChartGenerator:
                     )
                     
                     # Format y-axis for large numbers
-                    fig.update_yaxis(tickformat=",")
+                    fig.update_yaxes(tickformat=",")
                     
                     return fig
             
@@ -610,6 +610,248 @@ class ChartGenerator:
             )
             return fig
     
+    def create_area_chart(self, df: pd.DataFrame, config: Dict[str, Any]) -> go.Figure:
+        """Create an interactive area chart."""
+        try:
+            # Check if this is revenue data with years as columns
+            if 'Наименование показателей' in df.columns or 'Category' in df.columns:
+                # Similar to line chart but with filled areas
+                category_col = 'Наименование показателей' if 'Наименование показателей' in df.columns else 'Category'
+                year_columns = [col for col in df.columns if col.isdigit() or col.startswith('20')]
+                
+                if year_columns:
+                    fig = go.Figure()
+                    
+                    for _, row in df.iterrows():
+                        category = row[category_col]
+                        values = [row[year] for year in year_columns]
+                        
+                        fig.add_trace(go.Scatter(
+                            x=year_columns,
+                            y=values,
+                            mode='lines',
+                            fill='tonexty',
+                            name=category,
+                            line=dict(width=2)
+                        ))
+                    
+                    fig.update_layout(
+                        title=config.get("title", "Revenue Trends Over Time (Area Chart)"),
+                        xaxis_title="Year",
+                        yaxis_title="Revenue (тенге)",
+                        template=self.settings.default_theme,
+                        width=self.settings.chart_width,
+                        height=self.settings.chart_height,
+                        hovermode='x unified'
+                    )
+                    
+                    return fig
+            
+            # Standard area chart
+            fig = px.area(
+                df,
+                x=config.get("x"),
+                y=config.get("y"),
+                color=config.get("color"),
+                title=config.get("title", "Area Chart"),
+                template=self.settings.default_theme
+            )
+            
+            fig.update_layout(
+                width=self.settings.chart_width,
+                height=self.settings.chart_height
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating area chart: {e}")
+            return self._create_error_chart(str(e))
+    
+    def create_stacked_bar_chart(self, df: pd.DataFrame, config: Dict[str, Any]) -> go.Figure:
+        """Create a stacked bar chart."""
+        try:
+            # Check if this is revenue data
+            if 'Наименование показателей' in df.columns or 'Category' in df.columns:
+                category_col = 'Наименование показателей' if 'Наименование показателей' in df.columns else 'Category'
+                year_columns = [col for col in df.columns if col.isdigit() or col.startswith('20')]
+                
+                if year_columns:
+                    fig = go.Figure()
+                    
+                    for _, row in df.iterrows():
+                        category = row[category_col]
+                        values = [row[year] for year in year_columns]
+                        
+                        fig.add_trace(go.Bar(
+                            x=year_columns,
+                            y=values,
+                            name=category
+                        ))
+                    
+                    fig.update_layout(
+                        barmode='stack',
+                        title=config.get("title", "Stacked Revenue by Year"),
+                        xaxis_title="Year",
+                        yaxis_title="Revenue (тенге)",
+                        template=self.settings.default_theme,
+                        width=self.settings.chart_width,
+                        height=self.settings.chart_height
+                    )
+                    
+                    return fig
+            
+            # Standard stacked bar
+            fig = px.bar(
+                df,
+                x=config.get("x"),
+                y=config.get("y"),
+                color=config.get("color"),
+                title=config.get("title", "Stacked Bar Chart"),
+                template=self.settings.default_theme
+            )
+            
+            fig.update_layout(
+                barmode='stack',
+                width=self.settings.chart_width,
+                height=self.settings.chart_height
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating stacked bar chart: {e}")
+            return self._create_error_chart(str(e))
+    
+    def create_waterfall_chart(self, df: pd.DataFrame, config: Dict[str, Any]) -> go.Figure:
+        """Create a waterfall chart for showing cumulative effect."""
+        try:
+            # For revenue data, show year-over-year changes
+            if 'Наименование показателей' in df.columns or 'Category' in df.columns:
+                # Use total revenue row if available
+                total_row = df[df.iloc[:, 0].str.contains('ДОХОД|Total', case=False, na=False)]
+                if not total_row.empty:
+                    year_columns = [col for col in df.columns if col.isdigit() or col.startswith('20')]
+                    if len(year_columns) > 1:
+                        values = [total_row[col].values[0] for col in year_columns]
+                        
+                        # Calculate changes
+                        changes = [values[0]]  # First value
+                        for i in range(1, len(values)):
+                            changes.append(values[i] - values[i-1])
+                        
+                        fig = go.Figure(go.Waterfall(
+                            x=year_columns,
+                            y=changes,
+                            text=[f"{v:,.0f}" for v in changes],
+                            textposition="outside",
+                            connector={"line": {"color": "rgb(63, 63, 63)"}}
+                        ))
+                        
+                        fig.update_layout(
+                            title=config.get("title", "Year-over-Year Revenue Changes"),
+                            xaxis_title="Year",
+                            yaxis_title="Change in Revenue (тенге)",
+                            template=self.settings.default_theme,
+                            width=self.settings.chart_width,
+                            height=self.settings.chart_height
+                        )
+                        
+                        return fig
+            
+            # Standard waterfall
+            x_col = config.get("x", df.columns[0])
+            y_col = config.get("y", df.select_dtypes(include=[np.number]).columns[0] if df.select_dtypes(include=[np.number]).columns.any() else df.columns[1])
+            
+            fig = go.Figure(go.Waterfall(
+                x=df[x_col],
+                y=df[y_col],
+                text=[f"{v:,.0f}" for v in df[y_col]],
+                textposition="outside"
+            ))
+            
+            fig.update_layout(
+                title=config.get("title", "Waterfall Chart"),
+                template=self.settings.default_theme,
+                width=self.settings.chart_width,
+                height=self.settings.chart_height
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating waterfall chart: {e}")
+            return self._create_error_chart(str(e))
+    
+    def create_funnel_chart(self, df: pd.DataFrame, config: Dict[str, Any]) -> go.Figure:
+        """Create a funnel chart."""
+        try:
+            # For revenue data, show proportion of each category
+            if 'Наименование показателей' in df.columns or 'Category' in df.columns:
+                category_col = 'Наименование показателей' if 'Наименование показателей' in df.columns else 'Category'
+                
+                # Use latest year data
+                year_columns = [col for col in df.columns if col.isdigit() or col.startswith('20')]
+                if year_columns:
+                    latest_year = year_columns[-1]
+                    
+                    # Sort by value descending
+                    sorted_df = df.sort_values(by=latest_year, ascending=False)
+                    
+                    fig = go.Figure(go.Funnel(
+                        y=sorted_df[category_col],
+                        x=sorted_df[latest_year],
+                        textinfo="value+percent initial",
+                        textposition="inside"
+                    ))
+                    
+                    fig.update_layout(
+                        title=config.get("title", f"Revenue Funnel for {latest_year}"),
+                        template=self.settings.default_theme,
+                        width=self.settings.chart_width,
+                        height=self.settings.chart_height
+                    )
+                    
+                    return fig
+            
+            # Standard funnel
+            y_col = config.get("y", df.columns[0])
+            x_col = config.get("x", df.select_dtypes(include=[np.number]).columns[0] if df.select_dtypes(include=[np.number]).columns.any() else df.columns[1])
+            
+            fig = go.Figure(go.Funnel(
+                y=df[y_col],
+                x=df[x_col],
+                textinfo="value+percent initial"
+            ))
+            
+            fig.update_layout(
+                title=config.get("title", "Funnel Chart"),
+                template=self.settings.default_theme,
+                width=self.settings.chart_width,
+                height=self.settings.chart_height
+            )
+            
+            return fig
+            
+        except Exception as e:
+            logger.error(f"Error creating funnel chart: {e}")
+            return self._create_error_chart(str(e))
+    
+    def _create_error_chart(self, error_message: str) -> go.Figure:
+        """Create a simple error chart."""
+        fig = go.Figure()
+        fig.add_annotation(
+            text=f"Error creating chart: {error_message}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        fig.update_layout(
+            width=self.settings.chart_width,
+            height=self.settings.chart_height
+        )
+        return fig
+    
     def create_advanced_chart(self, df: pd.DataFrame, chart_type: str, config: Dict[str, Any]) -> go.Figure:
         """Create advanced chart types."""
         if chart_type == "violin":
@@ -884,6 +1126,14 @@ class DataVisualizationAgent:
             return self.chart_generator.create_heatmap(df, config)
         elif chart_type == "pie":
             return self.chart_generator.create_pie_chart(df, config)
+        elif chart_type == "area":
+            return self.chart_generator.create_area_chart(df, config)
+        elif chart_type == "stacked_bar":
+            return self.chart_generator.create_stacked_bar_chart(df, config)
+        elif chart_type == "waterfall":
+            return self.chart_generator.create_waterfall_chart(df, config)
+        elif chart_type == "funnel":
+            return self.chart_generator.create_funnel_chart(df, config)
         else:
             return self.chart_generator.create_advanced_chart(df, chart_type, config)
     
@@ -1073,7 +1323,11 @@ class DataVisualizationAgent:
             {"type": "heatmap", "description": "Heatmap for correlation matrix"},
             {"type": "pie", "description": "Pie chart for composition analysis"},
             {"type": "violin", "description": "Violin plot for distribution shape"},
-            {"type": "density_heatmap", "description": "Density heatmap for 2D distributions"}
+            {"type": "density_heatmap", "description": "Density heatmap for 2D distributions"},
+            {"type": "area", "description": "Area chart for time series data"},
+            {"type": "stacked_bar", "description": "Stacked bar chart for comparison"},
+            {"type": "waterfall", "description": "Waterfall chart for cumulative effect"},
+            {"type": "funnel", "description": "Funnel chart for revenue distribution"}
         ]
 
     def _save_chart_as_image(self, fig: go.Figure) -> str:
@@ -1169,7 +1423,11 @@ I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured 
                 "histogram": ["histogram", "distribution", "frequency", "spread"],
                 "box": ["box", "boxplot", "outlier", "quartile", "statistical"],
                 "heatmap": ["heatmap", "correlation matrix", "correlations"],
-                "pie": ["pie", "composition", "percentage", "proportion", "breakdown"]
+                "pie": ["pie", "composition", "percentage", "proportion", "breakdown"],
+                "area": ["area", "area chart", "time series"],
+                "stacked_bar": ["stacked bar", "stacked bar chart", "stacked revenue"],
+                "waterfall": ["waterfall", "waterfall chart", "cumulative effect"],
+                "funnel": ["funnel", "funnel chart", "revenue distribution"]
             }
             
             # Find the best matching chart type

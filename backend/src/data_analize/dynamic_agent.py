@@ -362,6 +362,18 @@ class DynamicAIAgent:
             chart_type = "scatter"
         elif any(word in query_lower for word in ["histogram", "distribution", "frequency"]):
             chart_type = "histogram"
+        elif any(word in query_lower for word in ["area", "area chart"]):
+            chart_type = "area"
+        elif any(word in query_lower for word in ["stacked bar", "stacked"]):
+            chart_type = "stacked_bar"
+        elif any(word in query_lower for word in ["waterfall"]):
+            chart_type = "waterfall"
+        elif any(word in query_lower for word in ["funnel"]):
+            chart_type = "funnel"
+        elif any(word in query_lower for word in ["box", "boxplot", "outlier"]):
+            chart_type = "box"
+        elif any(word in query_lower for word in ["heatmap", "heat map", "correlation matrix"]):
+            chart_type = "heatmap"
         
         prompt = f"""
         Analyze this user query and determine their intent:
@@ -383,6 +395,10 @@ class DynamicAIAgent:
         - If they say "bar chart" explicitly use bar chart
         - If they mention years/time, consider line chart
         - For revenue data, bar or line charts work well
+        - Area charts are good for showing cumulative trends
+        - Stacked bar charts show composition over time
+        - Waterfall charts show changes between periods
+        - Funnel charts show hierarchical data
         
         Return as JSON:
         {{
