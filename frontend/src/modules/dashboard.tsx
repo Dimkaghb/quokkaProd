@@ -1,5 +1,5 @@
 import { useAuthStore } from '../shared/stores/authStore'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Chatbot } from './chatbot'
 
@@ -7,13 +7,17 @@ export const Dashboard = () => {
   const { user, logout, refreshAuth } = useAuthStore()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const navigate = useNavigate()
+  const hasRefreshed = useRef(false)
 
   // Refresh auth on component mount to ensure user data persists
   useEffect(() => {
-    if (user && !user.name) {
+    // Only refresh auth once on mount if we have a token but incomplete user data
+    const { token, user } = useAuthStore.getState()
+    if (token && (!user || !user.name) && !hasRefreshed.current) {
+      hasRefreshed.current = true
       refreshAuth()
     }
-  }, [user, refreshAuth])
+  }, []) // Empty dependency array to run only once
 
   const handleLogout = () => {
     logout()
@@ -25,7 +29,6 @@ export const Dashboard = () => {
       {/* Back Button */}
       <button
         onClick={() => {
-          console.log('Back button clicked')
           navigate('/')
         }}
         className="fixed top-6 left-6 z-[60] flex items-center space-x-2 text-white hover:text-gray-300 transition-colors group bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-gray-600 hover:border-gray-500 shadow-lg"

@@ -7,7 +7,7 @@ import { useChatStore, type Message, type UploadedFile } from '../shared/stores/
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const chatAPI = axios.create({
-  baseURL: `${API_BASE_URL}/agents`,
+  baseURL: `${API_BASE_URL}/data-analysis`,
   timeout: 60000, // 60 second timeout for agent responses
 });
 
@@ -154,19 +154,24 @@ export const Chatbot: React.FC = () => {
 
       addMessage(agentMessage);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('Chat error:', err);
       
       let errorMessage = 'Sorry, I encountered an error processing your request.';
       
-      if (err.response?.status === 401) {
-        errorMessage = 'Please log in to continue chatting.';
-      } else if (err.response?.status === 500) {
-        errorMessage = 'I\'m experiencing technical difficulties. Please try again in a moment.';
-      } else if (err.code === 'ECONNABORTED') {
-        errorMessage = 'Request timed out. Please try a simpler query or try again later.';
-      } else if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
+      if (err instanceof Error) {
+        if ('response' in err && err.response) {
+          const axiosError = err as any; // Type assertion for axios error
+          if (axiosError.response?.status === 401) {
+            errorMessage = 'Please log in to continue chatting.';
+          } else if (axiosError.response?.status === 500) {
+            errorMessage = 'I\'m experiencing technical difficulties. Please try again in a moment.';
+          } else if (axiosError.response?.data?.detail) {
+            errorMessage = axiosError.response.data.detail;
+          }
+        } else if ('code' in err && err.code === 'ECONNABORTED') {
+          errorMessage = 'Request timed out. Please try a simpler query or try again later.';
+        }
       }
 
       const errorAgentMessage: Message = {
@@ -175,7 +180,7 @@ export const Chatbot: React.FC = () => {
         content: errorMessage,
         timestamp: new Date(),
         status: 'error',
-        error: err.message
+        error: err instanceof Error ? err.message : String(err)
       };
 
       addMessage(errorAgentMessage);
@@ -243,14 +248,17 @@ export const Chatbot: React.FC = () => {
       
       addUploadedFile(uploadedFile);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('File upload failed:', err);
       
       let errorMessage = 'File upload failed.';
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (err.response?.status === 413) {
-        errorMessage = 'File too large. Maximum size is 50MB.';
+      if (err instanceof Error && 'response' in err) {
+        const axiosError = err as any; // Type assertion for axios error
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        } else if (axiosError.response?.status === 413) {
+          errorMessage = 'File too large. Maximum size is 50MB.';
+        }
       }
 
       // Update file message with error

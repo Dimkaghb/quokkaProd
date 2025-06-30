@@ -2,6 +2,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError
 from .settings import settings
 
 # Password hashing
@@ -30,10 +31,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def verify_token(token: str) -> Optional[str]:
     """Verify JWT token and return email"""
     try:
+        if not token or not token.strip():
+            return None
+            
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
-        if email is None:
+        if email is None or not email.strip():
             return None
         return email
+    except ExpiredSignatureError:
+        return None
+    except JWTClaimsError:
+        return None
     except JWTError:
+        return None
+    except Exception:
         return None

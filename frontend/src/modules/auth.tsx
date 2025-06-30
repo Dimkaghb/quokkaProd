@@ -115,16 +115,19 @@ export const Auth = () => {
         navigate('/dashboard')
       }
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Auth error:', err)
       
       let errorMessage = 'An error occurred'
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail
-      } else if (err.response?.status === 401) {
-        errorMessage = 'Invalid email or password'
-      } else if (err.response?.status === 422) {
-        errorMessage = 'Please check your input and try again'
+      if (err instanceof Error && 'response' in err) {
+        const axiosError = err as any; // Type assertion for axios error
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail
+        } else if (axiosError.response?.status === 401) {
+          errorMessage = 'Invalid email or password'
+        } else if (axiosError.response?.status === 422) {
+          errorMessage = 'Please check your input and try again'
+        }
       }
       
       setError(errorMessage)

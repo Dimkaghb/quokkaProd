@@ -6,16 +6,18 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { token } = useAuthStore()
+  const { refreshAuth, setLoading } = useAuthStore()
 
   useEffect(() => {
-    // Initialize auth state on app startup
-    if (token) {
-      // If we have a token, we could validate it here
-      // For now, we'll just assume it's valid if it exists
-      console.log('Token found in localStorage, user should be authenticated')
+    const persistedToken = localStorage.getItem('token')
+    
+    if (persistedToken) {
+      // Token found in localStorage, user should be authenticated
+      refreshAuth()
+    } else {
+      setLoading(false)
     }
-  }, [token])
+  }, [])
 
   return <>{children}</>
 }
