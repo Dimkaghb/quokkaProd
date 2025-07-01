@@ -1386,11 +1386,11 @@ def create_visualization_tool(settings: Optional[VisualizationSettings] = None) 
                     data_files.extend(list(data_dir.glob(f"*{ext}")))
             
             if not data_files:
-                return """🚫 **No data files found for visualization.**
+                return """🚫 **No structured data files found for visualization.**
 
-I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured data files to create visualizations.
+I need data files to create visualizations. Please upload files in supported formats.
 
-📊 **What I can visualize:**
+📊 **What I can create:**
 - **Line charts** for time series data and trends
 - **Scatter plots** for correlations and relationships  
 - **Bar charts** for categorical comparisons
@@ -1400,14 +1400,14 @@ I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured 
 - **Box plots** for statistical distributions
 
 💡 **To get started:**
-1. **Upload a CSV or Excel file** with your numerical data
-2. **Ask me to create specific charts** like:
-   - "Create a line chart showing sales over time"
+1. **Upload a data file** (CSV, Excel, or JSON)
+2. **Ask for specific visualizations** like:
+   - "Create a line chart showing trends over time"
    - "Make a bar chart comparing categories"
    - "Show me a correlation heatmap"
    - "Visualize the data distribution"
 
-🔧 **Supported formats:** CSV, Excel (.xlsx/.xls), JSON
+🔧 **Supported formats:** CSV, Excel (.xlsx/.xls), JSON with tabular data
 """
             
             # Use the most recent data file or find the best match
@@ -1424,10 +1424,10 @@ I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured 
                 "box": ["box", "boxplot", "outlier", "quartile", "statistical"],
                 "heatmap": ["heatmap", "correlation matrix", "correlations"],
                 "pie": ["pie", "composition", "percentage", "proportion", "breakdown"],
-                "area": ["area", "area chart", "time series"],
-                "stacked_bar": ["stacked bar", "stacked bar chart", "stacked revenue"],
-                "waterfall": ["waterfall", "waterfall chart", "cumulative effect"],
-                "funnel": ["funnel", "funnel chart", "revenue distribution"]
+                "area": ["area", "area chart", "cumulative"],
+                "stacked_bar": ["stacked bar", "stacked", "composition over time"],
+                "waterfall": ["waterfall", "cumulative effect", "breakdown"],
+                "funnel": ["funnel", "hierarchy", "stages"]
             }
             
             # Find the best matching chart type
@@ -1471,7 +1471,7 @@ I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured 
 ### 💡 Alternative Visualizations:
 {chr(10).join(f"• {rec}" for rec in result.recommendations[:3])}
 
-🎯 **Your interactive chart is ready!** The visualization shows your data patterns and can be explored interactively.
+🎯 **Your interactive chart is ready!** The visualization reveals data patterns and can be explored interactively.
 
 **Chart Data:** {result.chart_json}
 """
@@ -1484,30 +1484,28 @@ I can see you have uploaded a file (sf11_ekonom_110.pdf), but I need structured 
             error_msg = f"""❌ **Error creating visualization: {str(e)}**
 
 🔧 **Troubleshooting steps:**
-1. **Check your data file format** - Ensure it's CSV, Excel, or JSON
-2. **Verify data structure** - Make sure you have numerical columns for charts
-3. **Try a different chart type** - Some visualizations need specific data types
+1. **Check data file format** - Ensure it's CSV, Excel, or JSON
+2. **Verify data structure** - Make sure you have appropriate columns for the requested chart type
+3. **Try a different visualization** - Some chart types need specific data structures
 
-💡 **Common solutions:**
-- For line charts: Include date/time and numeric columns
-- For bar charts: Include categorical and numeric columns  
-- For scatter plots: Include two numeric columns
-- For pie charts: Include categorical data
+💡 **Common requirements:**
+- Line charts: Date/time and numeric columns
+- Bar charts: Categorical and numeric columns  
+- Scatter plots: Two numeric columns
+- Pie charts: Categorical data with values
 
-Would you like me to help you with a specific type of visualization?
-
-You will make it!!"""
+Would you like me to help you with a specific type of visualization or data preparation?"""
             return error_msg
     
     return Tool(
         name="DataVisualization",
         description=(
             "Create interactive data visualizations and charts from uploaded data files. "
-            "This tool automatically detects available data files and creates appropriate visualizations "
-            "based on user requests. It can generate line charts, scatter plots, bar charts, histograms, "
-            "heatmaps, pie charts, and more. Use this when users ask to visualize data, create charts, "
-            "or analyze patterns visually. The tool provides detailed insights and statistical analysis "
-            "alongside the visualizations."
+            "Automatically detects available data files and generates appropriate visualizations "
+            "based on user requests and data characteristics. Supports line charts, scatter plots, "
+            "bar charts, histograms, heatmaps, pie charts, box plots, and more advanced chart types. "
+            "Provides detailed insights and statistical analysis alongside visualizations. "
+            "Use when users want to visualize data, create charts, explore patterns, or need visual analysis."
         ),
         func=create_chart
     )
@@ -1530,29 +1528,28 @@ def create_visualization_agent(settings: Optional[VisualizationSettings] = None)
 VISUALIZATION_AGENT_SYSTEM_PROMPT = """
 You are a specialized data visualization expert focused on creating insightful, interactive charts from data.
 
-Your capabilities:
-- Analyze data characteristics to recommend appropriate chart types
-- Generate interactive visualizations using Plotly
-- Provide statistical insights alongside visualizations
-- Create publication-ready charts with proper titles and labels
-- Handle various data formats (CSV, Excel, JSON)
+Core Capabilities:
+- Intelligent chart type recommendation based on data characteristics and user intent
+- Interactive visualization generation using modern charting libraries
+- Statistical analysis and pattern recognition
+- Professional chart design with clear titles, labels, and legends
+- Multi-format data processing (CSV, Excel, JSON)
 
-Guidelines for effective visualization:
-1. Always analyze data characteristics first
-2. Choose chart types that best represent the data story
-3. Provide clear titles, labels, and legends
-4. Include statistical insights and patterns
-5. Suggest alternative visualization approaches
-6. Ensure charts are interactive and engaging
+Visualization Principles:
+1. **Data-First Approach**: Analyze data structure before selecting chart type
+2. **Intent Recognition**: Match chart types to user goals and data story
+3. **Clarity and Accessibility**: Ensure charts are easy to read and understand
+4. **Interactivity**: Create engaging, explorable visualizations
+5. **Statistical Rigor**: Provide meaningful insights alongside visual representation
+6. **Professional Standards**: Use appropriate colors, scales, and formatting
 
-Chart type selection criteria:
-- Line charts: Time series, trends, continuous data
-- Scatter plots: Correlations, relationships between variables
-- Bar charts: Categorical comparisons, rankings
-- Histograms: Data distributions, frequency analysis
-- Box plots: Statistical distributions, outlier detection
-- Heatmaps: Correlation matrices, density patterns
-- Pie charts: Composition, percentages, parts of whole
+Chart Selection Guidelines:
+- **Temporal Data**: Line charts, area charts for trends over time
+- **Relationships**: Scatter plots for correlations between variables
+- **Comparisons**: Bar charts, grouped bars for categorical comparisons
+- **Distributions**: Histograms, box plots for data spread and outliers
+- **Compositions**: Pie charts, stacked bars for part-to-whole relationships
+- **Patterns**: Heatmaps for correlation matrices and density visualization
 
-Remember: Your goal is to make data insights visual, accessible, and actionable through compelling visualizations.
+Goal: Transform raw data into clear, actionable visual insights that drive understanding and decision-making.
 """

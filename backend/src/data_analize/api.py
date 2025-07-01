@@ -16,6 +16,7 @@ from src.auth.dependencies import get_current_user, get_current_user_optional
 from src.auth.models import User
 
 from .root_agent import create_root_agent, RootAgentSettings
+from .agents.rag_agent import get_rag_agent_instance, create_rag_agent, RAGSettings
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ async def upload_file(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
-    """Upload a file for analysis."""
+    """Upload a file for analysis and automatically process it."""
     try:
         # Validate file type
         allowed_extensions = ['.csv', '.xlsx', '.xls', '.pdf', '.json', '.txt']
@@ -172,6 +173,15 @@ async def upload_file(
                 detail=f"File type {file_ext} not supported. Allowed types: {', '.join(allowed_extensions)}"
             )
         
+        # Validate file size (limit to 50MB)
+        content = await file.read()
+        max_size = 50 * 1024 * 1024  # 50MB
+        if len(content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
+            )
+        
         # Save file
         data_dir = Path("data/rag")
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -180,35 +190,182 @@ async def upload_file(
         
         # Save uploaded file
         with open(file_path, "wb") as f:
-            content = await file.read()
             f.write(content)
             
-        logger.info(f"User {current_user.email} uploaded file: {file.filename}")
-            
-        return {
-            "success": True,
-                    "filename": file.filename,
+        logger.info(f"User {current_user.email} uploaded file: {file.filename} ({len(content)} bytes)")
+        
+        # Process file through the singleton RAG agent for immediate availability
+        file_metadata = {
+            "filename": file.filename,
+            "file_type": file_ext,
             "size": len(content),
-            "type": file_ext
+            "summary": "Processing...",
+            "chunks_count": 0
         }
         
+        try:
+            # Get or create the singleton RAG agent instance
+            rag_agent = get_rag_agent_instance()
+            if not rag_agent:
+                # Initialize the singleton if it doesn't exist
+                rag_settings = RAGSettings(data_directory=str(data_dir))
+                rag_agent = create_rag_agent(rag_settings)
+            
+            # Create a temporary copy for processing since RAG agent moves the file
+            import tempfile
+            
+            # Copy file to temp location for processing
+            temp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tf:
+                    shutil.copy2(file_path, tf.name)
+                    temp_file = tf.name
+                
+                # Process the temporary file through the singleton RAG agent
+                processing_result = await rag_agent.upload_file(
+                    file_path=temp_file,
+                    original_filename=file.filename
+                )
+                
+                # Clean up temp file if it still exists
+                if temp_file and Path(temp_file).exists():
+                    Path(temp_file).unlink()
+                
+                # Extract metadata from processing result
+                if processing_result.get("status") == "success":
+                    file_metadata.update({
+                        "summary": processing_result.get("summary", "File processed successfully"),
+                        "chunks_count": processing_result.get("chunks_count", 0),
+                        "file_type": processing_result.get("file_type", file_ext),
+                        "processed_at": datetime.utcnow().isoformat()
+                    })
+                    
+                    logger.info(f"File {file.filename} processed successfully with {file_metadata['chunks_count']} chunks and stored in singleton RAG agent")
+                else:
+                    # Processing failed
+                    error_msg = processing_result.get("message", "Unknown processing error")
+                    file_metadata.update({
+                        "summary": f"Processing failed: {error_msg}",
+                        "chunks_count": 0,
+                        "processed_at": datetime.utcnow().isoformat()
+                    })
+                    logger.warning(f"File processing failed for {file.filename}: {error_msg}")
+                    
+            except Exception as temp_error:
+                # Clean up temp file in case of error
+                if temp_file and Path(temp_file).exists():
+                    Path(temp_file).unlink()
+                raise temp_error
+                
+        except Exception as e:
+            logger.error(f"Error processing file through RAG agent: {e}")
+            # Continue with basic metadata
+            file_metadata.update({
+                "summary": f"File uploaded successfully but processing failed: {str(e)[:100]}",
+                "chunks_count": 0,
+                "processed_at": datetime.utcnow().isoformat()
+            })
+        
+        # Add file to conversation memory (root agent)
+        agent = get_root_agent()
+        if agent:
+            agent.add_uploaded_file(file.filename, file_metadata)
+        
+        return {
+            "success": True,
+            "filename": file.filename,
+            "size": len(content),
+            "type": file_ext,
+            "summary": file_metadata["summary"],
+            "chunks_count": file_metadata["chunks_count"],
+            "processed_at": file_metadata.get("processed_at"),
+            "metadata": file_metadata
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error uploading file: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 @router.get("/files")
 async def list_files(
     current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
-    """List uploaded files."""
+    """List uploaded files with their processing status."""
     try:
+        # Get files from root agent memory (conversation context)
         agent = get_root_agent()
-        files = await agent.get_uploaded_files()
+        agent_files = []
+        if agent:
+            agent_files = await agent.get_uploaded_files()
+        
+        # Get files from singleton RAG agent (processed documents)
+        rag_agent = get_rag_agent_instance()
+        rag_files = []
+        if rag_agent:
+            rag_files = rag_agent.get_uploaded_files()
+        
+        # Also scan the data directory for any files not in memory
+        data_dir = Path("data/rag")
+        disk_files = []
+        
+        if data_dir.exists():
+            for file_path in data_dir.iterdir():
+                if file_path.is_file():
+                    # Check if this file is already in agent memory or RAG agent
+                    found_in_agent = any(f["filename"] == file_path.name for f in agent_files)
+                    found_in_rag = any(f["filename"] == file_path.name for f in rag_files)
+                    
+                    if not found_in_agent and not found_in_rag:
+                        # Add basic metadata for files not processed by either agent
+                        disk_files.append({
+                            "filename": file_path.name,
+                            "file_type": file_path.suffix.lower(),
+                            "size": str(file_path.stat().st_size),
+                            "processed_at": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                            "chunks_count": 0,
+                            "summary": "File not processed by agent"
+                        })
+        
+        # Combine all lists, prioritizing RAG agent data over conversation memory
+        # Create a dict to merge data for same files
+        file_dict = {}
+        
+        # Add disk files first (lowest priority)
+        for file_info in disk_files:
+            file_dict[file_info["filename"]] = file_info
+        
+        # Add conversation memory files (medium priority)
+        for file_info in agent_files:
+            filename = file_info["filename"]
+            if filename in file_dict:
+                # Merge with existing data
+                file_dict[filename].update(file_info)
+            else:
+                file_dict[filename] = file_info
+        
+        # Add RAG agent files (highest priority - most accurate)
+        for file_info in rag_files:
+            filename = file_info["filename"]
+            if filename in file_dict:
+                # Merge with existing data, RAG data takes precedence
+                file_dict[filename].update(file_info)
+            else:
+                file_dict[filename] = file_info
+        
+        all_files = list(file_dict.values())
         
         return {
             "success": True,
-            "files": files
+            "files": all_files,
+            "total_files": len(all_files),
+            "sources": {
+                "conversation_memory": len(agent_files),
+                "rag_processed": len(rag_files),
+                "disk_only": len(disk_files)
+            }
         }
         
     except Exception as e:
@@ -398,8 +555,9 @@ async def get_conversation_context(
             files = await agent.get_uploaded_files()
             context["uploaded_files"] = files
             
-            # Get conversation length
-            context["conversation_length"] = len(agent.conversation_history)
+            # Get conversation summary
+            summary = await agent.get_conversation_summary()
+            context.update(summary)
         
         return {
             "success": True,
@@ -408,4 +566,115 @@ async def get_conversation_context(
         
     except Exception as e:
         logger.error(f"Error getting conversation context: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get context: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to get context: {str(e)}")
+
+
+@router.post("/process-file/{filename}")
+async def process_existing_file(
+    filename: str,
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Process an existing uploaded file through the RAG agent."""
+    try:
+        # Check if file exists
+        data_dir = Path("data/rag")
+        file_path = data_dir / filename
+        
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Get file info
+        file_ext = file_path.suffix.lower()
+        file_size = file_path.stat().st_size
+        
+        logger.info(f"User {current_user.email} processing existing file: {filename}")
+        
+        # Process file through the singleton RAG agent
+        file_metadata = {
+            "filename": filename,
+            "file_type": file_ext,
+            "size": file_size,
+            "summary": "Processing...",
+            "chunks_count": 0
+        }
+        
+        try:
+            # Get or create the singleton RAG agent instance
+            rag_agent = get_rag_agent_instance()
+            if not rag_agent:
+                # Initialize the singleton if it doesn't exist
+                rag_settings = RAGSettings(data_directory=str(data_dir))
+                rag_agent = create_rag_agent(rag_settings)
+            
+            # Create a temporary copy for processing since RAG agent moves the file
+            import tempfile
+            
+            # Copy file to temp location for processing
+            temp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tf:
+                    shutil.copy2(file_path, tf.name)
+                    temp_file = tf.name
+                
+                # Process the temporary file through the singleton RAG agent
+                processing_result = await rag_agent.upload_file(
+                    file_path=temp_file,
+                    original_filename=filename
+                )
+                
+                # Clean up temp file if it still exists
+                if temp_file and Path(temp_file).exists():
+                    Path(temp_file).unlink()
+                
+                # Extract metadata from processing result
+                if processing_result.get("status") == "success":
+                    file_metadata.update({
+                        "summary": processing_result.get("summary", "File processed successfully"),
+                        "chunks_count": processing_result.get("chunks_count", 0),
+                        "file_type": processing_result.get("file_type", file_ext),
+                        "processed_at": datetime.utcnow().isoformat()
+                    })
+                    
+                    logger.info(f"File {filename} processed successfully with {file_metadata['chunks_count']} chunks and stored in singleton RAG agent")
+                else:
+                    # Processing failed
+                    error_msg = processing_result.get("message", "Unknown processing error")
+                    file_metadata.update({
+                        "summary": f"Processing failed: {error_msg}",
+                        "chunks_count": 0,
+                        "processed_at": datetime.utcnow().isoformat()
+                    })
+                    logger.warning(f"File processing failed for {filename}: {error_msg}")
+                    
+            except Exception as temp_error:
+                # Clean up temp file in case of error
+                if temp_file and Path(temp_file).exists():
+                    Path(temp_file).unlink()
+                raise temp_error
+            
+            # Add to conversation memory (root agent)
+            agent = get_root_agent()
+            if agent:
+                agent.add_uploaded_file(filename, file_metadata)
+                
+            return {
+                "success": True,
+                "filename": filename,
+                "summary": file_metadata["summary"],
+                "chunks_count": file_metadata["chunks_count"],
+                "processed_at": file_metadata.get("processed_at"),
+                "message": "File processed successfully"
+            }
+                
+        except Exception as e:
+            logger.error(f"Error processing file through RAG agent: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to process file: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing existing file: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) 

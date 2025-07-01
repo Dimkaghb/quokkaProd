@@ -21,6 +21,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import json
+import threading
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
@@ -54,6 +55,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
+
+# Global singleton instance
+_rag_agent_instance = None
+_instance_lock = threading.Lock()
 
 
 class RAGSettings(BaseSettings):
@@ -282,96 +287,391 @@ class DataAnalysisRAGAgent:
             )]
 
     async def _load_pdf_with_fallbacks(self, file_path: Path) -> List[Document]:
-        """Load PDF with multiple fallback methods including OCR."""
+        """Enhanced PDF loader that extracts tables, images, charts, and structured content."""
         errors = []
+        extracted_documents = []
         
-        # Method 1: Try PyMuPDF (fitz) - most reliable
+        # Method 1: Advanced PyMuPDF extraction with table and image detection
         try:
             import fitz  # PyMuPDF
-            logger.info(f"Attempting PyMuPDF (fitz) for {file_path}")
+            logger.info(f"🔍 Starting advanced PDF analysis for {file_path}")
             
             doc = fitz.open(str(file_path))
-            text_content = []
+            total_pages = len(doc)
             
-            for page_num in range(len(doc)):
+            for page_num in range(total_pages):
                 page = doc.load_page(page_num)
-                text = page.get_text()
+                page_content = []
+                page_metadata = {
+                    "source": str(file_path),
+                    "page": page_num + 1,
+                    "total_pages": total_pages,
+                    "extraction_method": "Advanced PyMuPDF",
+                    "content_types": []
+                }
                 
-                # If no text found, try OCR on the page
-                if not text.strip():
-                    logger.info(f"No text found on page {page_num}, attempting OCR...")
+                # 1. Extract regular text with layout preservation
+                try:
+                    text_dict = page.get_text("dict")
+                    formatted_text = await self._extract_formatted_text(text_dict)
+                    if formatted_text.strip():
+                        page_content.append(f"📄 **Page {page_num + 1} - Text Content:**\n{formatted_text}")
+                        page_metadata["content_types"].append("text")
+                except Exception as e:
+                    logger.warning(f"Text extraction failed for page {page_num}: {e}")
+                
+                # 2. Extract tables using advanced detection
+                try:
+                    tables = await self._extract_pdf_tables(page, page_num + 1)
+                    if tables:
+                        page_content.append(f"\n📊 **Tables Found on Page {page_num + 1}:**\n{tables}")
+                        page_metadata["content_types"].append("tables")
+                        page_metadata["table_count"] = len(tables.split("Table"))
+                except Exception as e:
+                    logger.warning(f"Table extraction failed for page {page_num}: {e}")
+                
+                # 3. Extract and describe images/charts
+                try:
+                    images_description = await self._extract_pdf_images(page, page_num + 1)
+                    if images_description:
+                        page_content.append(f"\n🖼️ **Visual Elements on Page {page_num + 1}:**\n{images_description}")
+                        page_metadata["content_types"].append("images")
+                except Exception as e:
+                    logger.warning(f"Image extraction failed for page {page_num}: {e}")
+                
+                # 4. Extract forms and annotations
+                try:
+                    forms_content = await self._extract_pdf_forms(page, page_num + 1)
+                    if forms_content:
+                        page_content.append(f"\n📝 **Forms/Annotations on Page {page_num + 1}:**\n{forms_content}")
+                        page_metadata["content_types"].append("forms")
+                except Exception as e:
+                    logger.warning(f"Forms extraction failed for page {page_num}: {e}")
+                
+                # 5. OCR for scanned content if no text found
+                if not any("text" in content_type for content_type in page_metadata["content_types"]):
                     try:
-                        # Get page as image
-                        pix = page.get_pixmap()
+                        logger.info(f"🔍 No text found on page {page_num + 1}, attempting OCR...")
+                        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # High resolution
                         img_data = pix.tobytes("png")
                         
-                        # Use OCR to extract text
                         ocr_text = await self._extract_text_with_ocr(img_data)
                         if ocr_text.strip():
-                            text = f"[OCR Extracted] {ocr_text}"
-                            logger.info(f"OCR successful for page {page_num}")
+                            page_content.append(f"\n🔍 **OCR Extracted Content:**\n{ocr_text}")
+                            page_metadata["content_types"].append("ocr")
+                            page_metadata["extraction_method"] += " + OCR"
                     except Exception as ocr_error:
                         logger.warning(f"OCR failed for page {page_num}: {ocr_error}")
-                        text = f"[Page {page_num + 1}] - Unable to extract text (may be image/scanned content)"
                 
-                if text.strip():
-                    text_content.append(
+                # Combine all content for this page
+                if page_content:
+                    combined_content = "\n".join(page_content)
+                    
+                    # Add structural summary
+                    content_summary = f"""
+📋 **Page {page_num + 1} Summary:**
+- Content Types: {', '.join(page_metadata['content_types'])}
+- Extraction Method: {page_metadata['extraction_method']}
+{f"- Tables: {page_metadata.get('table_count', 0)}" if 'tables' in page_metadata.get('content_types', []) else ""}
+
+{combined_content}
+"""
+                    
+                    extracted_documents.append(
                         Document(
-                            page_content=text,
-                            metadata={
-                                "source": str(file_path),
-                                "page": page_num + 1,
-                                "total_pages": len(doc),
-                                "extraction_method": "PyMuPDF" + (" + OCR" if "[OCR Extracted]" in text else "")
-                            }
+                            page_content=content_summary,
+                            metadata=page_metadata
+                        )
+                    )
+                else:
+                    # Empty page - still add with metadata
+                    extracted_documents.append(
+                        Document(
+                            page_content=f"📄 **Page {page_num + 1}:** [Empty or unreadable page]",
+                            metadata=page_metadata
                         )
                     )
             
             doc.close()
             
-            if text_content:
-                logger.info(f"Successfully extracted {len(text_content)} pages with PyMuPDF")
-                return text_content
+            if extracted_documents:
+                logger.info(f"✅ Successfully extracted {len(extracted_documents)} pages with advanced analysis")
+                return extracted_documents
             else:
-                errors.append("PyMuPDF: No content extracted from any page")
+                errors.append("Advanced PyMuPDF: No content extracted from any page")
                 
         except ImportError:
-            errors.append("PyMuPDF not available")
+            errors.append("PyMuPDF not available - install with: pip install PyMuPDF")
         except Exception as e:
-            errors.append(f"PyMuPDF error: {str(e)}")
-            logger.warning(f"PyMuPDF failed: {e}")
+            errors.append(f"Advanced PyMuPDF error: {str(e)}")
+            logger.warning(f"Advanced PyMuPDF failed: {e}")
         
+        # Fallback methods (existing implementation as backup)
+        return await self._fallback_pdf_extraction(file_path, errors)
+
+    async def _extract_formatted_text(self, text_dict: dict) -> str:
+        """Extract text while preserving formatting and structure."""
+        formatted_lines = []
+        
+        try:
+            for block in text_dict.get("blocks", []):
+                if "lines" in block:
+                    block_text = []
+                    for line in block["lines"]:
+                        line_text = []
+                        for span in line.get("spans", []):
+                            text = span.get("text", "").strip()
+                            if text:
+                                # Detect headers based on font size
+                                font_size = span.get("size", 12)
+                                if font_size > 14:
+                                    text = f"## {text}"  # Mark as header
+                                elif span.get("flags", 0) & 2**4:  # Bold
+                                    text = f"**{text}**"
+                                line_text.append(text)
+                        
+                        if line_text:
+                            block_text.append(" ".join(line_text))
+                    
+                    if block_text:
+                        formatted_lines.append("\n".join(block_text))
+            
+            return "\n\n".join(formatted_lines)
+            
+        except Exception as e:
+            logger.warning(f"Text formatting failed: {e}")
+            return ""
+
+    async def _extract_pdf_tables(self, page, page_num: int) -> str:
+        """Extract tables from PDF page using multiple methods."""
+        tables_content = []
+        
+        try:
+            # Method 1: Use PyMuPDF table detection
+            try:
+                import fitz
+                tables = page.find_tables()
+                
+                for i, table in enumerate(tables):
+                    try:
+                        # Extract table data
+                        table_data = table.extract()
+                        if table_data:
+                            # Convert to readable format
+                            table_text = f"\n**Table {i + 1}:**\n"
+                            
+                            # Add headers if available
+                            if len(table_data) > 0:
+                                headers = table_data[0]
+                                table_text += "| " + " | ".join(str(cell) for cell in headers) + " |\n"
+                                table_text += "|" + "|".join("---" for _ in headers) + "|\n"
+                                
+                                # Add data rows
+                                for row in table_data[1:]:
+                                    table_text += "| " + " | ".join(str(cell) for cell in row) + " |\n"
+                            
+                            tables_content.append(table_text)
+                            
+                    except Exception as e:
+                        logger.warning(f"Failed to extract table {i}: {e}")
+                        
+            except Exception as e:
+                logger.warning(f"PyMuPDF table detection failed: {e}")
+            
+            # Method 2: Try pdfplumber for better table detection
+            try:
+                import pdfplumber
+                
+                with pdfplumber.open(page.parent.name) as pdf:
+                    if page_num - 1 < len(pdf.pages):
+                        plumber_page = pdf.pages[page_num - 1]
+                        plumber_tables = plumber_page.extract_tables()
+                        
+                        for i, table in enumerate(plumber_tables):
+                            if table:
+                                table_text = f"\n**Table {len(tables_content) + i + 1} (pdfplumber):**\n"
+                                
+                                # Format table
+                                for row_idx, row in enumerate(table):
+                                    if row_idx == 0:  # Header
+                                        table_text += "| " + " | ".join(str(cell) if cell else "" for cell in row) + " |\n"
+                                        table_text += "|" + "|".join("---" for _ in row) + "|\n"
+                                    else:  # Data rows
+                                        table_text += "| " + " | ".join(str(cell) if cell else "" for cell in row) + " |\n"
+                                
+                                tables_content.append(table_text)
+                                
+            except ImportError:
+                logger.info("pdfplumber not available - install with: pip install pdfplumber")
+            except Exception as e:
+                logger.warning(f"pdfplumber table extraction failed: {e}")
+            
+            return "\n".join(tables_content) if tables_content else ""
+            
+        except Exception as e:
+            logger.error(f"Table extraction failed for page {page_num}: {e}")
+            return ""
+
+    async def _extract_pdf_images(self, page, page_num: int) -> str:
+        """Extract and analyze images/charts from PDF page."""
+        images_description = []
+        
+        try:
+            image_list = page.get_images()
+            
+            for img_index, img in enumerate(image_list):
+                try:
+                    # Get image data
+                    xref = img[0]
+                    pix = fitz.Pixmap(page.parent, xref)
+                    
+                    if pix.n - pix.alpha < 4:  # GRAY or RGB
+                        img_data = pix.tobytes("png")
+                        
+                        # Analyze image content using AI vision
+                        image_description = await self._analyze_image_content(img_data, f"Image {img_index + 1} on page {page_num}")
+                        
+                        if image_description:
+                            images_description.append(f"""
+**Image {img_index + 1}:**
+- Dimensions: {pix.width}x{pix.height} pixels
+- Description: {image_description}
+""")
+                    
+                    pix = None  # Free memory
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to process image {img_index}: {e}")
+                    images_description.append(f"**Image {img_index + 1}:** [Could not analyze - {str(e)}]")
+            
+            return "\n".join(images_description) if images_description else ""
+            
+        except Exception as e:
+            logger.error(f"Image extraction failed for page {page_num}: {e}")
+            return ""
+
+    async def _analyze_image_content(self, image_data: bytes, context: str) -> str:
+        """Analyze image content using OpenAI Vision API or fallback methods."""
+        try:
+            # Try OpenAI Vision API if available
+            try:
+                import base64
+                from openai import AsyncOpenAI
+                
+                base64_image = base64.b64encode(image_data).decode('utf-8')
+                
+                client = AsyncOpenAI(api_key=self.settings.openai_api_key)
+                
+                response = await client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": f"Analyze this image from a document ({context}). Describe what you see, focusing on any charts, graphs, tables, diagrams, or important visual information that would be relevant for data analysis."
+                                },
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{base64_image}"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens=300
+                )
+                
+                return response.choices[0].message.content
+                
+            except Exception as vision_error:
+                logger.warning(f"OpenAI Vision API failed: {vision_error}")
+                
+                # Fallback: Try basic OCR on image
+                try:
+                    ocr_text = await self._extract_text_with_ocr(image_data)
+                    if ocr_text.strip():
+                        return f"Contains text/data: {ocr_text[:200]}..."
+                    else:
+                        return "Visual element (chart, diagram, or image) - content not readable as text"
+                except Exception as ocr_error:
+                    logger.warning(f"OCR fallback failed: {ocr_error}")
+                    return "Visual element detected but could not analyze content"
+            
+        except Exception as e:
+            logger.error(f"Image analysis failed: {e}")
+            return "Visual element present but analysis failed"
+
+    async def _extract_pdf_forms(self, page, page_num: int) -> str:
+        """Extract form fields and annotations from PDF."""
+        forms_content = []
+        
+        try:
+            # Extract form fields
+            if hasattr(page, 'widgets'):
+                widgets = page.widgets()
+                
+                for widget in widgets:
+                    try:
+                        field_name = widget.field_name
+                        field_value = widget.field_value
+                        field_type = widget.field_type_string
+                        
+                        if field_name or field_value:
+                            forms_content.append(f"- **{field_name or 'Unnamed Field'}** ({field_type}): {field_value or '[Empty]'}")
+                    except Exception as e:
+                        logger.warning(f"Failed to extract form field: {e}")
+            
+            # Extract annotations
+            annots = page.annots()
+            for annot in annots:
+                try:
+                    annot_type = annot.type[1]  # Get annotation type name
+                    content = annot.info.get("content", "")
+                    
+                    if content:
+                        forms_content.append(f"- **{annot_type}:** {content}")
+                except Exception as e:
+                    logger.warning(f"Failed to extract annotation: {e}")
+            
+            return "\n".join(forms_content) if forms_content else ""
+            
+        except Exception as e:
+            logger.error(f"Forms extraction failed for page {page_num}: {e}")
+            return ""
+
+    async def _fallback_pdf_extraction(self, file_path: Path, previous_errors: List[str]) -> List[Document]:
+        """Fallback PDF extraction methods when advanced analysis fails."""
         # Method 2: Try PyPDFLoader
         try:
-            logger.info(f"Attempting PyPDFLoader for {file_path}")
+            logger.info(f"Attempting PyPDFLoader fallback for {file_path}")
             loader = PyPDFLoader(str(file_path))
             docs = loader.load()
             if docs and any(doc.page_content.strip() for doc in docs):
                 logger.info(f"Successfully loaded PDF with PyPDFLoader: {len(docs)} pages")
                 return docs
             else:
-                errors.append("PyPDFLoader: No content extracted")
+                previous_errors.append("PyPDFLoader: No content extracted")
         except Exception as e:
-            errors.append(f"PyPDFLoader error: {str(e)}")
+            previous_errors.append(f"PyPDFLoader error: {str(e)}")
             logger.warning(f"PyPDFLoader failed: {e}")
         
-        # Method 3: Try pdf2image + OCR for scanned documents
+        # Method 3: OCR fallback
         try:
             from pdf2image import convert_from_path
             logger.info("Attempting full document OCR with pdf2image")
             
-            # Convert PDF to images
-            images = convert_from_path(str(file_path), dpi=300, first_page=1, last_page=5)  # Limit to first 5 pages
+            images = convert_from_path(str(file_path), dpi=300, first_page=1, last_page=5)
             text_content = []
             
             for i, image in enumerate(images):
-                # Convert PIL image to bytes
                 import io
                 img_byte_arr = io.BytesIO()
                 image.save(img_byte_arr, format='PNG')
                 img_bytes = img_byte_arr.getvalue()
                 
-                # Extract text with OCR
                 ocr_text = await self._extract_text_with_ocr(img_bytes)
                 
                 if ocr_text.strip():
@@ -390,105 +690,64 @@ class DataAnalysisRAGAgent:
                 logger.info(f"Successfully extracted {len(text_content)} pages with OCR")
                 return text_content
             else:
-                errors.append("OCR: No text extracted from images")
+                previous_errors.append("OCR: No text extracted from images")
                 
         except ImportError:
-            errors.append("pdf2image not available")
+            previous_errors.append("pdf2image not available")
         except Exception as e:
-            errors.append(f"OCR error: {str(e)}")
+            previous_errors.append(f"OCR error: {str(e)}")
             logger.warning(f"OCR extraction failed: {e}")
         
-        # Method 4: Try pypdf2 as final fallback
-        try:
-            import PyPDF2
-            logger.info("Attempting PyPDF2 direct extraction")
-            text_content = []
-            
-            with open(file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                for page_num, page in enumerate(pdf_reader.pages):
-                    try:
-                        text = page.extract_text()
-                        if text.strip():
-                            text_content.append(
-                                Document(
-                                    page_content=text,
-                                    metadata={
-                                        "source": str(file_path),
-                                        "page": page_num + 1,
-                                        "total_pages": len(pdf_reader.pages),
-                                        "extraction_method": "PyPDF2"
-                                    }
-                                )
-                            )
-                    except Exception as page_error:
-                        logger.warning(f"Error extracting page {page_num}: {page_error}")
-                        continue
-            
-            if text_content:
-                logger.info(f"Successfully extracted {len(text_content)} pages with PyPDF2")
-                return text_content
-            else:
-                errors.append("PyPDF2: No content extracted")
-                
-        except Exception as e:
-            errors.append(f"PyPDF2 error: {str(e)}")
-            logger.warning(f"PyPDF2 failed: {e}")
-        
         # If all methods fail, return helpful error document
-        error_msg = "; ".join(errors)
+        error_msg = "; ".join(previous_errors)
         logger.error(f"All PDF extraction methods failed for {file_path}: {error_msg}")
         
         return [Document(
-            page_content=f"""📄 PDF Analysis Report: {file_path.name}
+            page_content=f"""📄 **Advanced PDF Analysis Report: {file_path.name}**
 
-🔍 **Extraction Status**: Unable to extract readable text
+🔍 **Extraction Status**: Unable to extract readable content
 
 📊 **File Information**:
 - File Size: {file_path.stat().st_size / 1024:.1f} KB
 - Format: PDF Document
 
-⚠️ **Possible Issues**:
-- Scanned document (images of text requiring OCR)
-- Password-protected or encrypted PDF
-- Corrupted or complex PDF structure
-- Non-standard encoding or fonts
-
-🛠️ **Attempted Methods**: {len(errors)} different extraction techniques
-- PyMuPDF with OCR support
+⚠️ **Attempted Methods**: {len(previous_errors)} different extraction techniques
+- Advanced PyMuPDF with table/image detection
 - PyPDFLoader (LangChain)
 - pdf2image + Tesseract OCR
 - PyPDF2 direct extraction
 
+🛠️ **Possible Issues**:
+- Heavily encrypted or password-protected PDF
+- Scanned document with poor image quality
+- Complex layouts or non-standard fonts
+- Corrupted PDF structure
+
 💡 **Recommendations**:
-1. **For Scanned Documents**: Use professional OCR software or convert to high-resolution images first
-2. **For Password-Protected PDFs**: Remove password protection and re-upload
-3. **Alternative Formats**: Try converting to .txt, .docx, or .csv if possible
-4. **Data Analysis**: If this contains structured data, export as Excel/CSV for better analysis
+1. **For Scanned Documents**: Improve scan quality (300+ DPI) and re-upload
+2. **For Password-Protected PDFs**: Remove protection and re-upload
+3. **Alternative Formats**: Convert to Word/Excel if possible for better structure extraction
+4. **Manual Data Entry**: For critical data, consider manual extraction of key tables/charts
 
-📈 **What I Can Analyze Instead**:
-- CSV files with numerical data
-- Excel spreadsheets with multiple sheets
-- JSON data files
-- Plain text documents
-- Structured data formats
+📈 **Enhanced Capabilities for Other Formats**:
+- **Excel Files**: Full table extraction, multiple sheets, formulas
+- **CSV Files**: Complete data analysis with statistical insights
+- **Images**: Chart/graph analysis using AI vision
+- **JSON**: Structured data parsing and analysis
 
-🤖 **My Capabilities**: I can perform comprehensive data analysis including:
-- Statistical analysis and trend identification
-- Data visualization and charting
-- Predictive modeling and forecasting
-- Correlation analysis and pattern recognition
-- Business intelligence insights
+🤖 **What I Can Do Instead**:
+- Comprehensive statistical analysis on structured data
+- Interactive visualizations and charts
+- Pattern recognition and trend analysis
+- Business intelligence insights and recommendations
 
-Please try uploading your data in a different format, and I'll provide detailed analytical insights!""",
+{f"📝 **Technical Details**: {error_msg}" if previous_errors else ""}
+""",
             metadata={
                 "source": str(file_path),
-                "file_type": "pdf",
-                "extraction_failed": True,
-                "error_count": len(errors),
-                "error_summary": error_msg[:500],
-                "extraction_methods_tried": len(errors),
-                "file_size_kb": round(file_path.stat().st_size / 1024, 1)
+                "extraction_method": "Failed",
+                "error_count": len(previous_errors),
+                "file_type": "pdf"
             }
         )]
 
@@ -614,30 +873,424 @@ Please try uploading your data in a different format, and I'll provide detailed 
             )]
 
     async def _load_excel_with_fallbacks(self, file_path: Path) -> List[Document]:
-        """Load Excel with fallbacks."""
+        """Enhanced Excel loader that extracts multiple sheets, charts, formulas, and formatting."""
         try:
-            # Try UnstructuredExcelLoader first
+            logger.info(f"🔍 Starting advanced Excel analysis for {file_path}")
+            documents = []
+            
+            # Method 1: Advanced pandas analysis with openpyxl for rich content
             try:
+                import openpyxl
+                from openpyxl.chart import PieChart, BarChart, LineChart, ScatterChart, AreaChart
+                
+                # Load workbook with openpyxl for advanced features
+                wb = openpyxl.load_workbook(file_path, data_only=False)
+                
+                # Process each worksheet
+                for sheet_name in wb.sheetnames:
+                    logger.info(f"📊 Processing sheet: {sheet_name}")
+                    worksheet = wb[sheet_name]
+                    sheet_content = []
+                    
+                    # 1. Extract sheet metadata and structure
+                    sheet_info = await self._analyze_excel_sheet_structure(worksheet, sheet_name)
+                    sheet_content.append(f"📋 **Sheet Overview:**\n{sheet_info}")
+                    
+                    # 2. Extract data tables
+                    try:
+                        df = pd.read_excel(file_path, sheet_name=sheet_name)
+                        if not df.empty:
+                            data_analysis = await self._analyze_excel_data(df, sheet_name)
+                            sheet_content.append(f"\n📊 **Data Analysis:**\n{data_analysis}")
+                            
+                            # Include sample data
+                            sample_data = df.head(10).to_string(max_cols=10)
+                            sheet_content.append(f"\n📋 **Sample Data (First 10 rows):**\n```\n{sample_data}\n```")
+                        
+                    except Exception as e:
+                        logger.warning(f"Failed to read data from sheet {sheet_name}: {e}")
+                    
+                    # 3. Extract formulas
+                    try:
+                        formulas = await self._extract_excel_formulas(worksheet)
+                        if formulas:
+                            sheet_content.append(f"\n🧮 **Formulas Found:**\n{formulas}")
+                    except Exception as e:
+                        logger.warning(f"Formula extraction failed for {sheet_name}: {e}")
+                    
+                    # 4. Extract charts
+                    try:
+                        charts_info = await self._extract_excel_charts(worksheet)
+                        if charts_info:
+                            sheet_content.append(f"\n📈 **Charts and Visualizations:**\n{charts_info}")
+                    except Exception as e:
+                        logger.warning(f"Chart extraction failed for {sheet_name}: {e}")
+                    
+                    # 5. Extract comments and annotations
+                    try:
+                        comments = await self._extract_excel_comments(worksheet)
+                        if comments:
+                            sheet_content.append(f"\n💬 **Comments and Notes:**\n{comments}")
+                    except Exception as e:
+                        logger.warning(f"Comments extraction failed for {sheet_name}: {e}")
+                    
+                    # 6. Extract conditional formatting and styles
+                    try:
+                        formatting_info = await self._extract_excel_formatting(worksheet)
+                        if formatting_info:
+                            sheet_content.append(f"\n🎨 **Formatting and Highlights:**\n{formatting_info}")
+                    except Exception as e:
+                        logger.warning(f"Formatting extraction failed for {sheet_name}: {e}")
+                    
+                    # Create document for this sheet
+                    if sheet_content:
+                        combined_content = "\n".join(sheet_content)
+                        
+                        document = Document(
+                            page_content=f"""📊 **Excel Sheet: {sheet_name}**
+
+{combined_content}
+""",
+                            metadata={
+                                "source": str(file_path),
+                                "sheet_name": sheet_name,
+                                "file_type": "excel",
+                                "extraction_method": "Advanced Excel Analysis",
+                                "workbook": file_path.stem
+                            }
+                        )
+                        documents.append(document)
+                
+                wb.close()
+                
+                if documents:
+                    logger.info(f"✅ Successfully extracted {len(documents)} Excel sheets with advanced analysis")
+                    return documents
+                    
+            except ImportError:
+                logger.warning("openpyxl not available - install with: pip install openpyxl")
+            except Exception as e:
+                logger.warning(f"Advanced Excel analysis failed: {e}")
+            
+            # Method 2: Pandas fallback with multiple sheets
+            try:
+                logger.info("📊 Attempting pandas multi-sheet extraction")
+                
+                # Read all sheets
+                excel_file = pd.ExcelFile(file_path)
+                documents = []
+                
+                for sheet_name in excel_file.sheet_names:
+                    try:
+                        df = pd.read_excel(file_path, sheet_name=sheet_name)
+                        
+                        if not df.empty:
+                            # Basic data analysis
+                            data_summary = await self._create_basic_excel_summary(df, sheet_name)
+                            
+                            # Include full data for smaller sheets, sample for larger ones
+                            if len(df) <= 100:
+                                data_content = df.to_string(max_cols=20)
+                            else:
+                                sample_data = df.head(20).to_string(max_cols=20)
+                                data_content = f"Sample Data (First 20 rows):\n{sample_data}\n\n[Sheet contains {len(df)} total rows]"
+                            
+                            document = Document(
+                                page_content=f"""📊 **Excel Sheet: {sheet_name}**
+
+📋 **Sheet Summary:**
+{data_summary}
+
+📊 **Data Content:**
+```
+{data_content}
+```
+""",
+                                metadata={
+                                    "source": str(file_path),
+                                    "sheet_name": sheet_name,
+                                    "file_type": "excel",
+                                    "extraction_method": "Pandas Basic",
+                                    "rows": len(df),
+                                    "columns": len(df.columns)
+                                }
+                            )
+                            documents.append(document)
+                            
+                    except Exception as e:
+                        logger.warning(f"Failed to process sheet {sheet_name}: {e}")
+                        # Add error document for this sheet
+                        documents.append(Document(
+                            page_content=f"📊 **Excel Sheet: {sheet_name}**\n\n⚠️ Failed to process this sheet: {str(e)}",
+                            metadata={
+                                "source": str(file_path),
+                                "sheet_name": sheet_name,
+                                "file_type": "excel",
+                                "extraction_method": "Failed",
+                                "error": str(e)
+                            }
+                        ))
+                
+                if documents:
+                    logger.info(f"✅ Successfully extracted {len(documents)} Excel sheets with pandas")
+                    return documents
+                    
+            except Exception as e:
+                logger.warning(f"Pandas Excel extraction failed: {e}")
+            
+            # Method 3: Unstructured loader fallback
+            try:
+                logger.info("📊 Attempting UnstructuredExcelLoader fallback")
                 loader = UnstructuredExcelLoader(str(file_path))
                 docs = loader.load()
                 if docs:
-                    logger.info("Successfully loaded Excel with UnstructuredExcelLoader")
+                    logger.info(f"✅ Successfully loaded Excel with UnstructuredExcelLoader: {len(docs)} documents")
                     return docs
             except Exception as e:
-                logger.warning(f"UnstructuredExcelLoader failed: {e}, trying pandas")
+                logger.warning(f"UnstructuredExcelLoader failed: {e}")
             
-            # Fallback to pandas
-            df = pd.read_excel(file_path)
+            # If all methods fail
             return [Document(
-                page_content=df.to_string(),
-                metadata={"source": str(file_path), "file_type": "excel"}
+                page_content=f"""📊 **Enhanced Excel Analysis Report: {file_path.name}**
+
+🔍 **Extraction Status**: Unable to process Excel file
+
+📊 **File Information**:
+- File Size: {file_path.stat().st_size / 1024:.1f} KB
+- Format: Excel Workbook (.xlsx/.xls)
+
+⚠️ **Possible Issues**:
+- File corruption or invalid Excel format
+- Password-protected workbook
+- Very large file size causing memory issues
+- Missing required libraries (openpyxl, xlrd)
+
+🛠️ **Attempted Methods**:
+- Advanced openpyxl analysis (sheets, charts, formulas)
+- Pandas multi-sheet extraction
+- UnstructuredExcelLoader fallback
+
+💡 **Recommendations**:
+1. **For Password-Protected Files**: Remove protection and re-upload
+2. **For Large Files**: Split into smaller workbooks or save as CSV
+3. **Alternative Formats**: Export as CSV files for individual sheets
+4. **Manual Processing**: Extract key data tables manually
+
+📈 **What I Can Analyze Instead**:
+- **CSV Files**: Complete statistical analysis and visualization
+- **JSON Data**: Structured data parsing and insights
+- **PDF Reports**: Text and table extraction
+- **Images**: Chart/graph analysis using AI vision
+
+🤖 **My Excel Capabilities** (when working):
+- Multi-sheet analysis and comparison
+- Formula extraction and documentation
+- Chart and visualization detection
+- Data quality assessment
+- Conditional formatting analysis
+- Statistical insights across worksheets
+
+Please try converting to CSV format or check the file integrity and re-upload.
+""",
+                metadata={
+                    "source": str(file_path),
+                    "file_type": "excel",
+                    "extraction_method": "Failed",
+                    "error": "All extraction methods failed"
+                }
             )]
             
         except Exception as e:
+            logger.error(f"Excel processing failed for {file_path}: {e}")
             return [Document(
-                page_content=f"Excel file: {file_path.name}\n\nError loading file: {str(e)}",
+                page_content=f"📊 Excel file: {file_path.name}\n\n⚠️ Error loading file: {str(e)}",
                 metadata={"source": str(file_path), "file_type": "excel", "error": str(e)}
             )]
+
+    async def _analyze_excel_sheet_structure(self, worksheet, sheet_name: str) -> str:
+        """Analyze Excel sheet structure and metadata."""
+        try:
+            # Get sheet dimensions
+            max_row = worksheet.max_row
+            max_col = worksheet.max_column
+            
+            # Detect merged cells
+            merged_ranges = len(worksheet.merged_cells.ranges)
+            
+            # Count non-empty cells
+            non_empty_cells = 0
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    if cell.value is not None:
+                        non_empty_cells += 1
+            
+            # Try to detect headers
+            first_row_values = [cell.value for cell in worksheet[1] if cell.value is not None]
+            has_headers = len(first_row_values) > 1 and all(isinstance(v, str) for v in first_row_values[:5])
+            
+            structure_info = f"""- **Dimensions**: {max_row} rows × {max_col} columns
+- **Data Density**: {non_empty_cells} non-empty cells ({non_empty_cells/(max_row*max_col)*100:.1f}% filled)
+- **Merged Cells**: {merged_ranges} merged ranges
+- **Headers Detected**: {'Yes' if has_headers else 'No'}
+{f"- **Potential Headers**: {', '.join(str(v) for v in first_row_values[:10])}" if has_headers else ""}"""
+            
+            return structure_info
+            
+        except Exception as e:
+            return f"Structure analysis failed: {str(e)}"
+
+    async def _analyze_excel_data(self, df: pd.DataFrame, sheet_name: str) -> str:
+        """Analyze Excel data content."""
+        try:
+            analysis = []
+            
+            # Basic stats
+            total_rows, total_cols = df.shape
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            text_cols = df.select_dtypes(include=['object']).columns.tolist()
+            
+            analysis.append(f"- **Data Shape**: {total_rows:,} rows × {total_cols} columns")
+            analysis.append(f"- **Column Types**: {len(numeric_cols)} numeric, {len(text_cols)} text")
+            
+            # Missing data
+            missing_pct = (df.isnull().sum().sum() / (total_rows * total_cols) * 100)
+            analysis.append(f"- **Missing Data**: {missing_pct:.1f}% of cells are empty")
+            
+            # Column summary
+            if total_cols <= 20:
+                col_info = []
+                for col in df.columns:
+                    col_type = str(df[col].dtype)
+                    unique_vals = df[col].nunique()
+                    col_info.append(f"{col} ({col_type}, {unique_vals} unique)")
+                analysis.append(f"- **Columns**: {', '.join(col_info)}")
+            
+            # Data preview insights
+            if len(numeric_cols) > 0:
+                numeric_summary = df[numeric_cols].describe()
+                analysis.append(f"- **Numeric Summary**: {len(numeric_cols)} numeric columns with statistics available")
+            
+            return "\n".join(analysis)
+            
+        except Exception as e:
+            return f"Data analysis failed: {str(e)}"
+
+    async def _extract_excel_formulas(self, worksheet) -> str:
+        """Extract formulas from Excel worksheet."""
+        try:
+            formulas = []
+            
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    if cell.data_type == 'f':  # Formula cell
+                        cell_ref = f"{cell.column_letter}{cell.row}"
+                        formula = cell.value
+                        result = cell.displayed_value
+                        formulas.append(f"- **{cell_ref}**: `{formula}` → {result}")
+            
+            if formulas:
+                return "\n".join(formulas[:20])  # Limit to first 20 formulas
+            return ""
+            
+        except Exception as e:
+            logger.warning(f"Formula extraction failed: {e}")
+            return ""
+
+    async def _extract_excel_charts(self, worksheet) -> str:
+        """Extract chart information from Excel worksheet."""
+        try:
+            charts_info = []
+            
+            # Get charts (this is a simplified version - full implementation would need python-pptx or similar)
+            if hasattr(worksheet, '_charts'):
+                for i, chart in enumerate(worksheet._charts):
+                    try:
+                        chart_type = type(chart).__name__
+                        charts_info.append(f"- **Chart {i+1}**: {chart_type}")
+                        
+                        # Try to get chart title
+                        if hasattr(chart, 'title') and chart.title:
+                            charts_info.append(f"  - Title: {chart.title}")
+                            
+                    except Exception as e:
+                        charts_info.append(f"- **Chart {i+1}**: Could not analyze ({str(e)})")
+            
+            return "\n".join(charts_info) if charts_info else ""
+            
+        except Exception as e:
+            logger.warning(f"Chart extraction failed: {e}")
+            return ""
+
+    async def _extract_excel_comments(self, worksheet) -> str:
+        """Extract comments and notes from Excel worksheet."""
+        try:
+            comments = []
+            
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    if cell.comment:
+                        cell_ref = f"{cell.column_letter}{cell.row}"
+                        comment_text = cell.comment.text
+                        comments.append(f"- **{cell_ref}**: {comment_text}")
+            
+            return "\n".join(comments) if comments else ""
+            
+        except Exception as e:
+            logger.warning(f"Comments extraction failed: {e}")
+            return ""
+
+    async def _extract_excel_formatting(self, worksheet) -> str:
+        """Extract formatting information from Excel worksheet."""
+        try:
+            formatting_info = []
+            
+            # Check for conditional formatting
+            if worksheet.conditional_formatting:
+                formatting_info.append(f"- **Conditional Formatting**: {len(worksheet.conditional_formatting)} rules applied")
+            
+            # Check for colored cells (basic detection)
+            colored_cells = 0
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    if cell.fill.fgColor.rgb and cell.fill.fgColor.rgb != '00000000':
+                        colored_cells += 1
+            
+            if colored_cells > 0:
+                formatting_info.append(f"- **Colored Cells**: {colored_cells} cells with background colors")
+            
+            return "\n".join(formatting_info) if formatting_info else ""
+            
+        except Exception as e:
+            logger.warning(f"Formatting extraction failed: {e}")
+            return ""
+
+    async def _create_basic_excel_summary(self, df: pd.DataFrame, sheet_name: str) -> str:
+        """Create basic summary for Excel sheet."""
+        try:
+            summary = []
+            
+            # Basic info
+            rows, cols = df.shape
+            summary.append(f"- **Dimensions**: {rows:,} rows × {cols} columns")
+            
+            # Column types
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            summary.append(f"- **Data Types**: {len(numeric_cols)} numeric, {cols - len(numeric_cols)} other")
+            
+            # Missing data
+            missing_pct = (df.isnull().sum().sum() / (rows * cols) * 100)
+            summary.append(f"- **Completeness**: {100 - missing_pct:.1f}% of data is present")
+            
+            # Quick stats for numeric columns
+            if numeric_cols:
+                summary.append(f"- **Numeric Columns**: {', '.join(numeric_cols[:10])}")
+                if len(numeric_cols) > 10:
+                    summary.append(f"  ... and {len(numeric_cols) - 10} more")
+            
+            return "\n".join(summary)
+            
+        except Exception as e:
+            return f"Summary generation failed: {str(e)}"
 
     async def _generate_document_summary(self, documents: List[Document]) -> str:
         """Generate a summary of the document content."""
@@ -1048,33 +1701,33 @@ Please try uploading your data in a different format, and I'll provide detailed 
         """Perform enhanced qualitative analysis on text documents with conversational insights."""
         try:
             # Combine relevant document content
-            content = "\n".join([doc.page_content for doc in docs[:8]])  # Increased context
+            content = "\n".join([doc.page_content for doc in docs[:8]])
             
             # Enhanced analysis prompt with conversational context
             prompt = f"""
-            As a professional data analyst having a conversation with a user, analyze the following documents to answer: "{query}"
+            As a professional data analyst, analyze the following documents to answer: "{query}"
             
             Document Content:
-            {content[:4000]}  # Increased content limit
+            {content[:4000]}
             
-            Provide a comprehensive, conversational analysis that includes:
+            Provide a comprehensive analysis following these principles:
             
-            1. **Direct Answer**: Address the user's specific question
-            2. **Key Insights**: 3-5 important findings from the documents
-            3. **Actionable Recommendations**: 3-4 specific next steps
-            4. **Context & Implications**: What this means for the user
-            5. **Follow-up Suggestions**: Questions they might want to explore next
+            1. **Direct Response**: Address the specific question asked
+            2. **Evidence-Based Insights**: Extract 3-5 key findings supported by document content
+            3. **Actionable Recommendations**: Provide 3-4 specific, implementable next steps
+            4. **Business Context**: Explain implications and significance
+            5. **Future Considerations**: Suggest follow-up questions or analyses
             
-            Write in a conversational, helpful tone as if you're a colleague discussing findings.
-            Be specific and reference actual content from the documents.
+            Maintain a professional, conversational tone while being precise and data-driven.
+            Reference specific content from the documents to support your analysis.
             
             Format as JSON:
             {{
-                "direct_answer": "Clear answer to the user's question",
-                "summary": "Brief overview of what the documents reveal",
+                "direct_answer": "Clear, specific answer to the user's question",
+                "summary": "Concise overview of what the documents reveal",
                 "insights": ["insight1", "insight2", "insight3", "insight4", "insight5"],
                 "recommendations": ["action1", "action2", "action3", "action4"],
-                "implications": "What this means for the user's goals",
+                "implications": "What this means for decision-making and strategy",
                 "follow_up_questions": ["question1", "question2", "question3"],
                 "confidence": 0.8
             }}
@@ -1173,6 +1826,113 @@ Please try uploading your data in a different format, and I'll provide detailed 
             self.vectorstore.persist()
         logger.info("RAG agent resources cleaned up")
 
+    async def _analyze_excel_sheet_comprehensive(self, df: pd.DataFrame, sheet_name: str, file_path: Path) -> str:
+        """Comprehensive analysis of Excel sheet including data quality and insights."""
+        try:
+            analysis_parts = []
+            
+            # Basic information
+            rows, cols = df.shape
+            analysis_parts.append(f"📊 **Excel Sheet: {sheet_name}**")
+            analysis_parts.append(f"\n📋 **Sheet Overview:**")
+            analysis_parts.append(f"- **Dimensions**: {rows:,} rows × {cols} columns")
+            analysis_parts.append(f"- **File**: {file_path.name}")
+            
+            # Column analysis
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            text_cols = df.select_dtypes(include=['object', 'string']).columns.tolist()
+            date_cols = df.select_dtypes(include=['datetime64']).columns.tolist()
+            
+            analysis_parts.append(f"- **Column Types**: {len(numeric_cols)} numeric, {len(text_cols)} text, {len(date_cols)} datetime")
+            
+            # Data quality assessment
+            missing_pct = (df.isnull().sum().sum() / (rows * cols) * 100)
+            duplicate_pct = (df.duplicated().sum() / rows * 100)
+            
+            analysis_parts.append(f"- **Data Quality**: {100 - missing_pct:.1f}% complete, {duplicate_pct:.1f}% duplicates")
+            
+            # Column details
+            if cols <= 15:  # Show details for smaller sheets
+                col_details = []
+                for col in df.columns:
+                    col_type = str(df[col].dtype)
+                    unique_count = df[col].nunique()
+                    missing_count = df[col].isnull().sum()
+                    
+                    detail = f"**{col}** ({col_type}): {unique_count} unique"
+                    if missing_count > 0:
+                        detail += f", {missing_count} missing"
+                    col_details.append(detail)
+                
+                analysis_parts.append(f"\n📊 **Column Details:**")
+                analysis_parts.extend([f"- {detail}" for detail in col_details])
+            
+            # Statistical summary for numeric columns
+            if numeric_cols:
+                analysis_parts.append(f"\n📈 **Numeric Data Summary:**")
+                stats = df[numeric_cols].describe()
+                
+                for col in numeric_cols[:5]:  # Show first 5 numeric columns
+                    col_stats = stats[col]
+                    analysis_parts.append(f"- **{col}**: Min={col_stats['min']:.2f}, Max={col_stats['max']:.2f}, Mean={col_stats['mean']:.2f}")
+            
+            # Text data insights
+            if text_cols:
+                analysis_parts.append(f"\n📝 **Text Data Insights:**")
+                for col in text_cols[:3]:  # Show first 3 text columns
+                    unique_count = df[col].nunique()
+                    most_common = df[col].mode()
+                    if len(most_common) > 0:
+                        analysis_parts.append(f"- **{col}**: {unique_count} unique values, most common: '{most_common.iloc[0]}'")
+            
+            # Sample data
+            if rows > 0:
+                sample_size = min(10, rows)
+                sample_data = df.head(sample_size)
+                
+                # Format sample data nicely
+                analysis_parts.append(f"\n📋 **Sample Data (First {sample_size} rows):**")
+                analysis_parts.append("```")
+                
+                # Show column headers
+                col_names = [str(col)[:20] for col in df.columns[:10]]  # Limit column width and count
+                analysis_parts.append("| " + " | ".join(col_names) + " |")
+                analysis_parts.append("|" + "|".join("---" for _ in col_names) + "|")
+                
+                # Show sample rows
+                for _, row in sample_data.iterrows():
+                    row_values = [str(row[col])[:20] if pd.notna(row[col]) else "" for col in df.columns[:10]]
+                    analysis_parts.append("| " + " | ".join(row_values) + " |")
+                
+                analysis_parts.append("```")
+                
+                if rows > sample_size:
+                    analysis_parts.append(f"\n[Note: Showing {sample_size} of {rows:,} total rows]")
+            
+            # Data insights and recommendations
+            analysis_parts.append(f"\n💡 **Analysis Insights:**")
+            
+            if missing_pct > 20:
+                analysis_parts.append("- ⚠️ High missing data detected - consider data cleaning")
+            
+            if duplicate_pct > 5:
+                analysis_parts.append("- ⚠️ Significant duplicates found - consider deduplication")
+            
+            if len(numeric_cols) > 0:
+                analysis_parts.append("- 📊 Numeric data available for statistical analysis and visualization")
+            
+            if len(date_cols) > 0:
+                analysis_parts.append("- 📅 Date/time data found - time series analysis possible")
+            
+            if rows > 1000:
+                analysis_parts.append("- 📈 Large dataset suitable for advanced analytics and machine learning")
+            
+            return "\n".join(analysis_parts)
+            
+        except Exception as e:
+            logger.error(f"Comprehensive Excel analysis failed: {e}")
+            return f"📊 **Excel Sheet: {sheet_name}**\n\n⚠️ Analysis failed: {str(e)}"
+
 
 def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
     """
@@ -1184,7 +1944,8 @@ def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
     Returns:
         Tool instance for use with LangChain agents
     """
-    agent = DataAnalysisRAGAgent(settings)
+    # Use the singleton agent instance
+    agent = create_rag_agent(settings)
     
     async def analyze_documents(query: str) -> str:
         """Analyze documents using RAG agent."""
@@ -1192,23 +1953,22 @@ def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
             result = await agent.analyze_data(query)
             
             # Format result for agent consumption
-            formatted_result = f"""
-            ## 📊 Data Analysis Results
-            
-            **Summary:** {result.summary}
-            
-            **Key Insights:**
-            {chr(10).join(f"• {insight}" for insight in result.insights)}
-            
-            **Recommendations:**
-            {chr(10).join(f"• {rec}" for rec in result.recommendations)}
-            
-            **Statistical Analysis:**
-            {json.dumps(result.statistical_analysis, indent=2)[:500]}...
-            
-            **Visualizations:** {len(result.visualizations)} charts generated
-            **Confidence Score:** {result.confidence_score:.2f}
-            """
+            formatted_result = f"""## 📊 Document Analysis Results
+
+**Summary:** {result.summary}
+
+**Key Insights:**
+{chr(10).join(f"• {insight}" for insight in result.insights)}
+
+**Recommendations:**
+{chr(10).join(f"• {rec}" for rec in result.recommendations)}
+
+**Statistical Analysis:**
+{json.dumps(result.statistical_analysis, indent=2)[:500]}...
+
+**Visualizations:** {len(result.visualizations)} charts generated
+**Confidence Score:** {result.confidence_score:.2f}
+"""
             
             return formatted_result
             
@@ -1219,11 +1979,11 @@ def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
     return Tool(
         name="DocumentAnalysis",
         description=(
-            "Analyze uploaded documents and datasets using advanced RAG techniques. "
-            "Can perform statistical analysis, generate insights, create visualizations, "
-            "and make data-driven predictions. Use this for questions about uploaded data, "
-            "document content, statistical analysis, or data science tasks. "
-            "Input should be a clear analysis query."
+            "Analyze uploaded documents and datasets using advanced retrieval-augmented generation. "
+            "Processes any file type (PDF, CSV, Excel, JSON, TXT) to extract insights, perform statistical analysis, "
+            "and provide data-driven recommendations. Use for questions about document content, data patterns, "
+            "statistical analysis, or when users need comprehensive understanding of their uploaded files. "
+            "Excels at both quantitative analysis of structured data and qualitative analysis of text documents."
         ),
         func=lambda query: asyncio.run(analyze_documents(query))
     )
@@ -1231,12 +1991,31 @@ def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
 
 def create_rag_agent(settings: Optional[RAGSettings] = None) -> DataAnalysisRAGAgent:
     """
-    Factory function to create a configured RAG agent.
+    Factory function to create a configured RAG agent using singleton pattern.
+    This ensures all components share the same vector store and processed documents.
     
     Args:
         settings: Optional configuration settings
         
     Returns:
-        Configured DataAnalysisRAGAgent instance
+        Configured DataAnalysisRAGAgent instance (singleton)
     """
-    return DataAnalysisRAGAgent(settings)
+    global _rag_agent_instance
+    
+    with _instance_lock:
+        if _rag_agent_instance is None:
+            _rag_agent_instance = DataAnalysisRAGAgent(settings)
+            logger.info("Created new RAG agent singleton instance")
+        else:
+            logger.info("Returning existing RAG agent singleton instance")
+        return _rag_agent_instance
+
+
+def get_rag_agent_instance() -> Optional[DataAnalysisRAGAgent]:
+    """
+    Get the current RAG agent singleton instance if it exists.
+    
+    Returns:
+        The RAG agent instance or None if not yet created
+    """
+    return _rag_agent_instance

@@ -336,21 +336,20 @@ class WebSearchAgent:
             await self.session.close()
 
 
-class WebSearchTool(Tool):
+class WebSearchTool:
     """LangChain tool wrapper for WebSearchAgent."""
     
     def __init__(self, agent: WebSearchAgent):
         """Initialize the tool with a WebSearchAgent instance."""
         self.agent = agent
-        super().__init__(
-            name="WebSearch",
-            description=(
-                "Search the web for factual information, statistics, and numerical data. "
-                "This tool prioritizes authoritative sources and results containing "
-                "specific numbers, dates, percentages, and verifiable facts. "
-                "Input should be a clear search query."
-            ),
-            func=self._search_sync
+        self.name = "WebSearch"
+        self.description = (
+            "Search the web for current information, statistics, and factual data. "
+            "Prioritizes authoritative sources and results containing specific numbers, "
+            "dates, percentages, and verifiable facts. Excellent for finding recent data, "
+            "current events, market statistics, research findings, and external validation. "
+            "Use when users need information not available in uploaded documents or "
+            "when current/recent information is specifically requested."
         )
 
     def _search_sync(self, query: str) -> str:
@@ -375,6 +374,10 @@ class WebSearchTool(Tool):
         results = await self.agent.search_comprehensive(query)
         return self.agent.format_results_for_agent(results)
 
+    def __call__(self, query: str) -> str:
+        """Make the tool callable."""
+        return self._search_sync(query)
+
 
 def create_web_search_agent(settings: Optional[WebSearchSettings] = None) -> WebSearchAgent:
     """
@@ -389,7 +392,7 @@ def create_web_search_agent(settings: Optional[WebSearchSettings] = None) -> Web
     return WebSearchAgent(settings)
 
 
-def create_web_search_tool(settings: Optional[WebSearchSettings] = None) -> WebSearchTool:
+def create_web_search_tool(settings: Optional[WebSearchSettings] = None) -> Tool:
     """
     Factory function to create a LangChain-compatible web search tool.
     
@@ -397,35 +400,49 @@ def create_web_search_tool(settings: Optional[WebSearchSettings] = None) -> WebS
         settings: Optional configuration settings
         
     Returns:
-        WebSearchTool instance ready for use with LangChain agents
+        Tool instance ready for use with LangChain agents
     """
     agent = create_web_search_agent(settings)
-    return WebSearchTool(agent)
+    web_tool = WebSearchTool(agent)
+    
+    # Create a proper LangChain Tool
+    return Tool(
+        name=web_tool.name,
+        description=web_tool.description,
+        func=web_tool._search_sync
+    )
 
 
 # System prompt for the web search agent
 WEB_SEARCH_SYSTEM_PROMPT = """
-You are a specialized web search agent focused on finding factual, numerical, and statistical information.
+You are a specialized web search agent focused on finding accurate, current, and factual information.
 
-Your capabilities:
-- Search multiple APIs (Serper, Google Custom Search) simultaneously
-- Prioritize results containing numbers, statistics, and verifiable facts
-- Rank results by confidence based on source authority and content quality
-- Extract and highlight numerical data from search results
+Core Capabilities:
+- Multi-source search across authoritative APIs (Serper, Google Custom Search)
+- Fact-driven result prioritization with confidence scoring
+- Numerical data and statistical information extraction
+- Source credibility assessment and verification
+- Real-time information retrieval for current events and trends
 
-Guidelines for effective searching:
-1. Always prioritize authoritative sources (.gov, .edu, established news outlets)
-2. Look for specific numbers, percentages, dates, and statistical data
-3. Verify information across multiple sources when possible
-4. Provide confidence scores for your findings
-5. Cite sources clearly with URLs
+Search Strategy:
+1. **Authority First**: Prioritize government, educational, and established sources
+2. **Data Focus**: Seek specific numbers, statistics, dates, and quantifiable information
+3. **Recency Awareness**: Consider publication dates and information freshness
+4. **Cross-Verification**: Compare information across multiple sources when possible
+5. **Confidence Assessment**: Provide reliability scores for findings
 
-When responding to queries:
+Quality Standards:
 - Lead with the most factual and numerical information found
-- Provide specific numbers and statistics when available
-- Include source URLs for verification
-- Note the confidence level of your findings
-- Explain any limitations or uncertainties in the data
+- Provide specific data points with proper source attribution
+- Include confidence levels and any limitations in the data
+- Explain methodology when statistical claims are made
+- Cite sources with URLs for verification and transparency
 
-Remember: Your goal is to provide accurate, verifiable, and data-rich responses that users can trust and act upon.
+Response Principles:
+- Be precise and data-driven in all responses
+- Distinguish between facts, estimates, and opinions
+- Highlight any uncertainties or conflicting information
+- Provide context for numerical data (timeframes, methodologies, etc.)
+
+Goal: Deliver accurate, verifiable, and actionable information that users can trust for decision-making.
 """
