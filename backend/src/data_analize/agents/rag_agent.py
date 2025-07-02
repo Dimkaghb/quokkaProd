@@ -162,6 +162,36 @@ class DataAnalysisRAGAgent:
         
         logger.info("DataAnalysisRAGAgent initialized successfully")
 
+    async def _reindex_existing_documents(self) -> None:
+        """Reindex existing documents in the data directory for thread isolation."""
+        try:
+            data_dir = Path(self.settings.data_directory)
+            
+            # Check if documents subdirectory exists (for thread agents)
+            docs_dir = data_dir / "documents"
+            if docs_dir.exists() and docs_dir.is_dir():
+                check_dirs = [docs_dir, data_dir]
+            else:
+                check_dirs = [data_dir]
+            
+            # Process all files in the directories
+            for check_dir in check_dirs:
+                if check_dir.exists():
+                    for file_path in check_dir.iterdir():
+                        if file_path.is_file() and file_path.suffix.lower() in ['.pdf', '.csv', '.xlsx', '.xls', '.json', '.txt', '.md']:
+                            # Check if already processed
+                            if file_path.name not in self.processed_documents:
+                                logger.info(f"Reindexing document: {file_path.name}")
+                                await self.upload_file(str(file_path), file_path.name)
+                    
+                    if len(self.processed_documents) > 0:
+                        break  # Found and processed files in this directory
+            
+            logger.info(f"Reindexing completed: {len(self.processed_documents)} documents available")
+            
+        except Exception as e:
+            logger.warning(f"Document reindexing failed: {e}")
+
     def _setup_directories(self) -> None:
         """Create necessary directories."""
         Path(self.settings.data_directory).mkdir(parents=True, exist_ok=True)
@@ -180,9 +210,16 @@ class DataAnalysisRAGAgent:
             Processing result with metadata
         """
         try:
-            # Move file to data directory
+            # Handle file path properly - move only if different directory
+            source_path = Path(file_path)
             target_path = Path(self.settings.data_directory) / original_filename
-            shutil.move(file_path, target_path)
+            
+            if source_path != target_path:
+                if target_path.exists():
+                    target_path.unlink()  # Remove existing file
+                shutil.move(str(source_path), str(target_path))
+            else:
+                target_path = source_path  # File is already in the right place
             
             # Process the document
             documents = await self._load_document(target_path)
@@ -1944,12 +1981,16 @@ def create_rag_tool(settings: Optional[RAGSettings] = None) -> Tool:
     Returns:
         Tool instance for use with LangChain agents
     """
-    # Use the singleton agent instance
-    agent = create_rag_agent(settings)
     
     async def analyze_documents(query: str) -> str:
         """Analyze documents using RAG agent."""
         try:
+            # Create a new agent instance for each thread (not singleton)
+            agent = DataAnalysisRAGAgent(settings)
+            
+            # Reindex documents in the thread's data directory
+            await agent._reindex_existing_documents()
+            
             result = await agent.analyze_data(query)
             
             # Format result for agent consumption

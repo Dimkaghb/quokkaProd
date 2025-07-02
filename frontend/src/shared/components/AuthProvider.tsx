@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useAuthStore } from '../stores/authStore'
+import { useThreadStore } from '../stores/threadStore'
 
 interface AuthProviderProps {
   children: React.ReactNode
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { refreshAuth, setLoading } = useAuthStore()
+  const { user, refreshAuth, setLoading } = useAuthStore()
+  const { clearAll } = useThreadStore()
+  const previousUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     const persistedToken = localStorage.getItem('token')
@@ -17,7 +20,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       setLoading(false)
     }
-  }, [])
+  }, [refreshAuth, setLoading])
+
+  // Clear thread data when user changes
+  useEffect(() => {
+    const currentUserId = user?.id || null
+    
+    if (previousUserIdRef.current !== null && 
+        previousUserIdRef.current !== currentUserId) {
+      console.log('User changed, clearing thread data...')
+      clearAll()
+    }
+    
+    previousUserIdRef.current = currentUserId
+  }, [user?.id, clearAll])
 
   return <>{children}</>
 }

@@ -104,10 +104,11 @@ class RootAgent:
         tools = []
         
         try:
-            # RAG Agent for document analysis
+            # RAG Agent for document analysis with thread-specific settings
             rag_settings = RAGSettings(
                 openai_api_key=self.settings.openai_api_key,
-                data_directory=self.settings.data_directory
+                data_directory=self.settings.data_directory,
+                chroma_directory=f"{self.settings.data_directory}/chroma"
             )
             tools.append(create_rag_tool(rag_settings))
             
@@ -154,7 +155,13 @@ CONVERSATION PRINCIPLES:
 - Ask clarifying questions when needed
 - Be conversational and helpful
 
-When users upload files, automatically analyze them to understand the content and suggest relevant analyses or visualizations."""
+When users upload files, automatically analyze them to understand the content and suggest relevant analyses or visualizations.
+
+FILE CONTEXT MANAGEMENT:
+- Always check available files before answering questions
+- Reference specific files when providing analysis
+- Inform users about document availability and status
+- Suggest appropriate analysis based on file types available"""
 
         # Create the prompt template
         prompt = ChatPromptTemplate.from_messages([
@@ -248,19 +255,39 @@ When users upload files, automatically analyze them to understand the content an
     
     async def _get_file_context(self) -> str:
         """Get context about uploaded files."""
-        data_dir = Path(self.settings.data_directory)
+        # First check if we have files in agent context (from thread setup)
+        if self.context.uploaded_files:
+            context = f"Available files ({len(self.context.uploaded_files)} total):\n"
+            for file_info in self.context.uploaded_files:
+                filename = file_info.get("filename", "unknown")
+                file_type = file_info.get("file_type", "")
+                size_mb = round(int(file_info.get("size", "0")) / 1024 / 1024, 2)
+                summary = file_info.get("summary", "No summary available")
+                
+                context += f"- {filename} ({file_type}, {size_mb}MB)\n"
+                context += f"  Summary: {summary[:100]}...\n"
+            
+            return context
         
-        if not data_dir.exists():
-            return "No files have been uploaded yet."
+        # Fallback: check documents subdirectory for thread-based agents
+        data_dir = Path(self.settings.data_directory)
+        docs_dir = data_dir / "documents"
+        
+        # Try documents subdirectory first (for thread agents)
+        check_dirs = [docs_dir, data_dir] if docs_dir.exists() else [data_dir]
         
         files = []
-        for file_path in data_dir.iterdir():
-            if file_path.is_file():
-                files.append({
-                    "filename": file_path.name,
-                    "type": file_path.suffix.lower(),
-                    "size_mb": round(file_path.stat().st_size / 1024 / 1024, 2)
-                })
+        for check_dir in check_dirs:
+            if check_dir.exists():
+                for file_path in check_dir.iterdir():
+                    if file_path.is_file():
+                        files.append({
+                            "filename": file_path.name,
+                            "type": file_path.suffix.lower(),
+                            "size_mb": round(file_path.stat().st_size / 1024 / 1024, 2)
+                        })
+                if files:  # Found files in this directory
+                    break
         
         if not files:
             return "No files have been uploaded yet."

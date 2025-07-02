@@ -30,6 +30,16 @@ except ImportError:
 # Import agents router
 from src.data_analize.api import router as agents_router
 
+# Import new module routers (documents and chat)
+try:
+    from src.documents.api import router as documents_router
+    from src.chat.api import router as chat_router
+    NEW_MODULES_AVAILABLE = True
+    logger.info("✅ New modules (documents, chat) loaded successfully")
+except ImportError as e:
+    logger.warning(f"New modules not available: {e}")
+    NEW_MODULES_AVAILABLE = False
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -39,9 +49,31 @@ async def lifespan(app: FastAPI):
         logger.info("✅ MongoDB Atlas connected successfully!")
     else:
         logger.info("⚠️ Running without database connection")
+    
+    # Initialize thread agent manager if available
+    if NEW_MODULES_AVAILABLE:
+        try:
+            from src.chat.agent_manager import get_thread_agent_manager
+            agent_manager = get_thread_agent_manager()
+            logger.info("✅ Thread Agent Manager initialized")
+        except Exception as e:
+            logger.warning(f"Could not initialize Thread Agent Manager: {e}")
+    
     yield
+    
     # Shutdown
     logger.info("Shutting down application...")
+    
+    # Graceful shutdown of thread agent manager
+    if NEW_MODULES_AVAILABLE:
+        try:
+            from src.chat.agent_manager import get_thread_agent_manager
+            agent_manager = get_thread_agent_manager()
+            await agent_manager.shutdown()
+            logger.info("✅ Thread Agent Manager shutdown completed")
+        except Exception as e:
+            logger.warning(f"Error during agent manager shutdown: {e}")
+    
     if AUTH_AVAILABLE:
         await close_mongo_connection()
 
@@ -61,7 +93,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://localhost:8080",
-        "*"  # Allow all origins for development
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -76,6 +109,14 @@ else:
     logger.warning("Auth router not included (auth components not available)")
 
 app.include_router(agents_router)
+
+# Include new module routers
+if NEW_MODULES_AVAILABLE:
+    app.include_router(documents_router)
+    app.include_router(chat_router)
+    logger.info("✅ New module routers (documents, chat) included")
+else:
+    logger.warning("New module routers not included")
 
 # Mount static files for visualizations
 visualization_dir = Path("data/visualizations")

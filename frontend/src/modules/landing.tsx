@@ -187,7 +187,7 @@ export const Landing = () => {
                                 Sign In
                             </Link>
                             <Link 
-                                to="/auth"
+                                to="/chat"
                                 className="bg-white text-black px-4 md:px-6 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium transform hover:scale-105"
                             >
                                 Get Started
@@ -222,7 +222,7 @@ export const Landing = () => {
                                     Sign In
                                 </Link>
                                 <Link 
-                                    to="/auth"
+                                    to="/chat"
                                     className="block w-full text-center bg-white text-black py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                                 >
                                     Get Started
@@ -248,7 +248,7 @@ export const Landing = () => {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-delay-2 px-4">
                         <Link 
-                            to="/auth"
+                            to="/chat"
                             className="bg-white text-black px-6 md:px-8 py-3 md:py-4 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium text-base md:text-lg transform hover:scale-105 hover:shadow-xl text-center"
                         >
                             Start Analyzing

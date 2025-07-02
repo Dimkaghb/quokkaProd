@@ -1066,21 +1066,32 @@ class DataVisualizationAgent:
             path = Path(self.settings.data_directory) / file_path
         
         if not path.exists():
-            # Try finding the most recent file in data directory
+            # Try in documents subdirectory (for thread agents)
+            docs_path = Path(self.settings.data_directory) / "documents" / file_path
+            if docs_path.exists():
+                path = docs_path
+        
+        if not path.exists():
+            # Try finding the most recent file in data directory and documents subdirectory
             data_dir = Path(self.settings.data_directory)
-            if data_dir.exists():
-                data_files = []
-                for ext in ['.csv', '.xlsx', '.xls', '.json']:
-                    data_files.extend(list(data_dir.glob(f"*{ext}")))
-                
-                if data_files:
-                    # Use the most recently modified file
-                    path = max(data_files, key=lambda f: f.stat().st_mtime)
-                    logger.info(f"Using most recent data file: {path}")
-                else:
-                    raise FileNotFoundError(f"No data files found in {data_dir}")
+            docs_dir = data_dir / "documents"
+            
+            search_dirs = [docs_dir, data_dir] if docs_dir.exists() else [data_dir]
+            
+            data_files = []
+            for search_dir in search_dirs:
+                if search_dir.exists():
+                    for ext in ['.csv', '.xlsx', '.xls', '.json']:
+                        data_files.extend(list(search_dir.glob(f"*{ext}")))
+                    if data_files:  # Found files in this directory
+                        break
+            
+            if data_files:
+                # Use the most recently modified file
+                path = max(data_files, key=lambda f: f.stat().st_mtime)
+                logger.info(f"Using most recent data file: {path}")
             else:
-                raise FileNotFoundError(f"Data directory not found: {data_dir}")
+                raise FileNotFoundError(f"No data files found in {data_dir} or {docs_dir}")
         
         # Load based on file extension with better error handling
         try:
@@ -1377,13 +1388,19 @@ def create_visualization_tool(settings: Optional[VisualizationSettings] = None) 
             # Extract file references and chart preferences from query
             query_lower = query.lower()
             
-            # Try to find data files in the data directory
+            # Try to find data files in the data directory and documents subdirectory
             data_dir = Path(agent.settings.data_directory)
-            data_files = []
+            docs_dir = data_dir / "documents"
             
-            if data_dir.exists():
-                for ext in ['.csv', '.xlsx', '.xls', '.json']:
-                    data_files.extend(list(data_dir.glob(f"*{ext}")))
+            search_dirs = [docs_dir, data_dir] if docs_dir.exists() else [data_dir]
+            
+            data_files = []
+            for search_dir in search_dirs:
+                if search_dir.exists():
+                    for ext in ['.csv', '.xlsx', '.xls', '.json']:
+                        data_files.extend(list(search_dir.glob(f"*{ext}")))
+                    if data_files:  # Found files in this directory
+                        break
             
             if not data_files:
                 return """🚫 **No structured data files found for visualization.**

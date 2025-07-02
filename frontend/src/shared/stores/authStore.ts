@@ -44,6 +44,8 @@ export const useAuthStore = create<AuthState>()(
         // Clear all stored data
         localStorage.removeItem('quokka-chat-session')
         localStorage.removeItem('quokka-uploaded-files')
+        localStorage.removeItem('quokka-thread-storage') // Clear thread storage
+        localStorage.removeItem('quokka-auth-storage')   // Clear auth storage
         set({
           user: null,
           token: null,

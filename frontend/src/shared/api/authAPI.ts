@@ -7,7 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: false, // Using Bearer token authentication
 })
 
 // Request interceptor to add auth token

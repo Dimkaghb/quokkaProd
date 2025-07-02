@@ -296,3 +296,16 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Application data directories
+backend/data/threads/
+backend/data/documents/
+backend/data/visualizations/
+backend/data/chroma/
+backend/data/rag/*.csv
+backend/data/rag/*.xlsx
+backend/data/rag/*.pdf
+backend/data/rag/*.json
+
+# Test files
+test_*.py
