@@ -9,7 +9,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card, CardContent } from '../../components/ui/card';
-import { Send, Upload, FileText, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Upload, FileText, Bot, User, Sparkles, Paperclip } from 'lucide-react';
 import type { UserDocument } from '../api/documentsAPI';
 
 interface Message {
@@ -42,10 +42,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [contextWindowOpen, setContextWindowOpen] = useState(initialContextOpen);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,13 +69,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Auto-resize textarea
+  // Auto-resize textarea with mobile considerations
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      const maxHeight = isMobile ? 120 : 160; // Smaller max height on mobile
+      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight);
+      textareaRef.current.style.height = `${newHeight}px`;
     }
-  }, [inputValue]);
+  }, [inputValue, isMobile]);
+
+  // Handle mobile keyboard appearance
+  useEffect(() => {
+    if (isMobile && isInputFocused) {
+      // Small delay to ensure keyboard is shown
+      setTimeout(() => {
+        scrollToBottom();
+      }, 300);
+    }
+  }, [isInputFocused, isMobile]);
 
   // Initialize with welcome message when no thread is selected
   useEffect(() => {
@@ -301,41 +327,52 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Header */}
-      <div className="border-b border-gray-100 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+      {/* Header - Hidden on mobile since we have the mobile header in WorkspaceLayout */}
+      {!isMobile && (
+        <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">QuokkaAI</h1>
+                <p className="text-sm text-gray-500">Data Analysis Assistant</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">QuokkaAI</h1>
-              <p className="text-sm text-gray-500">Data Analysis Assistant</p>
-            </div>
+            
+            {selectedDocuments.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setContextWindowOpen(!contextWindowOpen)}
+                className="flex items-center space-x-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>{selectedDocuments.length} files</span>
+              </Button>
+            )}
           </div>
-          
-          {selectedDocuments.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setContextWindowOpen(!contextWindowOpen)}
-              className="flex items-center space-x-2"
-            >
-              <FileText className="w-4 h-4" />
-              <span>{selectedDocuments.length} files</span>
-            </Button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto"
+        style={{ 
+          paddingBottom: isMobile ? '120px' : '0px' // Extra padding for mobile keyboard
+        }}
+      >
+        <div className={cn(
+          "max-w-4xl mx-auto space-y-4",
+          isMobile ? "px-4 py-4" : "px-6 py-4"
+        )}>
           {messages.map((message) => (
             <div
               key={message.id}
               className={cn(
-                "flex items-start space-x-4",
+                "flex items-start space-x-3",
                 message.type === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
@@ -346,7 +383,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               )}
               
               <div className={cn(
-                "max-w-[80%] space-y-2",
+                "space-y-2",
+                isMobile ? "max-w-[85%]" : "max-w-[80%]",
                 message.type === 'user' ? 'order-first' : ''
               )}>
                 <Card className={cn(
@@ -355,15 +393,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     ? 'bg-gray-900 text-white border-gray-800' 
                     : 'bg-white border-gray-200'
                 )}>
-                  <CardContent className="p-4">
+                  <CardContent className={cn(
+                    isMobile ? "p-3" : "p-4"
+                  )}>
                     <div className="prose prose-sm max-w-none">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      <p className={cn(
+                        "whitespace-pre-wrap leading-relaxed",
+                        isMobile ? "text-sm" : "text-sm"
+                      )}>
                         {message.content}
                       </p>
                     </div>
                     
                     {message.visualization && (
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <div className={cn(
+                        "mt-4 p-3 bg-gray-50 rounded-lg",
+                        isMobile && "p-2"
+                      )}>
                         <RechartsVisualization 
                           chartConfig={message.visualization}
                         />
@@ -371,7 +417,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     )}
                     
                     {message.analysis && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                      <div className={cn(
+                        "mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-200",
+                        isMobile && "p-2"
+                      )}>
                         <p className="text-sm text-blue-800">{message.analysis}</p>
                       </div>
                     )}
@@ -395,12 +444,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           ))}
           
           {isLoading && (
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <Card className="bg-white border-gray-200 shadow-sm">
-                <CardContent className="p-4">
+                <CardContent className={cn(
+                  isMobile ? "p-3" : "p-4"
+                )}>
                   <LoadingDots />
                 </CardContent>
               </Card>
@@ -414,84 +465,116 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Input Area */}
       <div 
         className={cn(
-          "border-t border-gray-100 px-6 py-4 bg-white",
+          "border-t border-gray-100 bg-white flex-shrink-0",
+          isMobile ? [
+            "fixed bottom-0 left-0 right-0 z-40",
+            "px-4 py-3",
+            "border-t-2 border-gray-200"
+          ] : [
+            "px-6 py-4"
+          ],
           dragActive && "bg-blue-50 border-blue-200"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+        <div className={cn(
+          "mx-auto",
+          !isMobile && "max-w-4xl"
+        )}>
+          <form onSubmit={handleSubmit} className="flex items-end space-x-2">
             <div className="flex-1">
               <Textarea
                 ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about your data..."
-                className="min-h-[44px] max-h-32 resize-none border-gray-200 focus:border-gray-300 focus:ring-0"
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                placeholder={isMobile ? "Ask me anything..." : "Ask me anything about your data..."}
+                className={cn(
+                  "resize-none border-gray-200 focus:border-gray-300 focus:ring-0",
+                  isMobile ? [
+                    "min-h-[44px] max-h-[120px]",
+                    "text-base", // Prevent zoom on iOS
+                    "rounded-lg"
+                  ] : [
+                    "min-h-[44px] max-h-[160px]"
+                  ]
+                )}
                 disabled={isLoading}
               />
             </div>
             
             <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-                className="h-11 w-11"
-              >
-                <Upload className="w-4 h-4" />
-              </Button>
+              {!isMobile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="h-11 w-11"
+                >
+                  <Upload className="w-4 h-4" />
+                </Button>
+              )}
+              
+              {isMobile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="h-11 w-11 touch-manipulation"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+              )}
               
               <Button
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
-                className="h-11 w-11 bg-black hover:bg-gray-800"
-                size="icon"
+                className={cn(
+                  "h-11 w-11 bg-black hover:bg-gray-800 text-white",
+                  "touch-manipulation"
+                )}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? (
+                  <LoadingDots />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </form>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls,.json,.txt,.pdf"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handleFileSelect(file);
-              }
-            }}
-            className="hidden"
-          />
-          
-          {dragActive && (
-            <div className="absolute inset-0 bg-blue-50 bg-opacity-90 flex items-center justify-center">
-              <div className="text-center">
-                <Upload className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <p className="text-lg font-medium text-blue-700">Drop your file here</p>
-                <p className="text-sm text-blue-600">Supports CSV, Excel, JSON, TXT, PDF</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls,.pdf,.txt,.json"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleFileSelect(file);
+          }
+          e.target.value = '';
+        }}
+        className="hidden"
+      />
+
       {/* Context Window */}
-      {contextWindowOpen && (
-        <DocumentContextWindow
-          documents={selectedDocuments}
-          isOpen={contextWindowOpen}
-          onClose={() => setContextWindowOpen(false)}
-          onToggle={() => setContextWindowOpen(!contextWindowOpen)}
-        />
-      )}
+      <DocumentContextWindow
+        documents={selectedDocuments}
+        isOpen={contextWindowOpen}
+        onClose={() => setContextWindowOpen(false)}
+        onToggle={() => setContextWindowOpen(!contextWindowOpen)}
+      />
     </div>
   );
 }; 

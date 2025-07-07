@@ -16,7 +16,7 @@ import {
   Trash2, 
   Menu, 
   X,
-  Sparkles 
+  Sparkles
 } from 'lucide-react';
 
 interface WorkspaceLayoutProps {
@@ -39,14 +39,60 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   isLoading = false
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+
+  // Check if we're on mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Auto-collapse sidebar on mobile
+      if (window.innerWidth < 768) {
+        setIsCollapsed(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load documents on component mount
   useEffect(() => {
     loadDocuments();
   }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobileMenuOpen && isMobile) {
+        const sidebar = document.getElementById('mobile-sidebar');
+        if (sidebar && !sidebar.contains(event.target as Node)) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen, isMobile]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen, isMobile]);
 
   const loadDocuments = async () => {
     try {
@@ -64,6 +110,18 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
   const handleNewChat = () => {
     onNewChat();
+    // Close mobile menu after action
+    if (isMobile) {
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  const handleThreadSelect = (threadId: string) => {
+    onThreadSelect(threadId);
+    // Close mobile menu after selection
+    if (isMobile) {
+      setIsMobileMenuOpen(false);
+    }
   };
 
   const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
@@ -127,17 +185,62 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
   return (
     <div className="flex h-screen bg-white overflow-hidden">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="h-10 w-10"
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">
+              <Sparkles className="w-3 h-3 text-white" />
+            </div>
+            <span className="font-semibold text-gray-900">QuokkaAI</span>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleNewChat}
+            className="h-10 w-10"
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Overlay */}
+      {isMobile && isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity" />
+      )}
+
       {/* Sidebar */}
-      <div className={cn(
-        "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0",
-        isCollapsed ? 'w-20' : 'w-80'
-      )}>
+      <div 
+        id="mobile-sidebar"
+        className={cn(
+          "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out flex-shrink-0",
+          // Desktop behavior
+          !isMobile && (isCollapsed ? 'w-20' : 'w-80'),
+          // Mobile behavior
+          isMobile && [
+            'fixed inset-y-0 left-0 z-50 w-80 transform transition-transform',
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          ]
+        )}
+      >
         {/* Header */}
         <div className={cn(
           "border-b border-gray-100 flex items-center justify-center",
-          isCollapsed ? "p-4" : "p-6"
+          isCollapsed && !isMobile ? "p-4" : "p-6",
+          isMobile && "pt-16" // Account for mobile header
         )}>
-          {isCollapsed ? (
+          {isCollapsed && !isMobile ? (
             <div className="flex flex-col items-center space-y-4">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
@@ -162,20 +265,31 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   <div className="text-xs text-gray-500">Data Analysis Assistant</div>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="h-8 w-8 hover:bg-gray-100"
-              >
-                <X className="w-4 h-4 text-gray-600" />
-              </Button>
+              {isMobile ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-8 w-8 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-gray-600" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="h-8 w-8 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-gray-600" />
+                </Button>
+              )}
             </div>
           )}
         </div>
 
         {/* Dashboard Stats */}
-        {!isCollapsed && (
+        {(!isCollapsed || isMobile) && (
           <div className="p-6 border-b border-gray-100">
             <div className="grid grid-cols-2 gap-3">
               <Card className="border-gray-200">
@@ -207,8 +321,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         )}
 
         {/* New Chat Button */}
-        <div className={cn("p-4", !isCollapsed && "px-6")}>
-          {isCollapsed ? (
+        <div className={cn("p-4", (!isCollapsed || isMobile) && "px-6")}>
+          {isCollapsed && !isMobile ? (
             <div className="flex justify-center">
               <Button
                 onClick={handleNewChat}
@@ -244,7 +358,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto">
-          {isCollapsed ? (
+          {isCollapsed && !isMobile ? (
             <div className="flex flex-col items-center space-y-4 p-4">
               {/* Collapsed Navigation Icons */}
               <div className="flex flex-col items-center space-y-3">
@@ -304,7 +418,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   key={thread.id}
                   variant="ghost"
                   size="icon"
-                  onClick={() => onThreadSelect(thread.id)}
+                  onClick={() => handleThreadSelect(thread.id)}
                   className={cn(
                     "w-8 h-8 hover:bg-gray-100 rounded-lg",
                     selectedThreadId === thread.id && "bg-gray-100 ring-2 ring-gray-300"
@@ -333,12 +447,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     threads.map((thread) => (
                       <div
                         key={thread.id}
-                        onClick={() => onThreadSelect(thread.id)}
+                        onClick={() => handleThreadSelect(thread.id)}
                         className={cn(
-                          "group relative p-3 rounded-lg cursor-pointer transition-all duration-200 border",
+                          "group relative p-3 rounded-lg cursor-pointer transition-all duration-200 border touch-manipulation",
                           selectedThreadId === thread.id
                             ? 'bg-gray-50 border-gray-300'
-                            : 'hover:bg-gray-50 border-transparent hover:border-gray-200'
+                            : 'hover:bg-gray-50 border-transparent hover:border-gray-200 active:bg-gray-100'
                         )}
                       >
                         <div className="flex items-start justify-between">
@@ -363,12 +477,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                             size="icon"
                             onClick={(e) => handleDeleteThread(thread.id, e)}
                             disabled={deletingThreadId === thread.id}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 text-gray-400 hover:text-red-500"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-gray-400 hover:text-red-500 touch-manipulation"
                           >
                             {deletingThreadId === thread.id ? (
                               <LoadingDots />
                             ) : (
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-4 h-4" />
                             )}
                           </Button>
                         </div>
@@ -401,7 +515,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
                         >
                           <IconComponent className="w-4 h-4 text-gray-400 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
@@ -430,9 +544,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         {/* User Profile */}
         <div className={cn(
           "border-t border-gray-100",
-          isCollapsed ? "p-3 flex justify-center" : "p-4"
+          isCollapsed && !isMobile ? "p-3 flex justify-center" : "p-4"
         )}>
-          {isCollapsed ? (
+          {isCollapsed && !isMobile ? (
             <Button
               variant="ghost"
               size="icon"
@@ -450,7 +564,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col overflow-hidden",
+        isMobile && "pt-16" // Account for mobile header
+      )}>
         {children}
       </div>
     </div>

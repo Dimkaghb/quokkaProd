@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -24,6 +24,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
+import { cn } from '../../lib/utils';
 
 interface ChartConfig {
   chartType: string;
@@ -47,13 +48,30 @@ const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00', '#ff00ff'
 
 export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ chartConfig }) => {
   const { chartType, data, config } = chartConfig;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const renderChart = () => {
     const commonProps = {
-      width: 800,
-      height: 400,
       data: data,
-      margin: { top: 20, right: 30, left: 20, bottom: 5 }
+      margin: isMobile 
+        ? { top: 10, right: 10, left: 0, bottom: 5 }
+        : { top: 20, right: 30, left: 20, bottom: 5 }
+    };
+
+    // Mobile-specific props for axes
+    const axisProps = {
+      tick: { fontSize: isMobile ? 10 : 12 }
     };
 
     switch (chartType.toLowerCase()) {
@@ -62,10 +80,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
+            <YAxis {...axisProps} />
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
             {Array.isArray(config.yKey) ? (
               config.yKey.map((key, index) => (
                 <Line 
@@ -73,7 +97,8 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
                   type="monotone" 
                   dataKey={key} 
                   stroke={config.colors[index] || COLORS[index % COLORS.length]}
-                  strokeWidth={2}
+                  strokeWidth={isMobile ? 1.5 : 2}
+                  dot={isMobile ? { r: 2 } : { r: 3 }}
                 />
               ))
             ) : (
@@ -81,7 +106,8 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
                 type="monotone" 
                 dataKey={config.yKey} 
                 stroke={config.colors[0] || COLORS[0]}
-                strokeWidth={2}
+                strokeWidth={isMobile ? 1.5 : 2}
+                dot={isMobile ? { r: 2 } : { r: 3 }}
               />
             )}
           </LineChart>
@@ -92,10 +118,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <BarChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
+            <YAxis {...axisProps} />
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
             {Array.isArray(config.yKey) ? (
               config.yKey.map((key, index) => (
                 <Bar 
@@ -118,10 +150,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <ScatterChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey} />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+            />
+            <YAxis 
+              dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey} 
+              {...axisProps}
+            />
             <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Legend />
+            {!isMobile && <Legend />}
             <Scatter 
               name={config.title}
               data={data} 
@@ -133,14 +171,14 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
       case 'piechart':
       case 'pie':
         return (
-          <PieChart width={400} height={400}>
+          <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-              outerRadius={120}
+              label={isMobile ? false : ({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+              outerRadius={isMobile ? 80 : 120}
               fill="#8884d8"
               dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey}
               nameKey={config.xKey}
@@ -150,7 +188,7 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
               ))}
             </Pie>
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
           </PieChart>
         );
 
@@ -159,10 +197,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <AreaChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
+            <YAxis {...axisProps} />
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
             {Array.isArray(config.yKey) ? (
               config.yKey.map((key, index) => (
                 <Area 
@@ -188,10 +232,15 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
       case 'radarchart':
       case 'radar':
         return (
-          <RadarChart width={400} height={400} data={data}>
+          <RadarChart data={data}>
             <PolarGrid />
-            <PolarAngleAxis dataKey={config.xKey} />
-            <PolarRadiusAxis />
+            <PolarAngleAxis 
+              dataKey={config.xKey} 
+              tick={{ fontSize: isMobile ? 10 : 12 }}
+            />
+            <PolarRadiusAxis 
+              tick={{ fontSize: isMobile ? 8 : 10 }}
+            />
             <Radar
               name={config.title}
               dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey}
@@ -199,7 +248,7 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
               fill={config.colors[0] || COLORS[0]}
               fillOpacity={0.6}
             />
-            <Legend />
+            {!isMobile && <Legend />}
             <Tooltip />
           </RadarChart>
         );
@@ -210,10 +259,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <ComposedChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
+            <YAxis {...axisProps} />
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
             {yKeys.map((key, index) => {
               if (index === 0) {
                 return (
@@ -230,7 +285,7 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
                     type="monotone" 
                     dataKey={key} 
                     stroke={config.colors[index] || COLORS[index % COLORS.length]}
-                    strokeWidth={2}
+                    strokeWidth={isMobile ? 1.5 : 2}
                   />
                 );
               }
@@ -243,10 +298,16 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
         return (
           <BarChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.xKey} />
-            <YAxis />
+            <XAxis 
+              dataKey={config.xKey} 
+              {...axisProps}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
+            <YAxis {...axisProps} />
             <Tooltip />
-            <Legend />
+            {!isMobile && <Legend />}
             <Bar 
               dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey} 
               fill={config.colors[0] || COLORS[0]}
@@ -257,26 +318,47 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg">
-      <h3 className="text-xl font-bold mb-4 text-center">{config.title}</h3>
+    <div className={cn(
+      "bg-white rounded-lg shadow-lg",
+      isMobile ? "p-3" : "p-6"
+    )}>
+      <h3 className={cn(
+        "font-bold mb-3 text-center",
+        isMobile ? "text-lg" : "text-xl mb-4"
+      )}>{config.title}</h3>
       
       <div className="flex justify-center">
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer 
+          width="100%" 
+          height={isMobile ? 250 : 400}
+        >
           {renderChart()}
         </ResponsiveContainer>
       </div>
 
       {/* Chart Info */}
-      <div className="mt-4 text-sm text-gray-600 text-center">
+      <div className={cn(
+        "mt-3 text-gray-600 text-center",
+        isMobile ? "text-xs" : "text-sm mt-4"
+      )}>
         <p>X-Axis: {config.xLabel} | Y-Axis: {config.yLabel}</p>
         <p>Data Points: {data.length} | Chart Type: {chartType}</p>
       </div>
 
       {/* AI Analysis */}
       {chartConfig.analyticalText && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">AI Analysis:</h4>
-          <p className="text-blue-800 whitespace-pre-wrap">{chartConfig.analyticalText}</p>
+        <div className={cn(
+          "mt-4 bg-blue-50 rounded-lg",
+          isMobile ? "p-3" : "p-4 mt-6"
+        )}>
+          <h4 className={cn(
+            "font-semibold text-blue-900 mb-2",
+            isMobile ? "text-sm" : ""
+          )}>AI Analysis:</h4>
+          <p className={cn(
+            "text-blue-800 whitespace-pre-wrap",
+            isMobile ? "text-xs" : ""
+          )}>{chartConfig.analyticalText}</p>
         </div>
       )}
     </div>

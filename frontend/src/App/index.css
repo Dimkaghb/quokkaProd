@@ -18,6 +18,80 @@
   overflow: hidden;
 }
 
+/* Mobile-specific utilities */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Prevent text selection on mobile UI elements */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Mobile-optimized scrollbar */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+}
+
+/* Safe area insets for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-inset-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-inset-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Mobile keyboard handling */
+@media (max-width: 768px) {
+  .mobile-keyboard-adjust {
+    transition: transform 0.3s ease;
+  }
+  
+  .mobile-keyboard-adjust.keyboard-visible {
+    transform: translateY(-50px);
+  }
+}
+
+/* Improved mobile button interactions */
+@media (max-width: 768px) {
+  button:active {
+    transform: scale(0.95);
+  }
+  
+  .card-interactive:active {
+    transform: scale(0.98);
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
