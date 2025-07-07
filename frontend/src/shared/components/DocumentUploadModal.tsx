@@ -109,7 +109,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Upload className="w-5 h-5" />
@@ -117,7 +117,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-y-auto">
           {/* Upload Area */}
           <div
             className={cn(
@@ -179,7 +179,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-shrink-0">
           <Button variant="outline" onClick={onClose} disabled={isUploading}>
             Cancel
           </Button>

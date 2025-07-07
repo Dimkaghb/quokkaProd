@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from src.auth.dependencies import get_current_user, get_current_user_optional
 from src.auth.models import User
 
-from .visualization import create_intelligent_visualization, read_data
+from .visualization import create_intelligent_visualization, read_data, customize_visualization, process_data_with_llm
 from .data_analyzer import analyze_data_with_ai, create_visualization_from_query
 
 # Import chat service for thread creation
@@ -26,6 +26,7 @@ try:
     CHAT_AVAILABLE = True
 except ImportError:
     CHAT_AVAILABLE = False
+    logger = logging.getLogger(__name__)
     logger.warning("Chat service not available - threads will not be created")
 
 logger = logging.getLogger(__name__)
@@ -55,9 +56,10 @@ class DataAnalysisRequest(BaseModel):
 
 class CustomVisualizationRequest(BaseModel):
     """Request model for custom visualization based on user query."""
-    file_path: str = Field(description="Path to the data file")
+    file_path: Optional[str] = Field(default=None, description="Path to the data file")
     user_query: str = Field(description="User's question or request")
     selected_columns: Optional[List[str]] = Field(default=None, description="Selected columns to focus on")
+    current_data: Optional[List[Dict[str, Any]]] = Field(default=None, description="Current data for customization")
 
 
 class VisualizationResponse(BaseModel):
@@ -89,20 +91,22 @@ def allowed_file(filename: str) -> bool:
 @router.post("/upload", response_model=VisualizationResponse)
 async def upload_and_visualize(
     file: UploadFile = File(...),
-    current_user: Optional[User] = Depends(get_current_user)
+    user_query: str = Form(""),
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ) -> VisualizationResponse:
     """
-    Upload a file and automatically create intelligent visualization.
+    Upload a file and create intelligent visualization with optional user query.
     
     Args:
         file: Uploaded file (CSV, Excel, PDF, TXT, DOCX)
+        user_query: Optional user query for customization
         current_user: Current authenticated user
         
     Returns:
         Visualization configuration and analysis
     """
     try:
-        logger.info(f"Received file upload: {file.filename}")
+        logger.info(f"Received file upload: {file.filename} with query: '{user_query}'")
         
         if not file.filename:
             raise HTTPException(status_code=400, detail='No file selected')
@@ -138,8 +142,8 @@ async def upload_and_visualize(
         
         logger.info(f"File saved successfully, creating visualization...")
         
-        # Create intelligent visualization
-        chart_config = create_intelligent_visualization(str(file_path))
+        # Create intelligent visualization using the new simplified system
+        chart_config = create_intelligent_visualization(str(file_path), user_query)
         
         logger.info(f"Visualization created successfully")
         
@@ -198,7 +202,7 @@ async def create_visualization(
     Create visualization from existing file.
     
     Args:
-        request: Visualization request with file path and options
+        request: Visualization request with file path and optional query
         current_user: Current authenticated user
         
     Returns:
@@ -211,8 +215,8 @@ async def create_visualization(
         if not os.path.exists(request.file_path):
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Create intelligent visualization
-        chart_config = create_intelligent_visualization(request.file_path)
+        # Create visualization using the new simplified system
+        chart_config = create_intelligent_visualization(request.file_path, request.query)
         
         logger.info(f"Visualization created successfully")
         
@@ -226,6 +230,8 @@ async def create_visualization(
         raise
     except Exception as e:
         logger.error(f"Error in create_visualization: {str(e)}")
+        import traceback
+        traceback.print_exc()
         
         return VisualizationResponse(
             success=False,
@@ -280,7 +286,7 @@ async def delete_file(
         return {
             'success': True,
             'message': f'File {filename} deleted successfully'
-                }
+        }
             
     except HTTPException:
         raise
@@ -381,7 +387,8 @@ async def create_custom_visualization(
     current_user: User = Depends(get_current_user)
 ) -> VisualizationResponse:
     """
-    Create custom visualization based on user query and selected columns.
+    Create custom visualization based on user query.
+    Now supports both file-based and data-based customization.
     
     Args:
         request: Custom visualization request
@@ -391,21 +398,27 @@ async def create_custom_visualization(
         Custom visualization configuration and analysis
     """
     try:
-        logger.info(f"Creating custom visualization for: {request.user_query}")
+        logger.info(f"Creating custom visualization for query: {request.user_query}")
         
-        # Check if file exists
-        if not os.path.exists(request.file_path):
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        # Read data
-        data = read_data(request.file_path)
-        
-        # Create visualization from query
-        chart_config = create_visualization_from_query(
-            data, 
-            request.user_query, 
-            request.selected_columns
-        )
+        # Case 1: File-based customization
+        if request.file_path:
+            # Check if file exists
+            if not os.path.exists(request.file_path):
+                raise HTTPException(status_code=404, detail="File not found")
+            
+            # Read data and create visualization
+            data = read_data(request.file_path)
+            chart_config = process_data_with_llm(data, request.user_query, request.file_path)
+            
+        # Case 2: Data-based customization (for existing visualizations)
+        elif request.current_data:
+            # Convert data to DataFrame
+            import pandas as pd
+            data = pd.DataFrame(request.current_data)
+            chart_config = customize_visualization(data, request.user_query)
+            
+        else:
+            raise HTTPException(status_code=400, detail="Either file_path or current_data must be provided")
         
         logger.info(f"Custom visualization created successfully")
         
@@ -413,7 +426,7 @@ async def create_custom_visualization(
             success=True,
             chart_config=chart_config,
             analytical_text=chart_config.get('analyticalText')
-            )
+        )
             
     except HTTPException:
         raise

@@ -300,7 +300,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* Header */}
       <div className="border-b border-gray-100 px-6 py-4">
         <div className="flex items-center justify-between">

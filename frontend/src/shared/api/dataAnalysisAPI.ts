@@ -59,6 +59,7 @@ export interface ChartConfig {
     yLabel: string
     colors: string[]
   }
+  analyticalText?: string
 }
 
 export interface DataRecommendation {
@@ -98,10 +99,13 @@ export interface VisualizationResult {
 }
 
 export const dataAnalysisAPI = {
-  // Upload file and create automatic visualization
-  uploadFile: async (file: File): Promise<VisualizationResult> => {
+  // Upload file and create automatic visualization with optional user query
+  uploadFile: async (file: File, userQuery?: string): Promise<VisualizationResult> => {
     const formData = new FormData()
     formData.append('file', file)
+    if (userQuery) {
+      formData.append('user_query', userQuery)
+    }
 
     const response = await api.post<VisualizationResult>('/data-analysis/upload', formData, {
       headers: {
@@ -121,16 +125,28 @@ export const dataAnalysisAPI = {
   },
 
   // Create custom visualization based on user query
+  // Now supports both file-based and data-based customization
   createCustomVisualization: async (
-    filePath: string, 
-    userQuery: string, 
-    selectedColumns?: string[]
+    userQuery: string,
+    filePath?: string,
+    selectedColumns?: string[],
+    currentData?: any[]
   ): Promise<VisualizationResult> => {
-    const response = await api.post<VisualizationResult>('/data-analysis/custom-visualization', {
-      file_path: filePath,
+    const requestData: any = {
       user_query: userQuery,
       selected_columns: selectedColumns
-    })
+    }
+
+    // Either file path or current data must be provided
+    if (filePath) {
+      requestData.file_path = filePath
+    } else if (currentData) {
+      requestData.current_data = currentData
+    } else {
+      throw new Error('Either filePath or currentData must be provided')
+    }
+
+    const response = await api.post<VisualizationResult>('/data-analysis/custom-visualization', requestData)
     return response.data
   },
 
@@ -139,7 +155,7 @@ export const dataAnalysisAPI = {
     const response = await api.post<VisualizationResult>('/data-analysis/visualize', {
       file_path: filePath,
       chart_type: chartType,
-      query: query
+      query: query || ''
     })
     return response.data
   },
@@ -186,6 +202,14 @@ export const dataAnalysisAPI = {
     const response = await api.get('/data-analysis/health')
     return response.data
   },
+
+  // Convenience method for customizing existing visualizations
+  customizeExistingVisualization: async (
+    currentData: any[],
+    userQuery: string
+  ): Promise<VisualizationResult> => {
+    return dataAnalysisAPI.createCustomVisualization(userQuery, undefined, undefined, currentData)
+  }
 }
 
 export default dataAnalysisAPI 

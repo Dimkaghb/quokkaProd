@@ -130,9 +130,9 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Select Documents</h2>
             <p className="text-gray-600 mt-1">Choose documents to include in your analysis</p>
@@ -148,7 +148,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 flex-shrink-0">
           <nav className="flex space-x-8 px-6">
             <button className="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
               Files
@@ -163,7 +163,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         </div>
 
         {/* Search and Upload */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="flex-1 relative">
               <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +210,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         </div>
 
         {/* Document List */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner />
@@ -301,7 +301,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6">
+        <div className="border-t border-gray-200 p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               {selectedDocuments.length} file{selectedDocuments.length !== 1 ? 's' : ''} selected
