@@ -1,13 +1,15 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Landing } from '../modules/landing'
 import { Auth } from '../modules/auth'
-import { ThreadChatbot } from '../modules/threadChatbot'
+import { Chatbot } from '../modules/chatbot'
+import { ChatViewer } from '../modules/chatViewer'
 import { ProtectedRoute } from '../shared/components/ProtectedRoute'
 import { AuthProvider } from '../shared/components/AuthProvider'
 import { useAuthStore } from '../shared/stores/authStore'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Profile } from '../modules/profile'
+import { ToastContainer } from '../shared/components/Toast'
 
 export const App = () => {
   const queryClient = useMemo(() => new QueryClient(), [])
@@ -33,7 +35,15 @@ export const App = () => {
             path="/chat" 
             element={
               <ProtectedRoute>
-                <ThreadChatbot />
+                <Chatbot />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/chat/:threadId" 
+            element={
+              <ProtectedRoute>
+                <ChatViewer />
               </ProtectedRoute>
             } 
           />
@@ -42,6 +52,7 @@ export const App = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
+        <ToastContainer />
       </AuthProvider>
     </QueryClientProvider>
   )

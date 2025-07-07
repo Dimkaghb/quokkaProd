@@ -63,6 +63,7 @@ export interface ChatMessage {
     ai_response_type?: string
     confidence?: number
     visualization?: any
+    analysis?: string
     sources?: string[]
     selected_documents?: string[]
   }
@@ -70,15 +71,19 @@ export interface ChatMessage {
 
 export interface UserDocument {
   id: string
+  user_id: string
   filename: string
   original_filename: string
   file_type: string
   file_size: number
+  file_path: string
   summary: string
   chunks_count: number
-  tags: string[]
   processed_at: string
+  tags: string[]
   is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface CreateThreadRequest {
@@ -276,6 +281,18 @@ export const chatAPI = {
     message: string
   }> => {
     const response = await api.get(`/chat/threads/${threadId}/context`)
+    return response.data
+  },
+
+  // Get thread documents with full details
+  getThreadDocuments: async (threadId: string): Promise<{
+    success: boolean
+    thread_id: string
+    documents: UserDocument[]
+    total_count: number
+    message: string
+  }> => {
+    const response = await api.get(`/chat/threads/${threadId}/documents`)
     return response.data
   },
 }

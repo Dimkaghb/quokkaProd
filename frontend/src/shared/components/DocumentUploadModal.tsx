@@ -1,18 +1,34 @@
 import React, { useState, useRef } from 'react'
-import { useThreadStore } from '../stores/threadStore'
+import { documentsAPI } from '../api/documentsAPI'
+import { useToast } from './Toast'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../components/ui/dialog'
+import { Upload, FileText } from 'lucide-react'
+import { cn } from '../../lib/utils'
 
 interface DocumentUploadModalProps {
   isOpen: boolean
   onClose: () => void
+  onUploadSuccess?: () => void
 }
 
-export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ isOpen, onClose }) => {
-  const { uploadDocument, isLoadingDocuments } = useThreadStore()
+export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onUploadSuccess 
+}) => {
   const [dragActive, setDragActive] = useState(false)
   const [tags, setTags] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  if (!isOpen) return null
+  const { showToast } = useToast()
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -49,29 +65,41 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ isOpen
     const fileExt = '.' + file.name.split('.').pop()?.toLowerCase()
     
     if (!allowedTypes.includes(fileExt)) {
-      alert(`File type ${fileExt} not supported. Allowed types: ${allowedTypes.join(', ')}`)
+      showToast(`File type ${fileExt} not supported. Allowed types: ${allowedTypes.join(', ')}`, 'error')
       return
     }
 
     // Validate file size (50MB)
     const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
-      alert('File too large. Maximum size is 50MB')
+      showToast('File too large. Maximum size is 50MB', 'error')
       return
     }
 
     try {
-      const tagList = tags.trim() ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : undefined
-      await uploadDocument(file, tagList)
+      setIsUploading(true)
+      const tagList = tags.trim() ? tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : undefined
+      const response = await documentsAPI.uploadDocument(file, tagList)
       
-      // Reset form and close modal
-      setTags('')
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      if (response.success) {
+        showToast('Document uploaded successfully', 'success')
+        // Reset form and close modal
+        setTags('')
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        onClose()
+        if (onUploadSuccess) {
+          onUploadSuccess()
+        }
+      } else {
+        showToast('Failed to upload document', 'error')
       }
-      onClose()
     } catch (error) {
       console.error('Upload failed:', error)
+      showToast('Error uploading document', 'error')
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -80,33 +108,29 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ isOpen
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-700">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white">Upload Document</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <Upload className="w-5 h-5" />
+            <span>Upload Document</span>
+          </DialogTitle>
+        </DialogHeader>
 
-        {/* Upload Area */}
         <div className="space-y-4">
+          {/* Upload Area */}
           <div
-            className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            className={cn(
+              "relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
               dragActive 
-                ? 'border-blue-500 bg-blue-500/10' 
-                : 'border-gray-600 hover:border-gray-500'
-            }`}
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-300 hover:border-gray-400'
+            )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
+            onClick={onButtonClick}
           >
             <input
               ref={fileInputRef}
@@ -117,32 +141,16 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ isOpen
             />
             
             <div className="space-y-3">
-              <svg 
-                className="w-12 h-12 mx-auto text-gray-400"
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={1.5} 
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
-                />
-              </svg>
+              <div className="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
+                <FileText className="w-6 h-6 text-gray-500" />
+              </div>
               
-              <div className="text-gray-300">
+              <div className="text-gray-600">
                 <p className="text-sm font-medium">
                   {dragActive ? 'Drop your file here' : 'Drag and drop your file here'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  or{' '}
-                  <button
-                    onClick={onButtonClick}
-                    className="text-blue-400 hover:text-blue-300 underline"
-                  >
-                    browse files
-                  </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  or click to browse files
                 </p>
               </div>
               
@@ -154,45 +162,47 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ isOpen
           </div>
 
           {/* Tags Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               Tags (optional)
             </label>
-            <input
+            <Input
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., finance, quarterly, report"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white 
-                       placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent"
+              className="w-full"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500">
               Separate multiple tags with commas
             </p>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white 
-                       rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onButtonClick}
-              disabled={isLoadingDocuments}
-              className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 
-                       disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-            >
-              {isLoadingDocuments ? 'Uploading...' : 'Select File'}
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={onButtonClick} 
+            disabled={isUploading}
+            className="bg-black hover:bg-gray-800"
+          >
+            {isUploading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload File
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -301,9 +301,13 @@ async def send_message_to_thread(
     and returns both the user message and AI response.
     """
     try:
+        logger.info(f"Processing message for thread {thread_id}, user {current_user.id}")
+        logger.info(f"Message content: {message_data.content[:100]}...")
+        
         # Validate thread ownership
         thread = await get_thread_details(str(current_user.id), thread_id)
         if not thread:
+            logger.error(f"Thread {thread_id} not found for user {current_user.id}")
             raise HTTPException(status_code=404, detail="Thread not found")
         
         # Import here to avoid circular imports
@@ -322,12 +326,18 @@ async def send_message_to_thread(
         # Get thread agent manager and process message
         agent_manager = get_thread_agent_manager()
         
+        # Use thread's selected documents if message doesn't specify any
+        selected_documents = message_data.selected_documents
+        if not selected_documents and thread.selected_documents:
+            selected_documents = thread.selected_documents
+            logger.info(f"Using thread's selected documents: {selected_documents}")
+        
         # Process message through AI agent
         ai_response = await agent_manager.process_message(
             thread_id=thread_id,
             user_id=str(current_user.id),
             message=message_data.content,
-            selected_documents=message_data.selected_documents
+            selected_documents=selected_documents
         )
         
         # Save AI response to thread memory
@@ -380,13 +390,19 @@ async def send_message_to_thread(
         
     except ThreadMemoryError as e:
         logger.error(f"Thread memory error: {e}")
-        raise HTTPException(status_code=500, detail="Error saving conversation memory")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error saving conversation memory: {str(e)}")
     except ThreadAgentError as e:
         logger.error(f"Thread agent error: {e}")
-        raise HTTPException(status_code=500, detail="Error processing message with AI agent")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing message with AI agent: {str(e)}")
     except Exception as e:
         logger.error(f"Error in send_message_to_thread: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/threads/{thread_id}/documents", response_model=Dict[str, Any])
@@ -523,6 +539,72 @@ async def get_thread_context_details(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get thread context: {str(e)}"
+        )
+
+
+@router.get("/threads/{thread_id}/documents", response_model=Dict[str, Any])
+async def get_thread_documents(
+    thread_id: str,
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Get detailed document information for a thread.
+    
+    Args:
+        thread_id: Thread ID
+        current_user: Authenticated user
+        
+    Returns:
+        List of documents with full metadata
+    """
+    try:
+        # Get thread details
+        thread = await get_thread_details(str(current_user.id), thread_id)
+        if not thread:
+            raise HTTPException(
+                status_code=404,
+                detail="Thread not found or you don't have access"
+            )
+        
+        # Get documents with full details
+        from src.documents.service import get_documents_for_thread
+        documents = await get_documents_for_thread(str(current_user.id), thread.selected_documents)
+        
+        # Convert to response format
+        document_list = []
+        for doc in documents:
+            document_list.append({
+                "id": doc.id,
+                "user_id": doc.user_id,
+                "filename": doc.filename,
+                "original_filename": doc.original_filename,
+                "file_type": doc.file_type,
+                "file_size": doc.file_size,
+                "file_path": doc.file_path,
+                "summary": doc.summary,
+                "chunks_count": doc.chunks_count,
+                "processed_at": doc.created_at.isoformat() if doc.created_at else None,
+                "tags": doc.tags,
+                "is_active": doc.is_active,
+                "created_at": doc.created_at.isoformat() if doc.created_at else None,
+                "updated_at": doc.updated_at.isoformat() if doc.updated_at else None
+            })
+        
+        return {
+            "success": True,
+            "thread_id": thread_id,
+            "documents": document_list,
+            "total_count": len(document_list),
+            "message": f"Found {len(document_list)} documents for thread"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting thread documents: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get thread documents: {str(e)}"
         )
 
 

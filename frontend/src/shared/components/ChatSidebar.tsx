@@ -4,6 +4,7 @@ import { useThreadStore } from '../stores/threadStore'
 import { useAuthStore } from '../stores/authStore'
 import DocumentUploadModal from './DocumentUploadModal'
 import DocumentSelectionModal from './DocumentSelectionModal'
+import type { UserDocument } from '../api/documentsAPI'
 
 interface ChatSidebarProps {
   isOpen: boolean
@@ -51,12 +52,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
   }
 
   // Handle document selection confirmation
-  const handleDocumentSelectionConfirm = async (selectedDocuments: string[], firstMessage: string) => {
+  const handleDocumentSelectionConfirm = async (selectedDocuments: UserDocument[], firstMessage?: string) => {
     setIsCreatingThread(true)
     setShowDocumentSelection(false)
     
     try {
-      const thread = await createThread(firstMessage, selectedDocuments)
+      const documentIds = selectedDocuments.map(doc => doc.id)
+      const thread = await createThread(firstMessage || newChatMessage.trim(), documentIds)
       if (thread) {
         setNewChatMessage('')
       }
@@ -407,7 +409,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
           setNewChatMessage('')
         }}
         onConfirm={handleDocumentSelectionConfirm}
-        initialMessage={newChatMessage}
+        initialQuery={newChatMessage}
       />
     </>
   )

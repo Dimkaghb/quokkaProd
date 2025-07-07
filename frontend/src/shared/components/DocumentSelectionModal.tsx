@@ -1,77 +1,99 @@
 import React, { useState, useEffect } from 'react'
-import { useThreadStore } from '../stores/threadStore'
+import { documentsAPI } from '../api/documentsAPI'
+import type { UserDocument } from '../api/documentsAPI'
+import { useToast } from './Toast'
+import { LoadingSpinner } from './LoadingSpinner'
 
 interface DocumentSelectionModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: (selectedDocuments: string[], firstMessage: string) => void
-  initialMessage: string
+  onConfirm: (selectedDocuments: UserDocument[], query?: string) => void
+  initialQuery?: string
 }
 
 export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  initialMessage
+  initialQuery = ''
 }) => {
-  const { documents, loadDocuments, isLoadingDocuments } = useThreadStore()
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([])
-  const [message, setMessage] = useState(initialMessage)
+  const [documents, setDocuments] = useState<UserDocument[]>([])
+  const [selectedDocuments, setSelectedDocuments] = useState<UserDocument[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (isOpen) {
-      // Always reload documents when modal opens to ensure fresh data
-      console.log('DocumentSelectionModal: Modal opened, loading documents...')
       loadDocuments()
     }
-  }, [isOpen, loadDocuments])
+  }, [isOpen])
 
-  useEffect(() => {
-    setMessage(initialMessage)
-  }, [initialMessage])
-
-  if (!isOpen) return null
-
-  // Debug logging
-  console.log('DocumentSelectionModal render:', {
-    documentsCount: documents.length,
-    isLoadingDocuments,
-    documents: documents.map(d => ({ id: d.id, filename: d.original_filename }))
-  })
-
-  const filteredDocuments = documents.filter(doc => {
-    const query = searchQuery.toLowerCase()
-    return (
-      doc.original_filename.toLowerCase().includes(query) ||
-      doc.summary.toLowerCase().includes(query) ||
-      doc.tags.some(tag => tag.toLowerCase().includes(query))
-    )
-  })
-
-  const handleDocumentToggle = (docId: string) => {
-    setSelectedDocs(prev => 
-      prev.includes(docId)
-        ? prev.filter(id => id !== docId)
-        : [...prev, docId]
-    )
-  }
-
-  const handleSelectAll = () => {
-    if (selectedDocs.length === filteredDocuments.length) {
-      setSelectedDocs([])
-    } else {
-      setSelectedDocs(filteredDocuments.map(doc => doc.id))
+  const loadDocuments = async () => {
+    try {
+      setIsLoading(true)
+      const response = await documentsAPI.getUserDocuments()
+      if (response.success) {
+        setDocuments(response.documents)
+      } else {
+        showToast('Failed to load documents', 'error')
+      }
+    } catch (error) {
+      console.error('Error loading documents:', error)
+      showToast('Error loading documents', 'error')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleConfirm = () => {
-    if (!message.trim()) {
-      alert('Please enter a message to start the chat')
-      return
-    }
-    onConfirm(selectedDocs, message.trim())
+  const handleDocumentToggle = (document: UserDocument) => {
+    setSelectedDocuments(prev => {
+      const isSelected = prev.some(doc => doc.id === document.id)
+      if (isSelected) {
+        return prev.filter(doc => doc.id !== document.id)
+      } else {
+        return [...prev, document]
+      }
+    })
   }
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true)
+      const response = await documentsAPI.uploadDocument(file)
+      if (response.success && response.document) {
+        setDocuments(prev => [response.document!, ...prev])
+        setSelectedDocuments(prev => [...prev, response.document!])
+        showToast('Document uploaded successfully', 'success')
+      } else {
+        showToast('Failed to upload document', 'error')
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error)
+      showToast('Error uploading document', 'error')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length > 0) {
+      handleFileUpload(files[0])
+    }
+  }
+
+  const filteredDocuments = documents.filter(doc =>
+    doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -79,6 +101,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString()
   }
 
   const getFileIcon = (fileType: string) => {
@@ -89,213 +115,219 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         return '📊'
       case '.xlsx':
       case '.xls':
-        return '📗'
+        return '📈'
       case '.json':
-        return '🔧'
+        return '📋'
       case '.txt':
       case '.md':
         return '📝'
       default:
-        return '📁'
+        return '📄'
     }
   }
 
+  if (!isOpen) return null
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] border border-gray-700 flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h3 className="text-lg font-semibold text-white">Start New Chat</h3>
-            <p className="text-sm text-gray-400 mt-1">
-              Choose documents for your AI assistant to work with
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900">Select Documents</h2>
+            <p className="text-gray-600 mt-1">Choose documents to include in your analysis</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Message Input */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Your first message
-          </label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Start a conversation with your AI assistant..."
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white 
-                     placeholder-gray-400 resize-none focus:outline-none focus:ring-2 
-                     focus:ring-blue-500 focus:border-transparent"
-            rows={3}
-          />
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            <button className="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+              Files
+            </button>
+            <button className="py-4 px-2 text-gray-500 hover:text-gray-700">
+              Data Sources
+            </button>
+            <button className="py-4 px-2 text-gray-500 hover:text-gray-700">
+              Enrichments
+            </button>
+          </nav>
         </div>
 
-        {/* Documents Section */}
-        <div className="flex-1 min-h-0">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-md font-medium text-white">
-              Select Documents ({selectedDocs.length} selected)
-            </h4>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => {
-                  console.log('Manual refresh clicked')
-                  loadDocuments()
-                }}
-                disabled={isLoadingDocuments}
-                className="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                title="Refresh documents"
-              >
-                <svg className={`w-4 h-4 ${isLoadingDocuments ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-              
-              {filteredDocuments.length > 0 && (
-                <button
-                  onClick={handleSelectAll}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  {selectedDocs.length === filteredDocuments.length ? 'Deselect All' : 'Select All'}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Search */}
-          {documents.length > 0 && (
-            <div className="mb-4">
+        {/* Search and Upload */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search documents by name, content, or tags..."
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white 
-                         placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 
-                         focus:border-transparent"
+                placeholder="Search files"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-          )}
-
-          {/* Documents List */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoadingDocuments ? (
-              <div className="text-center py-8 text-gray-400">
-                <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                Loading documents...
-              </div>
-            ) : documents.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} 
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div className="flex items-center space-x-2">
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                accept=".csv,.xlsx,.xls,.pdf,.json,.txt,.md"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    handleFileUpload(file)
+                  }
+                }}
+              />
+              <label
+                htmlFor="file-upload"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="text-sm">No documents uploaded yet</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  You can start a chat without documents or upload some from the sidebar
-                </p>
-              </div>
-            ) : filteredDocuments.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p className="text-sm">No documents match your search</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredDocuments.map((doc) => (
-                  <label
-                    key={doc.id}
-                    className={`block p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedDocs.includes(doc.id)
-                        ? 'bg-blue-600/20 border-blue-500/50 ring-1 ring-blue-500/30'
-                        : 'bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-gray-600'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedDocs.includes(doc.id)}
-                        onChange={() => handleDocumentToggle(doc.id)}
-                        className="mt-1 text-blue-600 bg-gray-700 border-gray-600 rounded 
-                                 focus:ring-blue-500 focus:ring-offset-0"
-                      />
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-lg">{getFileIcon(doc.file_type)}</span>
-                          <h5 className="text-sm font-medium text-white truncate">
-                            {doc.original_filename}
-                          </h5>
-                        </div>
-                        
-                        <p className="text-xs text-gray-400 mb-2 line-clamp-2">
-                          {doc.summary}
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatFileSize(doc.file_size)}</span>
-                          {doc.chunks_count > 0 && (
-                            <span>{doc.chunks_count} chunks</span>
-                          )}
-                        </div>
-                        
-                        {doc.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {doc.tags.slice(0, 3).map((tag, index) => (
-                              <span
-                                key={index}
-                                className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                            {doc.tags.length > 3 && (
-                              <span className="text-xs text-gray-500">
-                                +{doc.tags.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            )}
+                <span>Upload files</span>
+              </label>
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Upload Google Sheets</span>
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Document List */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
+              <p className="text-gray-600 mb-4">Upload your first document to get started</p>
+              <label
+                htmlFor="file-upload"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+              >
+                Upload Document
+              </label>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredDocuments.map((document) => (
+                <div
+                  key={document.id}
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedDocuments.some(doc => doc.id === document.id)
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => handleDocumentToggle(document)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-2xl">{getFileIcon(document.file_type)}</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                          {document.filename}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          {document.tags.map((tag: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {document.summary}
+                      </p>
+                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                        <span>{formatFileSize(document.file_size)}</span>
+                        <span>•</span>
+                        <span>{formatDate(document.created_at)}</span>
+                        <span>•</span>
+                        <span>{document.chunks_count} chunks</span>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        selectedDocuments.some(doc => doc.id === document.id)
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedDocuments.some(doc => doc.id === document.id) && (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Footer */}
-        <div className="flex items-center justify-between pt-6 border-t border-gray-700 mt-6">
-          <div className="text-sm text-gray-400">
-            {selectedDocs.length > 0 
-              ? `${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''} selected`
-              : 'No documents selected - chat will work without document context'
-            }
-          </div>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className="py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={!message.trim()}
-              className="py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 
-                       disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-            >
-              Start Chat
-            </button>
+        <div className="border-t border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              {selectedDocuments.length} file{selectedDocuments.length !== 1 ? 's' : ''} selected
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onConfirm(selectedDocuments, initialQuery)}
+                disabled={isUploading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <span>Confirm selection</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

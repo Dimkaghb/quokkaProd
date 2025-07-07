@@ -7,7 +7,7 @@ from typing import List, Optional
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
 from src.auth.dependencies import get_current_user
 from src.auth.models import User
@@ -251,6 +251,57 @@ async def delete_document(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete document: {str(e)}"
+        )
+
+
+@router.get("/{document_id}/content")
+async def get_document_content(
+    document_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get document content for viewing.
+    
+    Args:
+        document_id: Document ID
+        current_user: Authenticated user
+        
+    Returns:
+        Document file content
+    """
+    try:
+        # Get document details to verify ownership
+        document = await get_document_details(str(current_user.id), document_id)
+        
+        if not document:
+            raise HTTPException(
+                status_code=404,
+                detail="Document not found or you don't have access"
+            )
+        
+        # Use the stored file path directly (it's already a relative path)
+        file_path = Path(document.file_path)
+        
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Document file not found on server"
+            )
+        
+        # Return file content
+        return FileResponse(
+            path=str(file_path),
+            filename=document.original_filename,
+            media_type='application/octet-stream'
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document content: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get document content: {str(e)}"
         )
 
 

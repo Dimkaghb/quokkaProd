@@ -9,6 +9,7 @@ services:
       - backend
     environment:
       - NODE_ENV=production
+      - VITE_API_URL=http://localhost:8000
 
   backend:
     build:
@@ -19,10 +20,17 @@ services:
     environment:
       - PYTHONPATH=/app/src
       - PYTHONUNBUFFERED=1
-    env_file:
-      - ./backend/.env
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MONGODB_URL=${MONGODB_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SERPER_API_KEY=${SERPER_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
     volumes:
-      - ./backend/.env:/app/.env
       - backend_data:/data
       - ./backend/data:/app/data
     healthcheck:

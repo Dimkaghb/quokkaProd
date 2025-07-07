@@ -1,144 +1,99 @@
 """
-QuokkaAI Data Analysis Module - Intelligent Multi-Agent System
+QuokkaAI Data Analysis Module - Intelligent Visualization System
 
-This module provides a sophisticated multi-agent architecture for data analysis,
-file processing, and conversational AI interactions. The system is designed
-with clean separation of concerns and professional prompt engineering.
+This module provides an AI-powered data visualization system that automatically
+processes various file formats and creates intelligent chart configurations.
 
 Architecture Overview:
 =====================
 
-1. ROOT AGENT (root_agent.py)
-   - Central orchestrator for the entire multi-agent system
-   - Intelligent routing of user queries to appropriate sub-agents
-   - Conversation memory and context management
-   - Unified response formatting and error handling
-   - AI-driven tool selection using LangChain OpenAI Functions
+1. TEXT_PDF_PROCESSOR (text_pdf_processor.py)
+   - Extracts and structures data from PDF, DOCX, TXT files
+   - Uses AI to intelligently parse unstructured text
+   - Converts text data into structured DataFrames
+   - Handles multiple document formats with fallback strategies
 
-2. RAG AGENT (agents/rag_agent.py)
-   - Document analysis and retrieval-augmented generation
-   - Supports all major file formats (PDF, CSV, Excel, JSON, TXT)
-   - Statistical analysis and data insights
-   - Vector embeddings with Chroma database
-   - Professional qualitative and quantitative analysis
+2. VISUALIZATION (visualization.py)
+   - Creates intelligent Recharts configurations using OpenAI
+   - Analyzes data characteristics to recommend optimal chart types
+   - Generates professional analytical text descriptions
+   - Supports multiple chart types (line, bar, scatter, pie, etc.)
+   - Provides fallback configurations when AI fails
 
-3. VISUALIZATION AGENT (agents/visualization_agent.py)
-   - Interactive chart creation with Plotly
-   - Intelligent chart type recommendation
-   - Statistical analysis alongside visualizations
-   - Support for 10+ chart types (line, bar, scatter, heatmap, etc.)
-   - Professional styling and formatting
+3. API (api.py)
+   - FastAPI endpoints for file upload and visualization
+   - Handles file validation and processing
+   - Returns Recharts-compatible JSON configurations
+   - Supports CSV, Excel, PDF, TXT, DOCX formats
 
-4. WEB SEARCH AGENT (agents/web_search_agent.py)
-   - Multi-source web search (Serper, Google Custom Search)
-   - Fact-driven result prioritization
-   - Confidence scoring and source verification
-   - Real-time information retrieval
-   - Authority-first search strategy
+Key Features:
+=============
 
-Key Improvements:
-================
+✅ INTELLIGENT DATA PROCESSING
+   - AI-powered text extraction and structuring
+   - Automatic data type detection and conversion
+   - Handles both structured and unstructured data
+   - Robust error handling and fallbacks
 
-✅ CLEAN ARCHITECTURE
-   - Proper separation of concerns
-   - Single responsibility principle
-   - Dependency injection pattern
-   - Factory functions for agent creation
+✅ SMART VISUALIZATION
+   - AI-driven chart type selection
+   - Professional analytical text generation
+   - Recharts-compatible configurations
+   - Responsive design considerations
 
-✅ PROFESSIONAL PROMPTING
-   - Generic, reusable system prompts
-   - No hard-coded examples or specific use cases
-   - Context-aware prompt engineering
-   - Clear capability definitions
+✅ MULTI-FORMAT SUPPORT
+   - CSV, Excel (xlsx, xls)
+   - PDF documents
+   - Text files (txt, docx)
+   - Automatic format detection
 
-✅ INTELLIGENT ROUTING
-   - AI-driven tool selection instead of keyword matching
-   - Conversation context preservation
-   - Dynamic message enhancement with relevant context
-   - Graceful error handling and fallbacks
-
-✅ CONVERSATION MANAGEMENT
-   - Persistent conversation memory
-   - Session-based context tracking
-   - User preference learning
-   - Topic flow management
-
-✅ ROBUST ERROR HANDLING
-   - Comprehensive exception management
-   - Graceful degradation when services fail
-   - Detailed logging and monitoring
-   - User-friendly error messages
+✅ PRODUCTION READY
+   - Comprehensive error handling
+   - File size validation
+   - Security considerations
+   - Scalable architecture
 
 Usage Example:
 ==============
 
 ```python
-from src.data_analize import create_root_agent
+from src.data_analize.visualization import create_intelligent_visualization
 
-# Create agent with default settings
-agent = create_root_agent()
+# Create visualization from file
+chart_config = create_intelligent_visualization("path/to/data.csv")
 
-# Process user message
-result = await agent.process_message(
-    message="Analyze my uploaded sales data and create a trend chart",
-    session_id="user_123"
-)
-
-# Access response
-print(result["answer"])
-if result.get("visualization"):
-    # Handle chart data
-    chart_data = result["visualization"]
+# Access chart configuration
+chart_type = chart_config["chartType"]
+data = chart_config["data"]
+config = chart_config["config"]
+analysis = chart_config["analyticalText"]
 ```
 
-Best Practices:
-===============
+API Endpoints:
+==============
 
-1. PROMPTING:
-   - Use generic, capability-focused system prompts
-   - Avoid specific examples or domain-specific language
-   - Focus on principles and methodologies
-   - Maintain professional, helpful tone
+- POST /data-analysis/upload - Upload file and create visualization
+- POST /data-analysis/visualize - Create visualization from existing file
+- GET /data-analysis/files - List uploaded files
+- DELETE /data-analysis/files/{filename} - Delete uploaded file
+- GET /data-analysis/supported-formats - Get supported file formats
 
-2. AGENT DESIGN:
-   - Keep each agent focused on a single domain
-   - Use clear interfaces between agents
-   - Implement proper error handling
-   - Log all significant operations
-
-3. CONVERSATION FLOW:
-   - Preserve context across interactions
-   - Track user preferences and patterns
-   - Provide relevant suggestions
-   - Maintain conversational coherence
-
-4. FILE PROCESSING:
-   - Support multiple file formats generically
-   - Extract maximum value from any data source
-   - Provide fallbacks for processing failures
-   - Maintain data security and privacy
-
-This architecture enables QuokkaAI to handle any type of data analysis request
-while maintaining high code quality, extensibility, and user experience.
+This system provides a streamlined approach to data visualization that works
+with any type of data source while maintaining high code quality and user experience.
 """
 
-__version__ = "2.0.0"
+__version__ = "3.0.0"
 __author__ = "QuokkaAI Team"
 
 # Export main components
-from .root_agent import create_root_agent, RootAgent, RootAgentSettings
-from .agents.rag_agent import create_rag_agent, create_rag_tool
-from .agents.visualization_agent import create_visualization_agent, create_visualization_tool
-from .agents.web_search_agent import create_web_search_agent, create_web_search_tool
+from .visualization import create_intelligent_visualization, read_data, analyze_data_structure
+from .text_pdf_processor import process_text_file, extract_text_from_pdf, extract_text_from_docx
 
 __all__ = [
-    "create_root_agent",
-    "RootAgent", 
-    "RootAgentSettings",
-    "create_rag_agent",
-    "create_rag_tool",
-    "create_visualization_agent", 
-    "create_visualization_tool",
-    "create_web_search_agent",
-    "create_web_search_tool"
+    "create_intelligent_visualization",
+    "read_data",
+    "analyze_data_structure", 
+    "process_text_file",
+    "extract_text_from_pdf",
+    "extract_text_from_docx"
 ] 

@@ -6,6 +6,7 @@ interface ThreadState {
   // Current state
   threads: ChatThread[]
   currentThread: ChatThread | null
+  selectedThreadId: string | null
   messages: ChatMessage[]
   documents: UserDocument[]
   selectedDocuments: string[]
@@ -19,8 +20,11 @@ interface ThreadState {
   
   // Actions - Thread management
   loadThreads: () => Promise<void>
+  loadUserThreads: () => Promise<void>
   createThread: (firstMessage: string, selectedDocs?: string[]) => Promise<ChatThread | null>
   selectThread: (threadId: string) => Promise<void>
+  setSelectedThread: (threadId: string | null) => void
+  clearSelectedThread: () => void
   updateThreadTitle: (threadId: string, title: string) => Promise<void>
   deleteThread: (threadId: string) => Promise<void>
   clearCurrentThread: () => void
@@ -47,6 +51,7 @@ export const useThreadStore = create<ThreadState>()(
       // Initial state
       threads: [],
       currentThread: null,
+      selectedThreadId: null,
       messages: [],
       documents: [],
       selectedDocuments: [],
@@ -77,6 +82,24 @@ export const useThreadStore = create<ThreadState>()(
         }
       },
 
+      loadUserThreads: async () => {
+        await get().loadThreads()
+      },
+
+      setSelectedThread: (threadId: string | null) => {
+        set({ selectedThreadId: threadId })
+        if (threadId) {
+          get().selectThread(threadId)
+        } else {
+          get().clearCurrentThread()
+        }
+      },
+
+      clearSelectedThread: () => {
+        set({ selectedThreadId: null })
+        get().clearCurrentThread()
+      },
+
       createThread: async (firstMessage: string, selectedDocs?: string[]) => {
         set({ isLoading: true, error: null })
         try {
@@ -90,6 +113,7 @@ export const useThreadStore = create<ThreadState>()(
             set(state => ({
               threads: [response.thread!, ...state.threads],
               currentThread: response.thread!,
+              selectedThreadId: response.thread!.id,
               selectedDocuments: response.thread!.selected_documents,
               isLoading: false
             }))
@@ -118,6 +142,7 @@ export const useThreadStore = create<ThreadState>()(
         if (thread) {
           set({ 
             currentThread: thread,
+            selectedThreadId: threadId,
             selectedDocuments: thread.selected_documents,
             error: null 
           })
@@ -157,10 +182,14 @@ export const useThreadStore = create<ThreadState>()(
             const newCurrentThread = state.currentThread?.id === threadId 
               ? null 
               : state.currentThread
+            const newSelectedThreadId = state.selectedThreadId === threadId 
+              ? null 
+              : state.selectedThreadId
             
             return {
               threads: newThreads,
               currentThread: newCurrentThread,
+              selectedThreadId: newSelectedThreadId,
               messages: newCurrentThread ? state.messages : [],
               isLoading: false
             }
@@ -171,6 +200,7 @@ export const useThreadStore = create<ThreadState>()(
             error: error?.response?.data?.detail || 'Failed to delete thread',
             isLoading: false 
           })
+          throw error
         }
       },
 

@@ -1,0 +1,145 @@
+import React from 'react';
+import { useAuthStore } from '../stores/authStore';
+import { Button } from '../../components/ui/button';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
+import { 
+  User, 
+  Settings, 
+  HelpCircle, 
+  LogOut, 
+  Crown,
+  ChevronDown
+} from 'lucide-react';
+
+interface ProfileDropdownProps {
+  isCollapsed?: boolean;
+}
+
+export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = false }) => {
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/auth';
+  };
+
+  const getUserInitials = () => {
+    if (!user?.email) return 'U';
+    const parts = user.email.split('@')[0].split('.');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return user.email.charAt(0).toUpperCase();
+  };
+
+  const getUserName = () => {
+    if (!user?.email) return 'User';
+    return user.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  if (isCollapsed) {
+    return (
+      <div className="flex justify-center">
+        <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+          <span className="text-white font-medium text-sm">
+            {getUserInitials()}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="w-full justify-start p-0 h-auto hover:bg-gray-50">
+          <div className="flex items-center space-x-3 w-full">
+            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium text-sm">
+                {getUserInitials()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="font-medium text-sm text-gray-900 truncate">
+                {getUserName()}
+              </div>
+              <div className="text-xs text-gray-500">
+                Free Plan
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium">
+                {getUserInitials()}
+              </span>
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">
+                {getUserName()}
+              </div>
+              <div className="text-sm text-gray-500">
+                {user?.email || 'user@example.com'}
+              </div>
+            </div>
+          </div>
+        </DropdownMenuLabel>
+        
+        <DropdownMenuSeparator />
+        
+        {/* Plan Info */}
+        <div className="px-2 py-2">
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+            <div>
+              <div className="text-sm font-medium text-gray-900 flex items-center">
+                <Crown className="w-4 h-4 mr-1 text-yellow-500" />
+                Free Plan
+              </div>
+              <div className="text-xs text-gray-500">3 queries remaining</div>
+            </div>
+            <Button size="sm" className="bg-black hover:bg-gray-800 text-white text-xs">
+              Upgrade
+            </Button>
+          </div>
+        </div>
+        
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem>
+          <User className="w-4 h-4 mr-2" />
+          Profile Settings
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem>
+          <Settings className="w-4 h-4 mr-2" />
+          Preferences
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem>
+          <HelpCircle className="w-4 h-4 mr-2" />
+          Help & Support
+        </DropdownMenuItem>
+        
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}; 
