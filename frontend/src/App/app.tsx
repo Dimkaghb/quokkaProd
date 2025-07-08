@@ -28,7 +28,14 @@ export const App = () => {
             path="/auth" 
             element={isAuthenticated ? <Navigate to="/chat" replace /> : <Auth />} 
           />
-          <Route path="/profile" element={<Profile />} />          
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />          
           
           {/* Protected Routes */}
           <Route 

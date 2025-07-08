@@ -12,6 +12,7 @@ export const Chatbot: React.FC = () => {
   const {
     threads, 
     selectedThreadId, 
+    currentThread,
     setSelectedThread, 
     loadUserThreads, 
     deleteThread,
@@ -126,9 +127,14 @@ export const Chatbot: React.FC = () => {
 
   const MainContent = () => {
     if (selectedThreadId) {
+      // Generate thread title from current thread or fallback
+      const threadTitle = currentThread?.title || 
+        (currentThread ? `Chat ${new Date(currentThread.created_at).toLocaleDateString()}` : 'New Chat');
+      
       return (
         <ChatInterface
           threadId={selectedThreadId}
+          threadTitle={threadTitle}
           selectedDocuments={currentDocuments}
           initialContextOpen={showContextWindow}
           onThreadCreated={handleThreadCreated}

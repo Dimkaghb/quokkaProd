@@ -8,8 +8,8 @@ import { DocumentContextWindow } from './DocumentContextWindow';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
-import { Card, CardContent } from '../../components/ui/card';
-import { Send, Upload, FileText, Bot, User, Sparkles, Paperclip } from 'lucide-react';
+
+import { Send, Upload, FileText, Paperclip } from 'lucide-react';
 import type { UserDocument } from '../api/documentsAPI';
 
 interface Message {
@@ -24,6 +24,7 @@ interface Message {
 
 interface ChatInterfaceProps {
   threadId?: string;
+  threadTitle?: string;
   onThreadCreated?: (threadId: string) => void;
   onNewChat?: () => void;
   selectedDocuments?: UserDocument[];
@@ -33,6 +34,7 @@ interface ChatInterfaceProps {
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   threadId,
+  threadTitle,
   onThreadCreated,
   selectedDocuments = [],
   initialContextOpen = false,
@@ -329,31 +331,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
+      {/* Fixed Docs Button - Top Right */}
+      {selectedDocuments.length > 0 && (
+        <button
+          onClick={() => setContextWindowOpen(!contextWindowOpen)}
+          className={cn(
+            "fixed top-6 right-6 z-50 flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg",
+            contextWindowOpen 
+              ? "bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200" 
+              : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+          )}
+          title={contextWindowOpen ? "Close documents" : "Show documents"}
+        >
+          <FileText className="w-4 h-4" />
+          <span className="text-sm font-medium">{selectedDocuments.length} files</span>
+        </button>
+      )}
+
       {/* Header - Hidden on mobile since we have the mobile header in WorkspaceLayout */}
-      {!isMobile && (
+      {!isMobile && threadTitle && (
         <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">QuokkaAI</h1>
-                <p className="text-sm text-gray-500">Data Analysis Assistant</p>
-              </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">{threadTitle}</h1>
             </div>
-            
-            {selectedDocuments.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setContextWindowOpen(!contextWindowOpen)}
-                className="flex items-center space-x-2"
-              >
-                <FileText className="w-4 h-4" />
-                <span>{selectedDocuments.length} files</span>
-              </Button>
-            )}
           </div>
         </div>
       )}
@@ -367,41 +368,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }}
       >
         <div className={cn(
-          "max-w-4xl mx-auto space-y-4",
-          isMobile ? "px-4 py-4" : "px-6 py-4"
+          "max-w-5xl mx-auto space-y-6",
+          isMobile ? "px-4 py-6" : "px-8 py-8"
         )}>
           {messages.map((message) => (
             <div
               key={message.id}
-              className={cn(
-                "flex items-start space-x-3",
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              )}
+              className="space-y-3"
             >
-              {message.type === 'assistant' && (
-                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-              )}
-              
+              {/* Message Content */}
               <div className={cn(
-                "space-y-2",
-                isMobile ? "max-w-[85%]" : "max-w-[80%]",
-                message.type === 'user' ? 'order-first' : ''
+                "w-full",
+                message.type === 'user' ? 'flex justify-end' : 'flex justify-start'
               )}>
-                <Card className={cn(
-                  "shadow-sm",
-                  message.type === 'user' 
-                    ? 'bg-gray-900 text-white border-gray-800' 
-                    : 'bg-white border-gray-200'
+                <div className={cn(
+                  "max-w-none w-full",
+                  message.type === 'user' ? 'bg-gray-50 border border-gray-200' : 'bg-white',
+                  "rounded-lg"
                 )}>
-                  <CardContent className={cn(
-                    isMobile ? "p-3" : "p-4"
+                  <div className={cn(
+                    isMobile ? "p-4" : "p-6"
                   )}>
                     <div className="prose prose-sm max-w-none">
                       <p className={cn(
-                        "whitespace-pre-wrap leading-relaxed",
-                        isMobile ? "text-sm" : "text-sm"
+                        "whitespace-pre-wrap leading-relaxed text-gray-900",
+                        isMobile ? "text-sm" : "text-base"
                       )}>
                         {message.content}
                       </p>
@@ -409,8 +400,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     
                     {message.visualization && (
                       <div className={cn(
-                        "mt-4 p-3 bg-gray-50 rounded-lg",
-                        isMobile && "p-2"
+                        "mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100",
+                        isMobile && "p-3"
                       )}>
                         <RechartsVisualization 
                           chartConfig={message.visualization}
@@ -420,43 +411,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     
                     {message.analysis && (
                       <div className={cn(
-                        "mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-200",
-                        isMobile && "p-2"
+                        "mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100",
+                        isMobile && "p-3"
                       )}>
-                        <p className="text-sm text-blue-800">{message.analysis}</p>
+                        <p className="text-sm text-blue-800 leading-relaxed">{message.analysis}</p>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-                
-                <div className={cn(
-                  "flex items-center space-x-2 text-xs text-gray-500",
-                  message.type === 'user' ? 'justify-end' : 'justify-start'
-                )}>
-                  <span>{formatTime(message.timestamp)}</span>
+                  </div>
                 </div>
               </div>
               
-              {message.type === 'user' && (
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-gray-600" />
-                </div>
-              )}
+              {/* Timestamp */}
+              <div className={cn(
+                "flex items-center text-xs text-gray-400",
+                message.type === 'user' ? 'justify-end' : 'justify-start'
+              )}>
+                <span>{formatTime(message.timestamp)}</span>
+              </div>
             </div>
           ))}
           
           {isLoading && (
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <Card className="bg-white border-gray-200 shadow-sm">
-                <CardContent className={cn(
-                  isMobile ? "p-3" : "p-4"
+            <div className="space-y-3">
+              <div className="w-full bg-white rounded-lg">
+                <div className={cn(
+                  isMobile ? "p-4" : "p-6"
                 )}>
                   <LoadingDots />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
           
@@ -470,10 +453,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           "border-t border-gray-100 bg-white flex-shrink-0",
           isMobile ? [
             "fixed bottom-0 left-0 right-0 z-40",
-            "px-4 py-3",
-            "border-t-2 border-gray-200"
+            "px-4 py-4",
+            "border-t border-gray-200"
           ] : [
-            "px-6 py-4"
+            "px-8 py-6"
           ],
           dragActive && "bg-blue-50 border-blue-200"
         )}
@@ -483,9 +466,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       >
         <div className={cn(
           "mx-auto",
-          !isMobile && "max-w-4xl"
+          !isMobile && "max-w-5xl"
         )}>
-          <form onSubmit={handleSubmit} className="flex items-end space-x-2">
+          <form onSubmit={handleSubmit} className="flex items-end space-x-3">
             <div className="flex-1">
               <Textarea
                 ref={textareaRef}
@@ -496,13 +479,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onBlur={() => setIsInputFocused(false)}
                 placeholder={isMobile ? "Ask me anything..." : "Ask me anything about your data..."}
                 className={cn(
-                  "resize-none border-gray-200 focus:border-gray-300 focus:ring-0",
+                  "resize-none border-gray-200 focus:border-gray-300 focus:ring-1 focus:ring-gray-200 rounded-lg",
                   isMobile ? [
-                    "min-h-[44px] max-h-[120px]",
-                    "text-base", // Prevent zoom on iOS
-                    "rounded-lg"
+                    "min-h-[48px] max-h-[120px]",
+                    "text-base px-4 py-3", // Prevent zoom on iOS
                   ] : [
-                    "min-h-[44px] max-h-[160px]"
+                    "min-h-[52px] max-h-[160px] px-4 py-3 text-base"
                   ]
                 )}
                 disabled={isLoading}
@@ -510,37 +492,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
             
             <div className="flex space-x-2">
-              {!isMobile && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="h-11 w-11"
-                >
-                  <Upload className="w-4 h-4" />
-                </Button>
-              )}
-              
-              {isMobile && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="h-11 w-11 touch-manipulation"
-                >
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className={cn(
+                  "h-12 w-12 border-gray-200 hover:bg-gray-50",
+                  isMobile && "touch-manipulation"
+                )}
+              >
+                {isMobile ? (
                   <Paperclip className="w-4 h-4" />
-                </Button>
-              )}
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+              </Button>
               
               <Button
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
                 className={cn(
-                  "h-11 w-11 bg-black hover:bg-gray-800 text-white",
+                  "h-12 w-12 bg-black hover:bg-gray-800 text-white rounded-lg",
                   "touch-manipulation"
                 )}
               >
@@ -575,7 +549,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         documents={selectedDocuments}
         isOpen={contextWindowOpen}
         onClose={() => setContextWindowOpen(false)}
-        onToggle={() => setContextWindowOpen(!contextWindowOpen)}
         onDocumentsUpdate={onDocumentsUpdate}
       />
     </div>

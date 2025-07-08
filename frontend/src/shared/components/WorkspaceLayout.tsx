@@ -15,9 +15,9 @@ import {
   Clock, 
   Trash2, 
   Menu, 
-  X,
-  Sparkles
+  X
 } from 'lucide-react';
+import logo3 from '../../assets/logo3.png';
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -199,7 +199,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           
           <div className="flex items-center space-x-2">
             <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-white" />
+              <img 
+                src={logo3} 
+                alt="QuokkaAI Logo" 
+                className="w-4 h-4 object-contain"
+              />
             </div>
             <span className="font-semibold text-gray-900">QuokkaAI</span>
           </div>
@@ -243,7 +247,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           {isCollapsed && !isMobile ? (
             <div className="flex flex-col items-center space-y-4">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+                <img 
+                  src={logo3} 
+                  alt="QuokkaAI Logo" 
+                  className="w-5 h-5 object-contain"
+                />
               </div>
               <Button
                 variant="ghost"
@@ -258,7 +266,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                  <img 
+                    src={logo3} 
+                    alt="QuokkaAI Logo" 
+                    className="w-6 h-6 object-contain"
+                  />
                 </div>
                 <div>
                   <span className="font-bold text-xl text-gray-900">QuokkaAI</span>
@@ -546,20 +558,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           "border-t border-gray-100",
           isCollapsed && !isMobile ? "p-3 flex justify-center" : "p-4"
         )}>
-          {isCollapsed && !isMobile ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 hover:bg-gray-100 rounded-lg"
-              title="User Profile"
-            >
-              <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">U</span>
-              </div>
-            </Button>
-          ) : (
-            <ProfileDropdown />
-          )}
+          <ProfileDropdown isCollapsed={isCollapsed && !isMobile} />
         </div>
       </div>
 

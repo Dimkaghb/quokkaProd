@@ -19,6 +19,7 @@ interface AuthState {
   setLoading: (loading: boolean) => void
   clearError: () => void
   refreshAuth: () => Promise<void>
+  updateUser: (userData: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -97,6 +98,14 @@ export const useAuthStore = create<AuthState>()(
           console.error('Auth refresh failed:', error)
           get().logout()
         }
+      },
+
+      updateUser: (userData: Partial<User>) => {
+        set((state) => ({
+          user: { ...state.user, ...userData } as User,
+          error: null,
+          isLoading: false
+        }))
       }
     }),
     {

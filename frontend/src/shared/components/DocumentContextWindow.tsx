@@ -8,7 +8,6 @@ interface DocumentContextWindowProps {
   documents: UserDocument[];
   isOpen: boolean;
   onClose: () => void;
-  onToggle: () => void;
   onDocumentsUpdate?: () => void; // Callback to refresh documents
 }
 
@@ -16,7 +15,6 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
   documents,
   isOpen,
   onClose,
-  onToggle,
   onDocumentsUpdate
 }) => {
   const [selectedDocument, setSelectedDocument] = useState<UserDocument | null>(null);
@@ -117,43 +115,20 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
 
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className={cn(
-          "fixed right-6 top-1/2 transform -translate-y-1/2 z-40 p-3 rounded-l-xl transition-all duration-300 shadow-lg",
-          isOpen 
-            ? "bg-gray-800 border border-gray-700 text-white" 
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        )}
-        title={isOpen ? "Close context" : "Show document context"}
-      >
-        <div className="flex items-center space-x-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          {!isOpen && (
-            <span className="text-sm font-medium">
-              {documents.length} doc{documents.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      </button>
-
       {/* Context Window */}
       <div className={cn(
-        "fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-30",
+        "fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform transition-transform duration-300 ease-in-out z-30",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h3 className="text-lg font-semibold text-white">Document Context</h3>
-            <p className="text-gray-400 text-sm">{documents.length} document{documents.length !== 1 ? 's' : ''} selected</p>
+            <h3 className="text-lg font-semibold text-gray-900">Document Context</h3>
+            <p className="text-gray-500 text-sm">{documents.length} document{documents.length !== 1 ? 's' : ''} selected</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -162,7 +137,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
         </div>
 
         {/* Upload Section */}
-        <div className="p-4 border-b border-gray-800">
+        <div className="p-4 border-b border-gray-200">
           <div className="space-y-3">
             <label className="block">
               <input
@@ -176,8 +151,8 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
               <div className={cn(
                 "w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-colors cursor-pointer",
                 isUploading 
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed" 
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200" 
+                  : "bg-black hover:bg-gray-800 text-white"
               )}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -190,11 +165,11 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
             </label>
             
             {uploadError && (
-              <div className="p-3 bg-red-900/30 border border-red-700 rounded-lg">
-                <p className="text-red-300 text-sm">{uploadError}</p>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{uploadError}</p>
                 <button 
                   onClick={() => setUploadError(null)}
-                  className="text-red-400 hover:text-red-300 text-xs mt-1"
+                  className="text-red-500 hover:text-red-700 text-xs mt-1"
                 >
                   Dismiss
                 </button>
@@ -208,36 +183,36 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
           {documents.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">📄</div>
-              <p className="text-gray-400">No documents selected</p>
-              <p className="text-gray-500 text-sm mt-2">Upload documents to get started</p>
+              <p className="text-gray-500">No documents selected</p>
+              <p className="text-gray-400 text-sm mt-2">Upload documents to get started</p>
             </div>
           ) : (
             <div className="space-y-3">
               {documents.map((document) => (
                 <div
                   key={document.id}
-                  className="group bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 hover:bg-gray-750 transition-all duration-200 cursor-pointer"
+                  className="group bg-gray-50 border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
                   onClick={() => handleDocumentClick(document)}
                 >
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center group-hover:bg-gray-600 transition-colors">
+                      <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:bg-gray-50 transition-colors">
                         <span className="text-lg">{getFileIcon(document.file_type)}</span>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="text-sm font-medium text-white truncate group-hover:text-blue-300 transition-colors">
+                        <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-black transition-colors">
                           {document.original_filename}
                         </h4>
-                        <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
                           {document.file_type}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-2">
                         {document.summary}
                       </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>{formatFileSize(document.file_size)}</span>
                         <span>{document.chunks_count} chunks</span>
                       </div>
@@ -255,11 +230,11 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
                       <button
                         onClick={(e) => handleDeleteDocument(document.id, e)}
                         disabled={deletingDocuments.has(document.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all disabled:opacity-50"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all disabled:opacity-50"
                         title="Delete document"
                       >
                         {deletingDocuments.has(document.id) ? (
-                          <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -276,8 +251,8 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-800 p-4">
-          <div className="text-xs text-gray-500 text-center">
+        <div className="border-t border-gray-200 p-4">
+          <div className="text-xs text-gray-400 text-center">
             Click on any document to view its content
           </div>
         </div>
@@ -298,7 +273,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-20"
+          className="fixed inset-0 bg-black/10 z-20"
           onClick={onClose}
         />
       )}

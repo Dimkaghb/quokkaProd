@@ -17,6 +17,7 @@ import {
   Crown,
   ChevronDown
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ProfileDropdownProps {
   isCollapsed?: boolean;
@@ -47,7 +48,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
   if (isCollapsed) {
     return (
       <div className="flex justify-center">
-        <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+        <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-white font-medium text-sm">
             {getUserInitials()}
           </span>
@@ -61,20 +62,20 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="w-full justify-start p-0 h-auto hover:bg-gray-50">
           <div className="flex items-center space-x-3 w-full">
-            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-medium text-sm">
                 {getUserInitials()}
               </span>
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="font-medium text-sm text-gray-900 truncate">
-                {getUserName()}
+                {user?.name || getUserName()}
               </div>
               <div className="text-xs text-gray-500">
                 Free Plan
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -82,16 +83,16 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-medium">
                 {getUserInitials()}
               </span>
             </div>
-            <div>
-              <div className="font-medium text-gray-900">
-                {getUserName()}
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 truncate">
+                {user?.name || getUserName()}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 truncate">
                 {user?.email || 'user@example.com'}
               </div>
             </div>
@@ -118,9 +119,11 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem>
-          <User className="w-4 h-4 mr-2" />
-          Profile Settings
+        <DropdownMenuItem asChild>
+          <Link to="/profile" className="flex items-center">
+            <User className="w-4 h-4 mr-2" />
+            Profile Settings
+          </Link>
         </DropdownMenuItem>
         
         <DropdownMenuItem>

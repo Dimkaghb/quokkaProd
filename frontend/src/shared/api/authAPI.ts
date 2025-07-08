@@ -95,6 +95,18 @@ export const authAPI = {
     }
   },
 
+  // Update user profile
+  updateProfile: async (name: string): Promise<User> => {
+    try {
+      const response = await api.put<User>('/auth/profile', {
+        name,
+      })
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
   // Refresh token
   refreshToken: async (): Promise<{ token: string }> => {
     try {

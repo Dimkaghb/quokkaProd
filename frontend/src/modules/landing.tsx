@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import logo3 from '../assets/logo3.png';
 
 export const Landing = () => {
     const [scrollY, setScrollY] = useState(0);
@@ -181,7 +182,11 @@ export const Landing = () => {
                     <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
                         <div className="flex items-center space-x-3 animate-fade-in-up">
                             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">🐨</span>
+                                <img 
+                                    src={logo3} 
+                                    alt="QuokkaAI Logo" 
+                                    className="w-6 h-6 object-contain"
+                                />
                             </div>
                             <span className="text-xl font-semibold text-black">quokkaAI</span>
                         </div>
@@ -265,7 +270,11 @@ export const Landing = () => {
                                 <div className="flex-1 text-center">
                                     <div className="flex items-center justify-center space-x-2">
                                         <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
-                                            <span className="text-white text-xs">🐨</span>
+                                            <img 
+                                                src={logo3} 
+                                                alt="QuokkaAI Logo" 
+                                                className="w-3 h-3 object-contain"
+                                            />
                                         </div>
                                         <span className="text-sm font-medium text-gray-700">QuokkaAI - Data Analysis Assistant</span>
                                     </div>
@@ -279,7 +288,11 @@ export const Landing = () => {
                                     <div className="mb-6">
                                         <div className="flex items-center space-x-3 mb-4">
                                             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                                <span className="text-white text-sm">🐨</span>
+                                                <img 
+                                                    src={logo3} 
+                                                    alt="QuokkaAI Logo" 
+                                                    className="w-6 h-6 object-contain"
+                                                />
                                             </div>
                                             <div>
                                                 <h3 className="font-semibold text-black">QuokkaAI</h3>
@@ -340,7 +353,11 @@ export const Landing = () => {
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                                <span className="text-white text-sm">🐨</span>
+                                                <img 
+                                                    src={logo3} 
+                                                    alt="QuokkaAI Logo" 
+                                                    className="w-6 h-6 object-contain"
+                                                />
                                             </div>
                                             <div>
                                                 <h3 className="font-semibold text-black">QuokkaAI</h3>
@@ -1144,7 +1161,11 @@ export const Landing = () => {
                         <div className="flex flex-col md:flex-row justify-between items-center">
                             <div className="flex items-center space-x-3 mb-4 md:mb-0">
                                 <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold">🐨</span>
+                                    <img 
+                                        src={logo3} 
+                                        alt="QuokkaAI Logo" 
+                                        className="w-6 h-6 object-contain"
+                                    />
                                 </div>
                                 <span className="text-xl font-semibold text-black">quokkaAI</span>
                             </div>

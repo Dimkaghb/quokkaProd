@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from .models import UserCreate, User, Token
-from .crud import create_user, authenticate_user
+from .crud import create_user, authenticate_user, update_user_profile
 from .utils import create_access_token
 from .dependencies import get_current_user
 from datetime import timedelta
@@ -20,6 +20,9 @@ class UserResponse(BaseModel):
     name: str
     email: str
     created_at: str
+
+class UpdateProfileRequest(BaseModel):
+    name: str
 
 @router.post("/signup")
 async def signup(user: UserCreate):
@@ -117,6 +120,57 @@ async def test_auth(current_user: User = Depends(get_current_user)):
         "user_email": current_user.email,
         "user_name": current_user.name
     }
+
+@router.put("/profile")
+async def update_profile(
+    profile_data: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update user profile information.
+    
+    Args:
+        profile_data: Profile data to update
+        current_user: Current authenticated user
+        
+    Returns:
+        Updated user information
+    """
+    try:
+        logger.info(f"Updating profile for user: {current_user.email}")
+        
+        # Update user profile in database
+        updated_user = await update_user_profile(current_user.email, profile_data.name)
+        
+        if not updated_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Format created_at properly
+        created_at_str = ""
+        if updated_user.get("created_at"):
+            if hasattr(updated_user["created_at"], 'isoformat'):
+                created_at_str = updated_user["created_at"].isoformat()
+            else:
+                created_at_str = str(updated_user["created_at"])
+        
+        return UserResponse(
+            id=str(updated_user.get("id") or updated_user.get("_id")),
+            name=updated_user.get("name", ""),
+            email=updated_user.get("email", ""),
+            created_at=created_at_str
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating profile: {str(e)}"
+        )
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):

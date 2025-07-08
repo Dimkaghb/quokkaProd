@@ -12,9 +12,9 @@ import {
   TrendingUp, 
   FileText, 
   Search,
-  Sparkles,
   Send
 } from 'lucide-react';
+import logo3 from '../../assets/logo3.png';
 
 interface StartWorkInterfaceProps {
   onStartWork: (query?: string) => void;
@@ -135,10 +135,14 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
             "mx-auto mb-4 bg-black rounded-2xl flex items-center justify-center shadow-lg",
             isMobile ? "w-16 h-16" : "w-20 h-20 mb-6"
           )}>
-            <Sparkles className={cn(
-              "text-white",
-              isMobile ? "w-8 h-8" : "w-10 h-10"
-            )} />
+            <img 
+              src={logo3} 
+              alt="QuokkaAI Logo" 
+              className={cn(
+                "object-contain",
+                isMobile ? "w-10 h-10" : "w-12 h-12"
+              )}
+            />
           </div>
           <h1 className={cn(
             "font-bold text-gray-900 mb-3 break-words",
