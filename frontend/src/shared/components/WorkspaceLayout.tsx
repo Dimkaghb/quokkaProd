@@ -211,7 +211,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <span className="font-semibold text-gray-900">quokkaAI</span>
           </div>
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 relative z-10">
             <LanguageSwitcher variant="ghost" className="h-9 w-9 p-1" />
             <Button
               variant="ghost"
