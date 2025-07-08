@@ -28,13 +28,15 @@ interface ChatInterfaceProps {
   onNewChat?: () => void;
   selectedDocuments?: UserDocument[];
   initialContextOpen?: boolean;
+  onDocumentsUpdate?: () => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   threadId,
   onThreadCreated,
   selectedDocuments = [],
-  initialContextOpen = false
+  initialContextOpen = false,
+  onDocumentsUpdate
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -574,6 +576,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         isOpen={contextWindowOpen}
         onClose={() => setContextWindowOpen(false)}
         onToggle={() => setContextWindowOpen(!contextWindowOpen)}
+        onDocumentsUpdate={onDocumentsUpdate}
       />
     </div>
   );

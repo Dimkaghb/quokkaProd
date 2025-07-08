@@ -4,6 +4,7 @@ import { useThreadStore } from '../stores/threadStore'
 import { useAuthStore } from '../stores/authStore'
 import DocumentUploadModal from './DocumentUploadModal'
 import DocumentSelectionModal from './DocumentSelectionModal'
+import { documentsAPI } from '../api/documentsAPI'
 import type { UserDocument } from '../api/documentsAPI'
 
 interface ChatSidebarProps {
@@ -125,6 +126,24 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
     return title.length > maxLength ? title.substring(0, maxLength) + '...' : title
   }
 
+  // Handle document deletion
+  const handleDeleteDocument = async (documentId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return
+    }
+
+    try {
+      await documentsAPI.deleteDocument(documentId)
+      // Refresh documents list
+      loadDocuments()
+    } catch (error) {
+      console.error('Delete failed:', error)
+      alert('Failed to delete document')
+    }
+  }
+
   // Handle logout
   const handleLogout = () => {
     clearAll() // Clear all thread data
@@ -203,8 +222,34 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
               </button>
               
               {documents.length > 0 && (
-                <div className="text-xs text-gray-400 text-center">
-                  {documents.length} document{documents.length > 1 ? 's' : ''} in library
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-400 text-center">
+                    {documents.length} document{documents.length > 1 ? 's' : ''} in library
+                  </div>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {documents.slice(0, 5).map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-2 bg-gray-800 rounded text-xs">
+                        <span className="text-gray-300 truncate flex-1 mr-2">
+                          {doc.original_filename}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteDocument(doc.id, e)}
+                          className="text-gray-400 hover:text-red-400 transition-colors"
+                          title="Delete document"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                    {documents.length > 5 && (
+                      <div className="text-xs text-gray-500 text-center">
+                        +{documents.length - 5} more documents
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

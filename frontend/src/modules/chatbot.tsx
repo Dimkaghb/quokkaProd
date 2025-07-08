@@ -15,7 +15,8 @@ export const Chatbot: React.FC = () => {
     setSelectedThread, 
     loadUserThreads, 
     deleteThread,
-    clearSelectedThread
+    clearSelectedThread,
+    loadDocuments
   } = useThreadStore();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +133,7 @@ export const Chatbot: React.FC = () => {
           initialContextOpen={showContextWindow}
           onThreadCreated={handleThreadCreated}
           onNewChat={handleNewChat}
+          onDocumentsUpdate={loadDocuments}
         />
       );
     }
