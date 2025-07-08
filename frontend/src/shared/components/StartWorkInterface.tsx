@@ -15,12 +15,15 @@ import {
   Send
 } from 'lucide-react';
 import logo3 from '../../assets/logo3.png';
+import { useLanguageStore } from '../stores/languageStore';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface StartWorkInterfaceProps {
   onStartWork: (query?: string) => void;
 }
 
 export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartWork }) => {
+  const { t } = useLanguageStore();
   const [query, setQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
 
@@ -50,26 +53,26 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
   const quickActions = [
     {
       icon: Upload,
-      title: 'Upload Data',
-      description: 'Upload spreadsheets, PDFs or integrate data sources for analysis.',
+      title: t('startWork.uploadData'),
+      description: t('startWork.uploadDataDesc'),
       onClick: () => onStartWork()
     },
     {
       icon: MessageSquare,
-      title: 'Ask Questions',
-      description: 'Generate charts, tables, insights, advanced models & more.',
+      title: t('startWork.askQuestions'),
+      description: t('startWork.askQuestionsDesc'),
       onClick: () => onStartWork('Generate charts and insights')
     },
     {
       icon: Brain,
-      title: 'AI Analysis',
-      description: 'Execute AI-powered analysis across your data with smart prompts.',
+      title: t('startWork.aiAnalysis'),
+      description: t('startWork.aiAnalysisDesc'),
       onClick: () => onStartWork('Add AI-based columns')
     },
     {
       icon: HelpCircle,
-      title: 'Expert Help',
-      description: 'Get help with formulas, queries, analysis techniques & more.',
+      title: t('startWork.expertHelp'),
+      description: t('startWork.expertHelpDesc'),
       onClick: () => onStartWork('Help with data analysis')
     }
   ];
@@ -77,22 +80,22 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
   const quantitativeTemplates = [
     {
       icon: FileText,
-      label: 'Clean/Prep Data',
+      label: t('startWork.cleanPrepData'),
       onClick: () => onStartWork('Clean and prepare data')
     },
     {
       icon: Search,
-      label: 'Uncover Insights',
+      label: t('startWork.uncoverInsights'),
       onClick: () => onStartWork('Uncover insights from data')
     },
     {
       icon: BarChart3,
-      label: 'Generate Charts',
+      label: t('startWork.generateCharts'),
       onClick: () => onStartWork('Generate charts and visualizations')
     },
     {
       icon: TrendingUp,
-      label: 'Identify Correlations',
+      label: t('startWork.identifyCorrelations'),
       onClick: () => onStartWork('Identify correlations in data')
     }
   ];
@@ -100,31 +103,36 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
   const qualitativeTemplates = [
     {
       icon: Brain,
-      label: 'Sentiment Analysis',
+      label: t('startWork.sentimentAnalysis'),
       onClick: () => onStartWork('Perform sentiment analysis')
     },
     {
       icon: MessageSquare,
-      label: 'Text Classification',
+      label: t('startWork.textClassification'),
       onClick: () => onStartWork('Classify text data')
     },
     {
       icon: Search,
-      label: 'Extract Entities',
+      label: t('startWork.extractEntities'),
       onClick: () => onStartWork('Extract entities from text')
     },
     {
       icon: TrendingUp,
-      label: 'Topic Modeling',
+      label: t('startWork.topicModeling'),
       onClick: () => onStartWork('Perform topic modeling')
     }
   ];
 
   return (
     <div className={cn(
-      "flex-1 flex flex-col items-center justify-start bg-white overflow-y-auto",
+      "flex-1 flex flex-col items-center justify-start bg-white overflow-y-auto relative",
       isMobile ? "px-4 py-6" : "px-6 py-8"
     )}>
+      {/* Language Switcher - Fixed top right */}
+      <div className="fixed top-6 right-6 z-50">
+        <LanguageSwitcher />
+      </div>
+      
       <div className="max-w-4xl w-full text-center flex-shrink-0">
         {/* Header */}
         <div className={cn(
@@ -148,13 +156,13 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
             "font-bold text-gray-900 mb-3 break-words",
             isMobile ? "text-2xl" : "text-3xl lg:text-4xl mb-4"
           )}>
-            Welcome to QuokkaAI
+            {t('startWork.title')}
           </h1>
           <p className={cn(
             "text-gray-600",
             isMobile ? "text-base" : "text-lg lg:text-xl"
           )}>
-            Your intelligent data analysis assistant
+            {t('startWork.subtitle')}
           </p>
         </div>
 
@@ -168,7 +176,7 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={isMobile ? "Ask me anything..." : "Ask me anything about your data..."}
+              placeholder={isMobile ? t('startWork.placeholderMobile') : t('startWork.placeholder')}
               className={cn(
                 "w-full border-gray-200 rounded-2xl focus:border-gray-300 shadow-sm",
                 isMobile ? [
@@ -264,8 +272,8 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
             "text-gray-600 mb-4",
             isMobile ? "text-sm" : "mb-6"
           )}>
-            or get started quickly with a{' '}
-            <span className="font-semibold text-gray-900">one-click template</span>
+            {t('startWork.orGetStarted')}{' '}
+            <span className="font-semibold text-gray-900">{t('startWork.oneClickTemplate')}</span>
           </p>
           
           <div className={cn(
@@ -280,11 +288,11 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
                 <h3 className={cn(
                   "font-semibold text-gray-900 mb-3",
                   isMobile ? "text-lg" : "text-xl mb-4"
-                )}>Quantitative Analysis</h3>
+                )}>{t('startWork.quantitativeAnalysis')}</h3>
                 <p className={cn(
                   "text-gray-600 mb-4",
                   isMobile ? "text-sm" : "mb-6"
-                )}>Generate tables, charts, insights & more.</p>
+                )}>{t('startWork.quantitativeDesc')}</p>
                 
                 <div className="space-y-2">
                   {quantitativeTemplates.map((template, index) => (
@@ -316,11 +324,11 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
                 <h3 className={cn(
                   "font-semibold text-gray-900 mb-3",
                   isMobile ? "text-lg" : "text-xl mb-4"
-                )}>Qualitative Analysis</h3>
+                )}>{t('startWork.qualitativeAnalysis')}</h3>
                 <p className={cn(
                   "text-gray-600 mb-4",
                   isMobile ? "text-sm" : "mb-6"
-                )}>Add intelligent columns and insights with AI.</p>
+                )}>{t('startWork.qualitativeDesc')}</p>
                 
                 <div className="space-y-2">
                   {qualitativeTemplates.map((template, index) => (
@@ -355,7 +363,7 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
             "text-gray-500",
             isMobile ? "text-xs" : "text-sm"
           )}>
-            Powered by advanced AI • Secure & Private • Enterprise Ready
+            {t('startWork.footer')}
           </p>
         </div>
       </div>

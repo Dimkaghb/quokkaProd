@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuthStore } from '../stores/authStore';
+import { useLanguageStore } from '../stores/languageStore';
 import { Button } from '../../components/ui/button';
 import { 
   DropdownMenu,
@@ -25,6 +26,7 @@ interface ProfileDropdownProps {
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = false }) => {
   const { user, logout } = useAuthStore();
+  const { t } = useLanguageStore();
 
   const handleLogout = () => {
     logout();
@@ -72,7 +74,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
                 {user?.name || getUserName()}
               </div>
               <div className="text-xs text-gray-500">
-                Free Plan
+                {t('profile.freePlan')}
               </div>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -107,12 +109,12 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
             <div>
               <div className="text-sm font-medium text-gray-900 flex items-center">
                 <Crown className="w-4 h-4 mr-1 text-yellow-500" />
-                Free Plan
+                {t('profile.freePlan')}
               </div>
-              <div className="text-xs text-gray-500">3 queries remaining</div>
+              <div className="text-xs text-gray-500">3 {t('profile.queriesRemaining')}</div>
             </div>
             <Button size="sm" className="bg-black hover:bg-gray-800 text-white text-xs">
-              Upgrade
+              {t('profile.upgrade')}
             </Button>
           </div>
         </div>
@@ -122,25 +124,25 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isCollapsed = 
         <DropdownMenuItem asChild>
           <Link to="/profile" className="flex items-center">
             <User className="w-4 h-4 mr-2" />
-            Profile Settings
+            {t('profile.profileSettings')}
           </Link>
         </DropdownMenuItem>
         
         <DropdownMenuItem>
           <Settings className="w-4 h-4 mr-2" />
-          Preferences
+          {t('profile.preferences')}
         </DropdownMenuItem>
         
         <DropdownMenuItem>
           <HelpCircle className="w-4 h-4 mr-2" />
-          Help & Support
+          {t('profile.helpSupport')}
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         
         <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
           <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
+          {t('profile.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

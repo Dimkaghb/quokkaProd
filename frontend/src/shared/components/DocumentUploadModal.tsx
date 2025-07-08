@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { documentsAPI } from '../api/documentsAPI'
 import { useToast } from './Toast'
+import { useLanguageStore } from '../stores/languageStore'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { 
@@ -24,6 +25,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   onClose, 
   onUploadSuccess 
 }) => {
+  const { t } = useLanguageStore()
   const [dragActive, setDragActive] = useState(false)
   const [tags, setTags] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -65,14 +67,14 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
     const fileExt = '.' + file.name.split('.').pop()?.toLowerCase()
     
     if (!allowedTypes.includes(fileExt)) {
-      showToast(`File type ${fileExt} not supported. Allowed types: ${allowedTypes.join(', ')}`, 'error')
+      showToast(t('upload.fileTypeNotSupported', { fileExt, allowedTypes: allowedTypes.join(', ') }), 'error')
       return
     }
 
     // Validate file size (50MB)
     const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
-      showToast('File too large. Maximum size is 50MB', 'error')
+      showToast(t('upload.fileTooLarge'), 'error')
       return
     }
 
@@ -82,7 +84,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
       const response = await documentsAPI.uploadDocument(file, tagList)
       
       if (response.success) {
-        showToast('Document uploaded successfully', 'success')
+        showToast(t('upload.documentUploaded'), 'success')
         // Reset form and close modal
         setTags('')
         if (fileInputRef.current) {
@@ -93,11 +95,11 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           onUploadSuccess()
         }
       } else {
-        showToast('Failed to upload document', 'error')
+        showToast(t('upload.uploadFailed'), 'error')
       }
     } catch (error) {
       console.error('Upload failed:', error)
-      showToast('Error uploading document', 'error')
+      showToast(t('upload.uploadError'), 'error')
     } finally {
       setIsUploading(false)
     }
@@ -113,7 +115,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Upload className="w-5 h-5" />
-            <span>Upload Document</span>
+            <span>{t('upload.uploadDocument')}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -147,16 +149,16 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               
               <div className="text-gray-600">
                 <p className="text-sm font-medium">
-                  {dragActive ? 'Drop your file here' : 'Drag and drop your file here'}
+                  {dragActive ? t('upload.dropFileHere') : t('upload.dragDropFile')}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  or click to browse files
+                  {t('upload.orClickBrowse')}
                 </p>
               </div>
               
               <div className="text-xs text-gray-500">
-                <p>Supported: CSV, Excel, PDF, JSON, TXT, MD</p>
-                <p>Maximum size: 50MB</p>
+                <p>{t('upload.supportedFormats')}</p>
+                <p>{t('upload.maxSize')}</p>
               </div>
             </div>
           </div>
@@ -164,24 +166,24 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           {/* Tags Input */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Tags (optional)
+              {t('upload.tagsOptional')}
             </label>
             <Input
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="e.g., finance, quarterly, report"
+              placeholder={t('upload.tagsPlaceholder')}
               className="w-full"
             />
             <p className="text-xs text-gray-500">
-              Separate multiple tags with commas
+              {t('upload.tagsHelp')}
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2 flex-shrink-0">
           <Button variant="outline" onClick={onClose} disabled={isUploading}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={onButtonClick} 
@@ -191,12 +193,12 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             {isUploading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Uploading...
+                {t('upload.uploading')}
               </>
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                Upload File
+                {t('upload.uploadFile')}
               </>
             )}
           </Button>

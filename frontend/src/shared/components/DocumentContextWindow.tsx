@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DocumentViewer } from './DocumentViewer';
 import { cn } from '../../lib/utils';
 import { documentsAPI } from '../api/documentsAPI';
+import { useLanguageStore } from '../stores/languageStore';
 import type { UserDocument } from '../api/documentsAPI';
 
 interface DocumentContextWindowProps {
@@ -17,6 +18,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
   onClose,
   onDocumentsUpdate
 }) => {
+  const { t } = useLanguageStore();
   const [selectedDocument, setSelectedDocument] = useState<UserDocument | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -58,7 +60,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
   const handleDeleteDocument = async (documentId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     
-    if (!confirm('Are you sure you want to delete this document?')) {
+    if (!confirm(t('documents.confirmDelete'))) {
       return;
     }
 
@@ -73,7 +75,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
       }
     } catch (error) {
       console.error('Delete failed:', error);
-      alert('Failed to delete document');
+      alert(t('documents.deleteFailed'));
     } finally {
       setDeletingDocuments(prev => {
         const newSet = new Set(prev);
@@ -106,9 +108,9 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return t('documents.0Bytes');
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = [t('documents.bytes'), t('documents.kb'), t('documents.mb'), t('documents.gb')];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -123,8 +125,8 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Document Context</h3>
-            <p className="text-gray-500 text-sm">{documents.length} document{documents.length !== 1 ? 's' : ''} selected</p>
+            <h3 className="text-lg font-semibold text-gray-900">{t('documents.documentContext')}</h3>
+            <p className="text-gray-500 text-sm">{t('documents.documentsSelected', { count: documents.length.toString() })}</p>
           </div>
           <button
             onClick={onClose}
@@ -159,7 +161,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <span>
-                  {isUploading ? 'Uploading...' : 'Upload Documents'}
+                  {isUploading ? t('upload.uploading') : t('documents.uploadDocuments')}
                 </span>
               </div>
             </label>
@@ -171,7 +173,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
                   onClick={() => setUploadError(null)}
                   className="text-red-500 hover:text-red-700 text-xs mt-1"
                 >
-                  Dismiss
+                  {t('common.dismiss')}
                 </button>
               </div>
             )}
@@ -183,8 +185,8 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
           {documents.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">📄</div>
-              <p className="text-gray-500">No documents selected</p>
-              <p className="text-gray-400 text-sm mt-2">Upload documents to get started</p>
+              <p className="text-gray-500">{t('documents.noDocuments')}</p>
+              <p className="text-gray-400 text-sm mt-2">{t('documents.uploadToStart')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -214,7 +216,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
                       </p>
                       <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>{formatFileSize(document.file_size)}</span>
-                        <span>{document.chunks_count} chunks</span>
+                        <span>{t('documents.chunks', { count: document.chunks_count.toString() })}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-1">
@@ -231,7 +233,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
                         onClick={(e) => handleDeleteDocument(document.id, e)}
                         disabled={deletingDocuments.has(document.id)}
                         className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all disabled:opacity-50"
-                        title="Delete document"
+                        title={t('documents.deleteDocument')}
                       >
                         {deletingDocuments.has(document.id) ? (
                           <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
@@ -253,7 +255,7 @@ export const DocumentContextWindow: React.FC<DocumentContextWindowProps> = ({
         {/* Footer */}
         <div className="border-t border-gray-200 p-4">
           <div className="text-xs text-gray-400 text-center">
-            Click on any document to view its content
+            {t('documents.clickToView')}
           </div>
         </div>
       </div>

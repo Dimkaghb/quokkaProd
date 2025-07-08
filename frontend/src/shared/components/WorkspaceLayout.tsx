@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ProfileDropdown } from './ProfileDropdown';
 import { LoadingDots } from './LoadingSpinner';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguageStore } from '../stores/languageStore';
 import type { ChatThread } from '../api/chatAPI';
 import { documentsAPI } from '../api/documentsAPI';
 import type { UserDocument } from '../api/documentsAPI';
@@ -38,6 +40,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   onDeleteThread,
   isLoading = false
 }) => {
+  const { t } = useLanguageStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
@@ -192,7 +195,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="h-10 w-10"
+            className="h-9 w-9"
           >
             <Menu className="w-5 h-5" />
           </Button>
@@ -205,17 +208,20 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 className="w-4 h-4 object-contain"
               />
             </div>
-            <span className="font-semibold text-gray-900">QuokkaAI</span>
+            <span className="font-semibold text-gray-900">quokkaAI</span>
           </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNewChat}
-            className="h-10 w-10"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center space-x-1">
+            <LanguageSwitcher variant="ghost" className="h-9 w-9 p-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNewChat}
+              className="h-9 w-9"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -302,30 +308,30 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* Dashboard Stats */}
         {(!isCollapsed || isMobile) && (
-          <div className="p-6 border-b border-gray-100">
-            <div className="grid grid-cols-2 gap-3">
+          <div className={cn("border-b border-gray-100", isMobile ? "p-4" : "p-6")}>
+            <div className={cn("grid gap-3", isMobile ? "grid-cols-2" : "grid-cols-2")}>
               <Card className="border-gray-200">
-                <CardContent className="p-3">
-                  <div className="text-xs text-gray-500 mb-1">Total Chats</div>
-                  <div className="text-lg font-semibold text-gray-900">{dashboardStats.totalChats}</div>
+                <CardContent className={cn(isMobile ? "p-2.5" : "p-3")}>
+                  <div className={cn("text-gray-500 mb-1", isMobile ? "text-xs" : "text-xs")}>{t('dashboard.totalChats')}</div>
+                  <div className={cn("font-semibold text-gray-900", isMobile ? "text-base" : "text-lg")}>{dashboardStats.totalChats}</div>
                 </CardContent>
               </Card>
               <Card className="border-gray-200">
-                <CardContent className="p-3">
-                  <div className="text-xs text-gray-500 mb-1">Documents</div>
-                  <div className="text-lg font-semibold text-gray-900">{dashboardStats.totalDocuments}</div>
+                <CardContent className={cn(isMobile ? "p-2.5" : "p-3")}>
+                  <div className={cn("text-gray-500 mb-1", isMobile ? "text-xs" : "text-xs")}>{t('dashboard.documents')}</div>
+                  <div className={cn("font-semibold text-gray-900", isMobile ? "text-base" : "text-lg")}>{dashboardStats.totalDocuments}</div>
                 </CardContent>
               </Card>
               <Card className="border-gray-200">
-                <CardContent className="p-3">
-                  <div className="text-xs text-gray-500 mb-1">Active Today</div>
-                  <div className="text-lg font-semibold text-green-600">{dashboardStats.activeToday}</div>
+                <CardContent className={cn(isMobile ? "p-2.5" : "p-3")}>
+                  <div className={cn("text-gray-500 mb-1", isMobile ? "text-xs" : "text-xs")}>{t('dashboard.activeToday')}</div>
+                  <div className={cn("font-semibold text-green-600", isMobile ? "text-base" : "text-lg")}>{dashboardStats.activeToday}</div>
                 </CardContent>
               </Card>
               <Card className="border-gray-200">
-                <CardContent className="p-3">
-                  <div className="text-xs text-gray-500 mb-1">Analyses</div>
-                  <div className="text-lg font-semibold text-blue-600">{dashboardStats.totalAnalyses}</div>
+                <CardContent className={cn(isMobile ? "p-2.5" : "p-3")}>
+                  <div className={cn("text-gray-500 mb-1", isMobile ? "text-xs" : "text-xs")}>{t('dashboard.analyses')}</div>
+                  <div className={cn("font-semibold text-blue-600", isMobile ? "text-base" : "text-lg")}>{dashboardStats.totalAnalyses}</div>
                 </CardContent>
               </Card>
             </div>
@@ -333,7 +339,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         )}
 
         {/* New Chat Button */}
-        <div className={cn("p-4", (!isCollapsed || isMobile) && "px-6")}>
+        <div className={cn(isMobile ? "p-4" : "p-4", (!isCollapsed || isMobile) && !isMobile && "px-6")}>
           {isCollapsed && !isMobile ? (
             <div className="flex justify-center">
               <Button
@@ -341,7 +347,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 disabled={isLoading}
                 size="icon"
                 className="w-10 h-10 bg-black hover:bg-gray-800 text-white rounded-lg"
-                title="New Analysis"
+                title={t('dashboard.newAnalysis')}
               >
                 {isLoading ? (
                   <LoadingDots />
@@ -354,14 +360,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <Button
               onClick={handleNewChat}
               disabled={isLoading}
-              className="w-full bg-black hover:bg-gray-800 text-white"
+              className={cn("w-full bg-black hover:bg-gray-800 text-white", isMobile ? "py-2.5" : "")}
             >
               {isLoading ? (
                 <LoadingDots />
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  <span className="ml-2">New Analysis</span>
+                  <span className="ml-2">{t('dashboard.newAnalysis')}</span>
                 </>
               )}
             </Button>
@@ -379,7 +385,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   variant="ghost"
                   size="icon"
                   className="w-10 h-10 hover:bg-gray-100 rounded-lg"
-                  title={`${threads.length} Recent Analyses`}
+                  title={`${threads.length} ${t('sidebar.recentChats')}`}
                 >
                   <div className="relative">
                     <MessageSquare className="w-5 h-5 text-gray-600" />
@@ -396,7 +402,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   variant="ghost"
                   size="icon"
                   className="w-10 h-10 hover:bg-gray-100 rounded-lg"
-                  title={`${documents.length} Documents`}
+                  title={`${documents.length} ${t('dashboard.documents')}`}
                 >
                   <div className="relative">
                     <FileText className="w-5 h-5 text-gray-600" />
@@ -413,7 +419,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   variant="ghost"
                   size="icon"
                   className="w-10 h-10 hover:bg-gray-100 rounded-lg"
-                  title={`${dashboardStats.totalAnalyses} Total Analyses`}
+                  title={`${dashboardStats.totalAnalyses} ${t('dashboard.analyses')}`}
                 >
                   <div className="relative">
                     <BarChart3 className="w-5 h-5 text-gray-600" />
@@ -442,18 +448,18 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               ))}
             </div>
           ) : (
-            <div className="px-6 py-2">
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                  Recent Analyses
+            <div className={cn(isMobile ? "px-4 py-2" : "px-6 py-2")}>
+              <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  {t('sidebar.recentChats')}
                 </h3>
                 
-                <div className="space-y-2">
+                <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
                   {threads.length === 0 ? (
-                    <div className="text-center py-8">
-                      <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">No analyses yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Create your first analysis to get started</p>
+                    <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
+                      <MessageSquare className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
+                      <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>No analyses yet</p>
+                      <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>Create your first analysis to get started</p>
                     </div>
                   ) : (
                     threads.map((thread) => (
@@ -461,7 +467,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                         key={thread.id}
                         onClick={() => handleThreadSelect(thread.id)}
                         className={cn(
-                          "group relative p-3 rounded-lg cursor-pointer transition-all duration-200 border touch-manipulation",
+                          "group relative rounded-lg cursor-pointer transition-all duration-200 border touch-manipulation",
+                          isMobile ? "p-2.5" : "p-3",
                           selectedThreadId === thread.id
                             ? 'bg-gray-50 border-gray-300'
                             : 'hover:bg-gray-50 border-transparent hover:border-gray-200 active:bg-gray-100'
@@ -469,16 +476,16 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                            <div className={cn("flex items-center space-x-2", isMobile ? "mb-0.5" : "mb-1")}>
+                              <MessageSquare className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                              <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
                                 {formatThreadTitle(thread)}
                               </p>
                             </div>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500">
-                              <Clock className="w-3 h-3" />
+                            <div className={cn("flex items-center space-x-2 text-gray-500", isMobile ? "text-xs" : "text-xs")}>
+                              <Clock className={cn(isMobile ? "w-3 h-3" : "w-3 h-3")} />
                               <span>{new Date(thread.updated_at).toLocaleDateString()}</span>
-                              {thread.message_count && (
+                              {thread.message_count && !isMobile && (
                                 <span className="text-gray-400">• {thread.message_count} messages</span>
                               )}
                             </div>
@@ -489,12 +496,15 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                             size="icon"
                             onClick={(e) => handleDeleteThread(thread.id, e)}
                             disabled={deletingThreadId === thread.id}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-gray-400 hover:text-red-500 touch-manipulation"
+                            className={cn(
+                              "opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 touch-manipulation",
+                              isMobile ? "h-7 w-7" : "h-8 w-8"
+                            )}
                           >
                             {deletingThreadId === thread.id ? (
                               <LoadingDots />
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className={cn(isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
                             )}
                           </Button>
                         </div>
@@ -505,36 +515,39 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
               </div>
 
               {/* Documents Section */}
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                  Documents
+              <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  {t('dashboard.documents')}
                 </h3>
                 
                 {isLoadingDocuments ? (
-                  <div className="text-center py-4">
+                  <div className={cn("text-center", isMobile ? "py-3" : "py-4")}>
                     <LoadingDots />
                   </div>
                 ) : documents.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">No documents yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Upload files to start analyzing</p>
+                  <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
+                    <FileText className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
+                    <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>No documents yet</p>
+                    <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>Upload files to start analyzing</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
                     {documents.slice(0, 5).map((doc) => {
                       const IconComponent = getFileIcon(doc.file_type);
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
+                          className={cn(
+                            "flex items-center space-x-3 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation",
+                            isMobile ? "p-2" : "p-2"
+                          )}
                         >
-                          <IconComponent className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <IconComponent className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
                               {doc.filename}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-xs")}>
                               {formatFileSize(doc.file_size)}
                             </p>
                           </div>
@@ -542,7 +555,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                       );
                     })}
                     {documents.length > 5 && (
-                      <p className="text-xs text-gray-500 text-center pt-2">
+                      <p className={cn("text-gray-500 text-center", isMobile ? "text-xs pt-1" : "text-xs pt-2")}>
                         +{documents.length - 5} more files
                       </p>
                     )}
@@ -556,7 +569,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         {/* User Profile */}
         <div className={cn(
           "border-t border-gray-100",
-          isCollapsed && !isMobile ? "p-3 flex justify-center" : "p-4"
+          isCollapsed && !isMobile ? "p-3 flex justify-center" : isMobile ? "p-3" : "p-4"
         )}>
           <ProfileDropdown isCollapsed={isCollapsed && !isMobile} />
         </div>

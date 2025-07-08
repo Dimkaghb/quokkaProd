@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../shared/stores/authStore';
+import { useLanguageStore } from '../shared/stores/languageStore';
 import { authAPI } from '../shared/api/authAPI';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -22,6 +23,7 @@ type ProfileSection = 'account' | 'settings' | 'chats' | 'charts' | 'subscriptio
 
 export const Profile: React.FC = () => {
   const { user, updateUser } = useAuthStore();
+  const { t } = useLanguageStore();
   const [activeSection, setActiveSection] = useState<ProfileSection>('account');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,31 +94,31 @@ export const Profile: React.FC = () => {
   const sidebarItems = [
     {
       id: 'account' as ProfileSection,
-      label: 'Account Settings',
+      label: t('profile.accountSettings'),
       icon: User,
       description: 'Manage your personal information'
     },
     {
       id: 'settings' as ProfileSection,
-      label: 'Preferences',
+      label: t('profile.preferences'),
       icon: Settings,
       description: 'App settings and preferences'
     },
     {
       id: 'chats' as ProfileSection,
-      label: 'Chat History',
+      label: t('profile.chatHistory'),
       icon: MessageSquare,
       description: 'View and manage your chats'
     },
     {
       id: 'charts' as ProfileSection,
-      label: 'Charts & Analytics',
+      label: t('profile.chartsAnalytics'),
       icon: BarChart3,
       description: 'Your visualization history'
     },
     {
       id: 'subscription' as ProfileSection,
-      label: 'Subscription',
+      label: t('profile.subscription'),
       icon: Crown,
       description: 'Manage your plan and billing'
     }
@@ -128,7 +130,7 @@ export const Profile: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Account Settings</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('profile.accountSettings')}</h2>
               <Button
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
@@ -136,7 +138,7 @@ export const Profile: React.FC = () => {
                 className="flex items-center space-x-2"
               >
                 <Edit3 className="w-4 h-4" />
-                <span>{isEditing ? 'Cancel' : 'Edit'}</span>
+                <span>{isEditing ? t('profile.cancel') : t('profile.edit')}</span>
               </Button>
             </div>
 
@@ -144,7 +146,7 @@ export const Profile: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <User className="w-5 h-5" />
-                  <span>Personal Information</span>
+                  <span>{t('profile.personalInfo')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -163,7 +165,7 @@ export const Profile: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
+                      {t('profile.firstName')}
                     </label>
                     <Input
                       value={formData.firstName}
@@ -174,7 +176,7 @@ export const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
+                      {t('profile.lastName')}
                     </label>
                     <Input
                       value={formData.lastName}
@@ -185,7 +187,7 @@ export const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
+                      {t('profile.email')}
                     </label>
                     <Input
                       value={formData.email}
@@ -196,7 +198,7 @@ export const Profile: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone
+                      {t('profile.phone')}
                     </label>
                     <Input
                       value={formData.phone}
@@ -207,7 +209,7 @@ export const Profile: React.FC = () => {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company
+                      {t('profile.company')}
                     </label>
                     <Input
                       value={formData.company}
@@ -222,10 +224,10 @@ export const Profile: React.FC = () => {
                   <div className="flex space-x-3 pt-4">
                     <Button onClick={handleSave} className="bg-black hover:bg-gray-800" disabled={isSaving}>
                       <Save className="w-4 h-4 mr-2" />
-                      {isSaving ? 'Saving...' : 'Save Changes'}
+                      {isSaving ? t('profile.saving') : t('profile.save')}
                     </Button>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>
-                      Cancel
+                      {t('profile.cancel')}
                     </Button>
                   </div>
                 )}

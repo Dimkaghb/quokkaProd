@@ -5,6 +5,8 @@ import { RechartsVisualization } from './RechartsVisualization';
 import { LoadingDots } from './LoadingSpinner';
 import { useToast } from './Toast';
 import { DocumentContextWindow } from './DocumentContextWindow';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguageStore } from '../stores/languageStore';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
@@ -40,6 +42,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   initialContextOpen = false,
   onDocumentsUpdate
 }) => {
+  const { t } = useLanguageStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -99,12 +102,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setMessages([{
         id: 'welcome',
         type: 'assistant',
-        content: "Hello! I'm your AI data analysis assistant. Upload a file or ask me anything about data analysis, and I'll help you create visualizations and insights!",
+        content: t('chat.welcome'),
         timestamp: new Date()
       }]);
       setCurrentThreadId(null);
     }
-  }, [threadId, messages.length]);
+  }, [threadId, messages.length, t]);
 
   // Load thread context when threadId changes
   useEffect(() => {
@@ -116,7 +119,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setMessages([{
         id: 'welcome',
         type: 'assistant',
-        content: "Hello! I'm your AI data analysis assistant. Upload a file or ask me anything about data analysis, and I'll help you create visualizations and insights!",
+        content: t('chat.welcome'),
         timestamp: new Date()
       }]);
       setCurrentThreadId(null);
@@ -140,14 +143,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }));
         
         setMessages(threadMessages);
-        showToast('Thread loaded successfully', 'success');
+        showToast(t('chat.threadLoaded'), 'success');
       } else {
-        showToast('Failed to load thread context', 'error');
+        showToast(t('chat.threadLoadError'), 'error');
         console.error('Failed to load thread context:', response);
       }
     } catch (error) {
       console.error('Error loading thread context:', error);
-      showToast('Error loading thread context', 'error');
+      showToast(t('chat.threadLoadError'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -168,14 +171,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (onThreadCreated) {
           onThreadCreated(response.thread.id);
         }
-        showToast('New thread created', 'success');
+        showToast(t('chat.threadCreated'), 'success');
         return response.thread.id;
       } else {
         throw new Error(response.message || 'Failed to create thread');
       }
     } catch (error) {
       console.error('Error creating thread:', error);
-      showToast('Failed to create thread', 'error');
+      showToast(t('chat.threadCreateError'), 'error');
       return null;
     }
   };
@@ -188,13 +191,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     // If file is provided, upload it first
     if (file) {
-      messageContent = `Проанализируй загруженный файл: ${file.name}`;
+      messageContent = t('chat.analyzeFile', { fileName: file.name });
       
       // Add user message about file upload
       const userMessage: Message = {
         id: Date.now().toString(),
         type: 'user',
-        content: `📁 Загружаю файл: ${file.name}`,
+        content: `📁 ${t('chat.uploadingFile', { fileName: file.name })}`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, userMessage]);
@@ -205,13 +208,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         const uploadResponse = await documentsAPI.uploadDocument(file);
         if (uploadResponse.success && uploadResponse.document) {
           uploadedDocumentId = uploadResponse.document.id;
-          showToast(`Файл ${file.name} загружен успешно!`, 'success');
+          showToast(t('chat.fileUploaded', { fileName: file.name }), 'success');
           
           // Update message to show successful upload
           const uploadSuccessMessage: Message = {
             id: (Date.now() + 1).toString(),
             type: 'assistant',
-            content: `✅ Файл ${file.name} загружен! Создаю визуализацию...`,
+            content: t('chat.fileUploadedCreatingViz', { fileName: file.name }),
             timestamp: new Date()
           };
           setMessages(prev => [...prev, uploadSuccessMessage]);
@@ -220,7 +223,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       } catch (error) {
         console.error('Error uploading file:', error);
-        showToast('Ошибка загрузки файла', 'error');
+        showToast(t('chat.fileUploadError'), 'error');
         setIsLoading(false);
         return;
       }
@@ -267,19 +270,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         };
         
         setMessages(prev => [...prev, assistantMessage]);
-        showToast('Message sent successfully', 'success');
+        showToast(t('chat.messageSent'), 'success');
       } else {
         throw new Error(response.message || 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      showToast('Failed to send message', 'error');
+      showToast(t('chat.messageSendError'), 'error');
       
       // Add error message
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: 'Sorry, I encountered an error while processing your request. Please try again.',
+        content: t('chat.errorMessage'),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -336,24 +339,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <button
           onClick={() => setContextWindowOpen(!contextWindowOpen)}
           className={cn(
-            "fixed top-6 right-6 z-50 flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg",
+            "fixed top-4 right-4 z-50 flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-lg",
             contextWindowOpen 
               ? "bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200" 
               : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
           )}
-          title={contextWindowOpen ? "Close documents" : "Show documents"}
+          title={contextWindowOpen ? t('chat.closeDocuments') : t('chat.showDocuments')}
         >
-          <FileText className="w-4 h-4" />
-          <span className="text-sm font-medium">{selectedDocuments.length} files</span>
+          <FileText className="w-3 h-3" />
+          <span className="text-xs font-medium">{selectedDocuments.length} {t('chat.files')}</span>
         </button>
       )}
 
       {/* Header - Hidden on mobile since we have the mobile header in WorkspaceLayout */}
       {!isMobile && threadTitle && (
-        <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
+        <div className="border-b border-gray-100 px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">{threadTitle}</h1>
+              <h1 className="text-base font-semibold text-gray-900">{threadTitle}</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <LanguageSwitcher />
             </div>
           </div>
         </div>
@@ -368,8 +374,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }}
       >
         <div className={cn(
-          "max-w-5xl mx-auto space-y-6",
-          isMobile ? "px-4 py-6" : "px-8 py-8"
+          "max-w-4xl mx-auto space-y-4",
+          isMobile ? "px-3 py-4" : "px-6 py-6"
         )}>
           {messages.map((message) => (
             <div
@@ -387,12 +393,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   "rounded-lg"
                 )}>
                   <div className={cn(
-                    isMobile ? "p-4" : "p-6"
+                    isMobile ? "p-3" : "p-4"
                   )}>
                     <div className="prose prose-sm max-w-none">
                       <p className={cn(
                         "whitespace-pre-wrap leading-relaxed text-gray-900",
-                        isMobile ? "text-sm" : "text-base"
+                        isMobile ? "text-sm" : "text-sm"
                       )}>
                         {message.content}
                       </p>
@@ -400,8 +406,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     
                     {message.visualization && (
                       <div className={cn(
-                        "mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100",
-                        isMobile && "p-3"
+                        "mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100",
+                        isMobile && "p-2"
                       )}>
                         <RechartsVisualization 
                           chartConfig={message.visualization}
@@ -411,10 +417,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     
                     {message.analysis && (
                       <div className={cn(
-                        "mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100",
-                        isMobile && "p-3"
+                        "mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100",
+                        isMobile && "p-2"
                       )}>
-                        <p className="text-sm text-blue-800 leading-relaxed">{message.analysis}</p>
+                        <p className="text-xs text-blue-800 leading-relaxed">{message.analysis}</p>
                       </div>
                     )}
                   </div>
@@ -453,10 +459,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           "border-t border-gray-100 bg-white flex-shrink-0",
           isMobile ? [
             "fixed bottom-0 left-0 right-0 z-40",
-            "px-4 py-4",
+            "px-3 py-3",
             "border-t border-gray-200"
           ] : [
-            "px-8 py-6"
+            "px-6 py-4"
           ],
           dragActive && "bg-blue-50 border-blue-200"
         )}
@@ -466,9 +472,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       >
         <div className={cn(
           "mx-auto",
-          !isMobile && "max-w-5xl"
+          !isMobile && "max-w-4xl"
         )}>
-          <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+          <form onSubmit={handleSubmit} className="flex items-end space-x-2">
             <div className="flex-1">
               <Textarea
                 ref={textareaRef}
@@ -477,21 +483,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onKeyPress={handleKeyPress}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
-                placeholder={isMobile ? "Ask me anything..." : "Ask me anything about your data..."}
+                placeholder={t('chat.typeMessage')}
                 className={cn(
                   "resize-none border-gray-200 focus:border-gray-300 focus:ring-1 focus:ring-gray-200 rounded-lg",
                   isMobile ? [
-                    "min-h-[48px] max-h-[120px]",
-                    "text-base px-4 py-3", // Prevent zoom on iOS
+                    "min-h-[40px] max-h-[100px]",
+                    "text-sm px-3 py-2", // Prevent zoom on iOS
                   ] : [
-                    "min-h-[52px] max-h-[160px] px-4 py-3 text-base"
+                    "min-h-[44px] max-h-[120px] px-3 py-2 text-sm"
                   ]
                 )}
                 disabled={isLoading}
               />
             </div>
             
-            <div className="flex space-x-2">
+            <div className="flex space-x-1.5">
               <Button
                 type="button"
                 variant="outline"
@@ -499,14 +505,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
                 className={cn(
-                  "h-12 w-12 border-gray-200 hover:bg-gray-50",
+                  "h-10 w-10 border-gray-200 hover:bg-gray-50",
                   isMobile && "touch-manipulation"
                 )}
               >
                 {isMobile ? (
-                  <Paperclip className="w-4 h-4" />
+                  <Paperclip className="w-3 h-3" />
                 ) : (
-                  <Upload className="w-4 h-4" />
+                  <Upload className="w-3 h-3" />
                 )}
               </Button>
               
@@ -514,7 +520,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 type="submit"
                 disabled={isLoading || !inputValue.trim()}
                 className={cn(
-                  "h-12 w-12 bg-black hover:bg-gray-800 text-white rounded-lg",
+                  "h-10 w-10 bg-black hover:bg-gray-800 text-white rounded-lg",
                   "touch-manipulation"
                 )}
               >

@@ -1,8 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguageStore } from '../shared/stores/languageStore';
+import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
 import logo3 from '../assets/logo3.png';
 
 export const Landing = () => {
+    const { t } = useLanguageStore();
     const [scrollY, setScrollY] = useState(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -174,61 +177,65 @@ export const Landing = () => {
                 }
             `}</style>
             
-            <div className="min-h-screen bg-white text-black">
+            <div className="min-h-screen bg-white text-black overflow-x-hidden">
                 {/* Navigation */}
                 <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
                     scrollY > 50 ? 'bg-white/90 backdrop-blur-md border-b border-gray-200' : 'bg-white'
                 }`}>
-                    <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+                                            <div className="flex justify-between items-center px-4 py-3 max-w-6xl mx-auto">
                         <div className="flex items-center space-x-3 animate-fade-in-up">
-                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                            <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
                                 <img 
                                     src={logo3} 
                                     alt="QuokkaAI Logo" 
-                                    className="w-6 h-6 object-contain"
+                                    className="w-5 h-5 object-contain"
                                 />
                             </div>
-                            <span className="text-xl font-semibold text-black">quokkaAI</span>
+                            <span className="text-lg font-semibold text-black">quokkaAI</span>
                         </div>
                         
                         {/* Desktop Navigation */}
                         <div className="hidden lg:flex items-center space-x-8">
-                            <button onClick={() => scrollToSection('features')} className="text-gray-600 hover:text-black transition-colors">Features</button>
-                            <button onClick={() => scrollToSection('how-it-works')} className="text-gray-600 hover:text-black transition-colors">How It Works</button>
-                            <button onClick={() => scrollToSection('pricing')} className="text-gray-600 hover:text-black transition-colors">Pricing</button>
+                            <button onClick={() => scrollToSection('features')} className="text-gray-600 hover:text-black transition-colors">{t('nav.features')}</button>
+                            <button onClick={() => scrollToSection('how-it-works')} className="text-gray-600 hover:text-black transition-colors">{t('nav.howItWorks')}</button>
+                            <button onClick={() => scrollToSection('pricing')} className="text-gray-600 hover:text-black transition-colors">{t('nav.pricing')}</button>
                             <div className="flex items-center space-x-4 ml-8">
-                                <Link to="/auth" className="text-gray-600 hover:text-black transition-colors">Sign in</Link>
+                                <LanguageSwitcher />
+                                <Link to="/auth" className="text-gray-600 hover:text-black transition-colors">{t('nav.signIn')}</Link>
                                 <Link to="/chat" className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                                    Start for free
+                                    {t('nav.startForFree')}
                             </Link>
                             </div>
                         </div>
                         
-                        {/* Mobile Menu Button */}
-                        <button 
-                            className="lg:hidden p-2"
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        >
-                            <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-                                <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-                                <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`}></div>
-                                <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
-                            </div>
-                        </button>
+                        {/* Mobile Navigation */}
+                        <div className="lg:hidden flex items-center space-x-2">
+                            <LanguageSwitcher variant="ghost" className="h-8 w-8 p-1" />
+                            <button 
+                                className="p-2"
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            >
+                                <div className="w-6 h-6 flex flex-col justify-center space-y-1">
+                                    <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+                                    <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`}></div>
+                                    <div className={`w-full h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                     
                     {/* Mobile Menu */}
                     <div className={`lg:hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden bg-white border-t border-gray-200`}>
                         <div className="px-6 py-6 space-y-4">
-                            <button onClick={() => scrollToSection('features')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">Features</button>
-                            <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">How It Works</button>
-                            <button onClick={() => scrollToSection('pricing')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">Pricing</button>
+                            <button onClick={() => scrollToSection('features')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.features')}</button>
+                            <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.howItWorks')}</button>
+                            <button onClick={() => scrollToSection('pricing')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.pricing')}</button>
                             <div className="pt-4 space-y-3">
                                 <Link to="/auth" className="block w-full text-center py-2 text-gray-600 hover:text-black transition-colors border border-gray-300 rounded-lg">
-                                    Sign In
+                                    {t('nav.signIn')}
                                 </Link>
                                 <Link to="/chat" className="block w-full text-center bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors">
-                                    Start for free
+                                    {t('nav.startForFree')}
                                 </Link>
                             </div>
                         </div>
@@ -236,109 +243,108 @@ export const Landing = () => {
                 </nav>
 
                 {/* Hero Section */}
-                <section className="pt-32 pb-20 max-w-4xl mx-auto px-6 text-center">
-                    <div className="mb-8 animate-fade-in-up">
-                        <h1 className="text-5xl md:text-6xl font-bold mb-6 text-black leading-tight">
-                            The next gen of <span className="text-gray-600">data analysis</span>.
+                <section className="pt-24 pb-16 max-w-3xl mx-auto px-4 text-center">
+                    <div className="mb-6 animate-fade-in-up">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-black leading-tight">
+                            {t('landing.hero.title')}
                         </h1>
-                        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                            QuokkaAI is the engine that builds, scales and grows your data insights to the next level.
+                        <p className="text-lg text-gray-600 mb-6 max-w-xl mx-auto leading-relaxed">
+                            {t('landing.hero.subtitle')}
                     </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-delay">
-                            <Link to="/chat" className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
-                                Start for free
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-delay">
+                            <Link to="/chat" className="bg-black text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
+                                {t('landing.hero.getStarted')}
                         </Link>
-                            <button className="text-gray-600 hover:text-black transition-colors px-6 py-3">
-                                Talk to sales
+                            <button className="text-gray-600 hover:text-black transition-colors px-5 py-2.5">
+                                {t('landing.hero.talkToSales')}
                         </button>
                     </div>
                     </div>
                 </section>
 
                                 {/* Main Dashboard Preview */}
-                <section className="py-20 max-w-7xl mx-auto px-6">
-                    <div className="bg-gray-50 rounded-2xl p-8 data-grid animate-on-scroll">
+                <section className="py-8 md:py-16 max-w-6xl mx-auto px-2 md:px-4">
+                    <div className="bg-gray-50 rounded-lg md:rounded-xl p-2 md:p-6 data-grid animate-on-scroll">
                         {/* macOS Window */}
-                        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl md:shadow-2xl border border-gray-200 overflow-hidden max-h-96 md:max-h-none">
                             {/* macOS Title Bar */}
-                            <div className="bg-gray-100 border-b border-gray-200 p-4 flex items-center">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                </div>
+                            <div className="bg-gray-100 border-b border-gray-200 p-2 md:p-4 flex items-center">
+                                <div className="flex items-center space-x-1 md:space-x-2">
+                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full"></div>
+                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-yellow-500 rounded-full"></div>
+                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></div>
+                    </div>
                                 <div className="flex-1 text-center">
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
+                                    <div className="flex items-center justify-center space-x-1 md:space-x-2">
+                                        <div className="w-3 h-3 md:w-4 md:h-4 bg-black rounded flex items-center justify-center">
                                             <img 
                                                 src={logo3} 
                                                 alt="QuokkaAI Logo" 
-                                                className="w-3 h-3 object-contain"
+                                                className="w-2 h-2 md:w-3 md:h-3 object-contain"
                                             />
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-700">QuokkaAI - Data Analysis Assistant</span>
-                                    </div>
                                 </div>
-                            </div>
-
+                                        <span className="text-xs md:text-sm font-medium text-gray-700">quokkaAI - Data Analysis Assistant</span>
+                                    </div>
+                                        </div>
+                                    </div>
+                                    
                             {/* Dashboard Content */}
-                            <div className="flex">
+                            <div className="flex flex-col md:flex-row overflow-hidden">
                                 {/* Left Sidebar */}
-                                <div className="w-80 bg-white border-r border-gray-200 p-6">
-                                    <div className="mb-6">
-                                        <div className="flex items-center space-x-3 mb-4">
-                                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                                <div className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-2 md:p-4">
+                                    <div className="mb-2 md:mb-4">
+                                        <div className="flex items-center space-x-2 mb-2 md:mb-3">
+                                            <div className="w-5 h-5 md:w-6 md:h-6 bg-black rounded-lg flex items-center justify-center">
                                                 <img 
                                                     src={logo3} 
                                                     alt="QuokkaAI Logo" 
-                                                    className="w-6 h-6 object-contain"
+                                                    className="w-3 h-3 md:w-4 md:h-4 object-contain"
                                                 />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-black">QuokkaAI</h3>
-                                                <p className="text-sm text-gray-600">Data Analysis Assistant</p>
-                                            </div>
                                         </div>
-                                    </div>
+                                            <div>
+                                                <h3 className="text-xs md:text-sm font-semibold text-black">quokkaAI</h3>
+                                                <p className="text-xs text-gray-600 hidden md:block">Data Analysis Assistant</p>
+                                        </div>
+                                            </div>
+                                            </div>
 
                                     {/* Stats Grid */}
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-gray-50 rounded-lg p-3">
-                                            <div className="text-lg font-bold text-black">5</div>
-                                            <div className="text-xs text-gray-600">Total Chats</div>
+                                    <div className="grid grid-cols-4 md:grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-4">
+                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
+                                            <div className="text-sm md:text-base font-bold text-black">5</div>
+                                            <div className="text-xs text-gray-600">{t('dashboard.totalChats')}</div>
                                         </div>
-                                        <div className="bg-gray-50 rounded-lg p-3">
-                                            <div className="text-lg font-bold text-black">8</div>
-                                            <div className="text-xs text-gray-600">Documents</div>
-                                        </div>
-                                        <div className="bg-gray-50 rounded-lg p-3">
-                                            <div className="text-lg font-bold text-green-600">0</div>
-                                            <div className="text-xs text-gray-600">Active Today</div>
-                                        </div>
-                                        <div className="bg-gray-50 rounded-lg p-3">
-                                            <div className="text-lg font-bold text-blue-600">52</div>
-                                            <div className="text-xs text-gray-600">Analyses</div>
-                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
+                                            <div className="text-sm md:text-base font-bold text-black">8</div>
+                                            <div className="text-xs text-gray-600">{t('dashboard.documents')}</div>
                                     </div>
+                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
+                                            <div className="text-sm md:text-base font-bold text-green-600">0</div>
+                                            <div className="text-xs text-gray-600">{t('dashboard.activeToday')}</div>
+                                </div>
+                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
+                                            <div className="text-sm md:text-base font-bold text-blue-600">52</div>
+                                            <div className="text-xs text-gray-600">{t('dashboard.analyses')}</div>
+                            </div>
+                        </div>
 
                                     {/* New Analysis Button */}
-                                    <button className="w-full bg-black text-white rounded-lg py-3 mb-6 font-medium">
-                                        + New Analysis
+                                    <button className="w-full bg-black text-white rounded-lg py-1.5 md:py-2 mb-2 md:mb-4 text-xs md:text-sm font-medium">
+                                        {t('dashboard.newAnalysis')}
                                     </button>
 
-                                    {/* Recent Analyses */}
-                                    <div>
-                                        <h4 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">Recent Analyses</h4>
-                                        <div className="space-y-3">
+                                    {/* Recent Analyses - Hidden on mobile */}
+                                    <div className="hidden md:block">
+                                        <h4 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">{t('dashboard.recentAnalyses')}</h4>
+                                        <div className="space-y-2">
                                             {[
-                                                { title: "Hello! I'm ready to analyze", date: "07.07.2025", messages: "10 messages" },
-                                                { title: "Hello! I'm ready to analyze", date: "07.07.2025", messages: "6 messages" },
-                                                { title: "Hello! I'm ready to analyze", date: "07.07.2025", messages: "8 messages" }
+                                                { title: t('dashboard.ready'), date: "07.07.2025", messages: `10 ${t('dashboard.messages')}` },
+                                                { title: t('dashboard.ready'), date: "07.07.2025", messages: `6 ${t('dashboard.messages')}` }
                                             ].map((item, index) => (
-                                                <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                                <div key={index} className="bg-gray-50 rounded-lg p-2">
                                                     <div className="flex items-center space-x-2 mb-1">
-                                                        <div className="w-4 h-4 bg-gray-300 rounded"></div>
-                                                        <h5 className="text-sm font-medium text-black truncate">{item.title}</h5>
+                                                        <div className="w-3 h-3 bg-gray-300 rounded"></div>
+                                                        <h5 className="text-xs font-medium text-black truncate">{item.title}</h5>
                                                     </div>
                                                     <div className="text-xs text-gray-500">{item.date} • {item.messages}</div>
                                                 </div>
@@ -346,11 +352,11 @@ export const Landing = () => {
                                         </div>
                                     </div>
                                 </div>
-
+                                
                                 {/* Main Content Area */}
-                                <div className="flex-1 p-6">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-6">
+                                <div className="flex-1 p-2 md:p-4">
+                                    {/* Header - Hidden on mobile */}
+                                        <div className="hidden md:flex items-center justify-between mb-6">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                                                 <img 
@@ -360,7 +366,7 @@ export const Landing = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-black">QuokkaAI</h3>
+                                                <h3 className="font-semibold text-black">quokkaAI</h3>
                                                 <p className="text-sm text-gray-600">Data Analysis Assistant</p>
                                             </div>
                                         </div>
@@ -369,21 +375,21 @@ export const Landing = () => {
                                             <span className="text-sm text-gray-600">Live</span>
                                         </div>
                                     </div>
-
+                                    
                                     {/* AI Message */}
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 md:p-4 mb-3 md:mb-6">
                                         <div className="flex items-start space-x-2">
                                             <span className="text-yellow-600">💡</span>
-                                            <p className="text-sm text-gray-800">Можете попросить изменить тип графика, сортировку, фильтры и т.д.</p>
+                                            <p className="text-xs md:text-sm text-gray-800">Можете попросить изменить тип графика, сортировку, фильтры и т.д.</p>
                                         </div>
-                                    </div>
+                                            </div>
 
                                     {/* Chart */}
-                                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                        <h4 className="text-lg font-semibold text-black mb-4">Количество операторов по группам</h4>
+                                    <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-6">
+                                        <h4 className="text-sm md:text-lg font-semibold text-black mb-3 md:mb-4">Количество операторов по группам</h4>
                                         
                                         {/* Chart Area */}
-                                        <div className="h-64 relative">
+                                        <div className="h-32 md:h-64 relative">
                                             <svg className="w-full h-full" viewBox="0 0 600 200">
                                                 {/* Grid lines */}
                                                 <defs>
@@ -409,47 +415,50 @@ export const Landing = () => {
                                                 />
                                                 
                                                 {/* Data points */}
-                                                <circle cx="60" cy="40" r="4" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="200" cy="60" r="4" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="400" cy="100" r="4" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="540" cy="100" r="4" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
+                                                <circle cx="60" cy="40" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
+                                                <circle cx="200" cy="60" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
+                                                <circle cx="400" cy="100" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
+                                                <circle cx="540" cy="100" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
                                             </svg>
                                             
-                                            {/* X-axis labels */}
-                                            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-12">
-                                                <span>ДГД/КАЗ,РУ - ЭКО</span>
-                                                <span>ДГД/КАЗ,РУ - г.Алматы</span>
-                                                <span>ДГД/КАЗ/РУ - Павлодарская обл</span>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Legend */}
-                                        <div className="flex items-center justify-center mt-4">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="w-3 h-0.5 bg-purple-500"></div>
-                                                <span className="text-sm text-gray-600">Количество операторов</span>
-                                            </div>
+                                            {/* X-axis labels - Simplified for mobile */}
+                                            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-4 md:px-12">
+                                                <span className="hidden md:inline">ДГД/КАЗ,РУ - ЭКО</span>
+                                                <span className="md:hidden">ЭКО</span>
+                                                <span className="hidden md:inline">ДГД/КАЗ,РУ - г.Алматы</span>
+                                                <span className="md:hidden">Алматы</span>
+                                                <span className="hidden md:inline">ДГД/КАЗ/РУ - Павлодарская обл</span>
+                                                <span className="md:hidden">Павлодар</span>
                                         </div>
                                     </div>
+                                        
+                                        {/* Legend */}
+                                        <div className="flex items-center justify-center mt-2 md:mt-4">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-3 h-0.5 bg-purple-500"></div>
+                                                <span className="text-xs md:text-sm text-gray-600">Количество операторов</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                                    </div>
+                                </div>
+                            </div>
                 </section>
 
                 {/* Features Section */}
                 <section id="features" className="py-20 max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">Powerful features</h2>
-                        <p className="text-xl text-gray-600 animate-on-scroll">Everything you need for intelligent data analysis</p>
+                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">{t('features.title')}</h2>
+                        <p className="text-xl text-gray-600 animate-on-scroll">{t('features.subtitle')}</p>
                     </div>
-                    
+
                     <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
                         {/* Left side - Automation description */}
                         <div className="animate-on-scroll">
-                            <h3 className="text-2xl font-bold mb-4 text-black">Automate everything</h3>
+                            <h3 className="text-2xl font-bold mb-4 text-black">{t('features.automation')}</h3>
                             <p className="text-gray-600 mb-8 leading-relaxed">
-                                You're in control. Automate even the most complex data analysis processes with our powerful intelligent automation engine.
+                                {t('features.automationDesc')}
                             </p>
                             <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-2">
                                 <span>Explore automations</span>
@@ -466,27 +475,27 @@ export const Landing = () => {
                                     <div className="flex items-center space-x-4">
                                         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                                             <span className="text-white text-sm">⚡</span>
-                                        </div>
+                                            </div>
                                         <div className="flex-1">
                                             <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                                <div className="text-sm font-medium text-black">When Data uploaded</div>
+                                                <div className="text-sm font-medium text-black">{t('automation.trigger')}</div>
                                                 <div className="text-xs text-gray-500">Trigger when new data is uploaded</div>
-                                            </div>
                                         </div>
                                     </div>
+                                </div>
 
                                     {/* Condition */}
                                     <div className="flex items-center space-x-4 ml-4">
                                         <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
                                             <span className="text-white text-xs">✓</span>
-                                        </div>
+                                            </div>
                                         <div className="flex-1">
                                             <div className="bg-white rounded-lg p-3 border border-gray-200">
                                                 <div className="text-sm font-medium text-black">Switch</div>
                                                 <div className="text-xs text-gray-500">Route to specific analysis</div>
-                                            </div>
                                         </div>
                                     </div>
+                                </div>
 
                                     {/* Actions */}
                                     <div className="ml-8 space-y-3">
@@ -495,29 +504,29 @@ export const Landing = () => {
                                             <div className="bg-white rounded-lg p-2 border border-gray-200 flex-1">
                                                 <div className="text-xs font-medium text-black">Create visualization</div>
                                             </div>
-                                        </div>
+                                            </div>
                                         <div className="flex items-center space-x-3">
                                             <div className="w-4 h-4 bg-orange-500 rounded"></div>
                                             <div className="bg-white rounded-lg p-2 border border-gray-200 flex-1">
                                                 <div className="text-xs font-medium text-black">Generate insights</div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
                                 {/* Connecting lines */}
                                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{zIndex: 1}}>
                                     <path d="M 40 40 L 40 80 L 44 80 L 44 120 L 52 120 L 52 140" stroke="#e5e7eb" strokeWidth="2" fill="none" strokeDasharray="3,3"/>
                                 </svg>
-                            </div>
-                        </div>
-                    </div>
+                                            </div>
+                                            </div>
+                                        </div>
 
                     {/* Chart Showcase */}
                     <div className="mb-16">
                         <div className="text-center mb-12">
-                            <h3 className="text-2xl font-bold mb-4 text-black">Create any chart instantly</h3>
-                            <p className="text-gray-600">AI-powered visualization for every data type</p>
+                            <h3 className="text-2xl font-bold mb-4 text-black">{t('charts.title')}</h3>
+                            <p className="text-gray-600">{t('charts.subtitle')}</p>
                         </div>
 
                         {/* Infinite Chart Carousel */}
@@ -550,7 +559,7 @@ export const Landing = () => {
                                         <h4 className="font-semibold text-black">Subscriptions</h4>
                                         <div className="text-2xl font-bold text-black">+2,350</div>
                                         <div className="text-sm text-green-600">+180.1% from last month</div>
-                                    </div>
+                                            </div>
                                     <div className="h-20">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
                                             <path d="M 0 70 L 50 65 L 100 40 L 150 30 L 200 50 L 250 25 L 300 35" stroke="#000" strokeWidth="2" fill="none"/>
@@ -562,8 +571,8 @@ export const Landing = () => {
                                             <circle cx="250" cy="25" r="3" fill="#000"/>
                                             <circle cx="300" cy="35" r="3" fill="#000"/>
                                         </svg>
-                                    </div>
-                                </div>
+                                            </div>
+                                        </div>
 
                                 {/* Chart 3 - Bar Chart */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
@@ -588,15 +597,15 @@ export const Landing = () => {
                                         <h4 className="font-semibold text-black">User Distribution</h4>
                                         <div className="text-2xl font-bold text-black">100%</div>
                                         <div className="text-sm text-gray-600">Active users</div>
-                                    </div>
+                                            </div>
                                     <div className="h-20 flex items-center justify-center">
                                         <svg className="w-16 h-16" viewBox="0 0 64 64">
                                             <circle cx="32" cy="32" r="16" fill="none" stroke="#f3f4f6" strokeWidth="32"/>
                                             <circle cx="32" cy="32" r="16" fill="none" stroke="#000" strokeWidth="32" strokeDasharray="60 40" strokeDashoffset="25"/>
                                             <circle cx="32" cy="32" r="16" fill="none" stroke="#6b7280" strokeWidth="32" strokeDasharray="25 75" strokeDashoffset="85"/>
                                         </svg>
-                                    </div>
-                                </div>
+                                            </div>
+                                        </div>
 
                                 {/* Chart 5 - Area Chart */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
@@ -616,8 +625,8 @@ export const Landing = () => {
                                             <path d="M 0 60 L 50 50 L 100 40 L 150 30 L 200 25 L 250 20 L 300 15 L 300 80 L 0 80 Z" fill="url(#areaGradient)"/>
                                             <path d="M 0 60 L 50 50 L 100 40 L 150 30 L 200 25 L 250 20 L 300 15" stroke="#000" strokeWidth="2" fill="none"/>
                                         </svg>
-                                    </div>
                                 </div>
+                            </div>
 
                                 {/* Chart 6 - Scatter Plot */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
@@ -625,7 +634,7 @@ export const Landing = () => {
                                         <h4 className="font-semibold text-black">Data Points</h4>
                                         <div className="text-2xl font-bold text-black">847</div>
                                         <div className="text-sm text-gray-600">Analyzed</div>
-                                    </div>
+                        </div>
                                     <div className="h-20 relative">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
                                             <circle cx="30" cy="60" r="2" fill="#000"/>
@@ -646,7 +655,7 @@ export const Landing = () => {
                                             <circle cx="225" cy="25" r="2" fill="#000"/>
                                             <circle cx="255" cy="35" r="2" fill="#000"/>
                                         </svg>
-                                    </div>
+                    </div>
                                 </div>
 
                                 {/* Duplicate set for seamless loop */}
@@ -655,7 +664,7 @@ export const Landing = () => {
                                         <h4 className="font-semibold text-black">Total Revenue</h4>
                                         <div className="text-2xl font-bold text-black">$15,231.89</div>
                                         <div className="text-sm text-green-600">+20.1% from last month</div>
-                                    </div>
+                                </div>
                                     <div className="h-20">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
                                             <path d="M 0 60 L 50 50 L 100 55 L 150 45 L 200 35 L 250 25 L 300 20" stroke="#000" strokeWidth="2" fill="none"/>
@@ -667,7 +676,7 @@ export const Landing = () => {
                                             <circle cx="250" cy="25" r="3" fill="#000"/>
                                             <circle cx="300" cy="20" r="3" fill="#000"/>
                                         </svg>
-                                    </div>
+                                </div>
                                 </div>
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
@@ -687,9 +696,9 @@ export const Landing = () => {
                                             <circle cx="250" cy="25" r="3" fill="#000"/>
                                             <circle cx="300" cy="35" r="3" fill="#000"/>
                                         </svg>
-                                    </div>
-                                </div>
-
+                            </div>
+                        </div>
+                        
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
                                         <h4 className="font-semibold text-black">Sales by Region</h4>
@@ -719,7 +728,7 @@ export const Landing = () => {
                                             <circle cx="32" cy="32" r="16" fill="none" stroke="#6b7280" strokeWidth="32" strokeDasharray="25 75" strokeDashoffset="85"/>
                                         </svg>
                                     </div>
-                                </div>
+                                    </div>
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
@@ -739,14 +748,14 @@ export const Landing = () => {
                                             <path d="M 0 60 L 50 50 L 100 40 L 150 30 L 200 25 L 250 20 L 300 15" stroke="#000" strokeWidth="2" fill="none"/>
                                         </svg>
                                     </div>
-                                </div>
+                                    </div>
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
                                         <h4 className="font-semibold text-black">Data Points</h4>
                                         <div className="text-2xl font-bold text-black">847</div>
                                         <div className="text-sm text-gray-600">Analyzed</div>
-                                    </div>
+                                </div>
                                     <div className="h-20 relative">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
                                             <circle cx="30" cy="60" r="2" fill="#000"/>
@@ -768,18 +777,18 @@ export const Landing = () => {
                                             <circle cx="255" cy="35" r="2" fill="#000"/>
                                         </svg>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
                 </section>
 
                 {/* Data Sources Section */}
                 <section className="py-20 max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">Connect any type of data</h2>
-                        <p className="text-xl text-gray-600 animate-on-scroll">Sync data from databases, files, and APIs for a real-time single source of truth</p>
-                        </div>
+                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">{t('landing.dataSources.title')}</h2>
+                        <p className="text-xl text-gray-600 animate-on-scroll">{t('landing.dataSources.subtitle')}</p>
+                                    </div>
 
                     {/* Infinite Carousel */}
                     <div className="relative overflow-hidden">
@@ -792,70 +801,70 @@ export const Landing = () => {
                             <div className="flex space-x-12 min-w-max">
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg" alt="Excel" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PostgreSQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" alt="MongoDB" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                        </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/MySQL_textlogo.svg" alt="MySQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg" alt="PDF" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Cloud_logo.svg" alt="Google Cloud" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg" alt="Excel" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
-                                <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PostgreSQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                        </div>
-                                <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" alt="MongoDB" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/MySQL_textlogo.svg" alt="MySQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PostgreSQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                 </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" alt="MongoDB" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
+                            </div>
+                                <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/MySQL_textlogo.svg" alt="MySQL" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
+                        </div>
+                                <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg" alt="PDF" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Cloud_logo.svg" alt="Google Cloud" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>
-                                </div>
-                            </div>
+                                    </div>
+                                    </div>
 
                         {/* Second Row - Moving Left */}
                         <div className="flex space-x-12 animate-infinite-scroll-reverse">
                             <div className="flex space-x-12 min-w-max">
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/en/0/04/Salesforce_logo.svg" alt="Salesforce" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                        </div>
+                                </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg" alt="Slack" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/SQLite370.svg" alt="SQLite" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg" alt="Apache Spark" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Microsoft_Azure.svg" alt="Azure" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                        </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/en/0/04/Salesforce_logo.svg" alt="Salesforce" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>
@@ -864,13 +873,13 @@ export const Landing = () => {
                                 </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/SQLite370.svg" alt="SQLite" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                            </div>
+                                    </div>
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Apache_Spark_logo.svg" alt="Apache Spark" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
                 </section>
 
                 {/* Stats Section */}
@@ -879,73 +888,166 @@ export const Landing = () => {
                         <div className="grid lg:grid-cols-2 gap-16 items-center">
                             <div className="animate-on-scroll">
                                 <h2 className="text-4xl font-bold mb-6 text-black leading-tight">
-                                    The system of action for the next generation. <span className="text-gray-600">QuokkaAI is built for scale.</span> Our customers sort through millions of records with sub-50ms latency.
+                                    {t('landing.stats.title')} <span className="text-gray-600">{t('landing.stats.subtitle')}</span>
                             </h2>
                                 
                                 <div className="grid grid-cols-2 gap-8 mt-12">
                                     <div>
                                         <div className="text-3xl font-bold text-black mb-1">2,000,000</div>
-                                        <div className="text-sm text-gray-600 uppercase tracking-wide">Data points processed</div>
+                                        <div className="text-sm text-gray-600 uppercase tracking-wide">{t('landing.stats.dataPoints')}</div>
                                     </div>
                                     <div>
                                         <div className="text-3xl font-bold text-black mb-1">500+</div>
-                                        <div className="text-sm text-gray-600 uppercase tracking-wide">Chart types</div>
-                                    </div>
+                                        <div className="text-sm text-gray-600 uppercase tracking-wide">{t('landing.stats.chartTypes')}</div>
+                                </div>
                                     <div>
                                         <div className="text-3xl font-bold text-black mb-1">10,000+</div>
-                                        <div className="text-sm text-gray-600 uppercase tracking-wide">Visualizations</div>
+                                        <div className="text-sm text-gray-600 uppercase tracking-wide">{t('landing.stats.visualizations')}</div>
                                     </div>
                                     <div>
                                         <div className="text-3xl font-bold text-black mb-1">99.9%</div>
-                                        <div className="text-sm text-gray-600 uppercase tracking-wide">Uptime</div>
+                                        <div className="text-sm text-gray-600 uppercase tracking-wide">{t('landing.stats.uptime')}</div>
                                     </div>
                             </div>
                         </div>
 
                             <div className="animate-on-scroll">
-                                <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 relative overflow-hidden">
-                                    <div className="absolute top-6 left-6 text-xs text-gray-500 uppercase tracking-wide">Growth • Delivery</div>
+                                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 relative overflow-hidden">
+                                    <div className="absolute top-6 left-6 text-xs text-gray-500 uppercase tracking-wide">Growth • Analytics</div>
                                     
-                                    {/* Growth curve */}
-                                    <div className="mt-16 relative h-64">
-                                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+                                    {/* Chart Header */}
+                                    <div className="mt-8 mb-6">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('landing.stats.chartTitle')}</h3>
+                                        <div className="flex items-center space-x-6 text-sm text-gray-600">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                                <span>{t('landing.stats.dataProcessing')}</span>
+                                    </div>
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                                <span>{t('landing.stats.querySpeed')}</span>
+                                    </div>
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                                <span>{t('landing.stats.visualization')}</span>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    
+                                    {/* Enhanced Chart */}
+                                    <div className="relative h-80">
+                                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 500 300" preserveAspectRatio="none">
                                             <defs>
-                                                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                    <stop offset="0%" style={{stopColor: '#e5e7eb', stopOpacity: 0.3}} />
-                                                    <stop offset="100%" style={{stopColor: '#e5e7eb', stopOpacity: 0}} />
+                                                <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 0.4}} />
+                                                    <stop offset="100%" style={{stopColor: '#3b82f6', stopOpacity: 0}} />
                                                 </linearGradient>
+                                                <linearGradient id="greenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" style={{stopColor: '#10b981', stopOpacity: 0.4}} />
+                                                    <stop offset="100%" style={{stopColor: '#10b981', stopOpacity: 0}} />
+                                                </linearGradient>
+                                                <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" style={{stopColor: '#8b5cf6', stopOpacity: 0.4}} />
+                                                    <stop offset="100%" style={{stopColor: '#8b5cf6', stopOpacity: 0}} />
+                                                </linearGradient>
+                                                <filter id="glow">
+                                                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                                    <feMerge> 
+                                                        <feMergeNode in="coloredBlur"/>
+                                                        <feMergeNode in="SourceGraphic"/>
+                                                    </feMerge>
+                                                </filter>
                                             </defs>
+                                            
+                                            {/* Grid lines */}
+                                            <g stroke="#f3f4f6" strokeWidth="1" opacity="0.5">
+                                                <line x1="0" y1="60" x2="500" y2="60" />
+                                                <line x1="0" y1="120" x2="500" y2="120" />
+                                                <line x1="0" y1="180" x2="500" y2="180" />
+                                                <line x1="0" y1="240" x2="500" y2="240" />
+                                                <line x1="100" y1="0" x2="100" y2="300" />
+                                                <line x1="200" y1="0" x2="200" y2="300" />
+                                                <line x1="300" y1="0" x2="300" y2="300" />
+                                                <line x1="400" y1="0" x2="400" y2="300" />
+                                            </g>
+                                            
+                                            {/* Data Processing Line */}
                                             <path 
-                                                d="M 0 180 Q 100 160 200 120 T 400 40" 
-                                                stroke="#6b7280" 
-                                                strokeWidth="2" 
+                                                d="M 0 250 Q 100 230 200 180 Q 300 120 400 80 T 500 40" 
+                                                stroke="#3b82f6" 
+                                                strokeWidth="3" 
                                                 fill="none"
-                                        />
+                                                filter="url(#glow)"
+                                            />
                                             <path 
-                                                d="M 0 180 Q 100 160 200 120 T 400 40 L 400 200 L 0 200 Z" 
-                                                fill="url(#gradient)"
-                                        />
+                                                d="M 0 250 Q 100 230 200 180 Q 300 120 400 80 T 500 40 L 500 300 L 0 300 Z" 
+                                                fill="url(#blueGradient)"
+                                            />
+                                            
+                                            {/* Query Speed Line */}
+                                            <path 
+                                                d="M 0 270 Q 100 250 200 200 Q 300 140 400 100 T 500 60" 
+                                                stroke="#10b981" 
+                                                strokeWidth="3" 
+                                                fill="none"
+                                                filter="url(#glow)"
+                                            />
+                                            <path 
+                                                d="M 0 270 Q 100 250 200 200 Q 300 140 400 100 T 500 60 L 500 300 L 0 300 Z" 
+                                                fill="url(#greenGradient)"
+                                                opacity="0.6"
+                                            />
+                                            
+                                            {/* Visualization Line */}
+                                            <path 
+                                                d="M 0 280 Q 100 260 200 220 Q 300 160 400 120 T 500 80" 
+                                                stroke="#8b5cf6" 
+                                                strokeWidth="3" 
+                                                fill="none"
+                                                filter="url(#glow)"
+                                            />
+                                            <path 
+                                                d="M 0 280 Q 100 260 200 220 Q 300 160 400 120 T 500 80 L 500 300 L 0 300 Z" 
+                                                fill="url(#purpleGradient)"
+                                                opacity="0.4"
+                                            />
                                         </svg>
 
-                                        {/* Data points */}
-                                        <div className="absolute bottom-4 left-4">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        {/* Interactive Data Points */}
+                                        <div className="absolute bottom-12 left-8">
+                                            <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg animate-pulse"></div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Jan</div>
                                     </div>
-                                        <div className="absolute bottom-8 left-1/4">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        <div className="absolute bottom-16 left-1/4">
+                                            <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Mar</div>
                                     </div>
-                                        <div className="absolute bottom-16 left-1/2">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        <div className="absolute bottom-24 left-2/4">
+                                            <div className="w-3 h-3 bg-purple-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '1s'}}></div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Jun</div>
+                                </div>
+                                        <div className="absolute bottom-32 right-1/4">
+                                            <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '1.5s'}}></div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Sep</div>
                                     </div>
-                                        <div className="absolute bottom-24 right-1/4">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        <div className="absolute bottom-40 right-8">
+                                            <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '2s'}}></div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Dec</div>
                                     </div>
-                                        <div className="absolute bottom-32 right-4">
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        
+                                        {/* Performance Metrics */}
+                                        <div className="absolute top-4 right-4 bg-gray-50 rounded-lg p-3">
+                                            <div className="text-xs text-gray-500 mb-1">{t('landing.stats.avgResponse')}</div>
+                                            <div className="text-lg font-bold text-green-600">24ms</div>
+                                    </div>
+                                        
+                                        <div className="absolute bottom-4 right-4 bg-gray-50 rounded-lg p-3">
+                                            <div className="text-xs text-gray-500 mb-1">{t('landing.stats.throughput')}</div>
+                                            <div className="text-lg font-bold text-blue-600">2.4M/s</div>
                                     </div>
                                     </div>
                                 </div>
-                                    </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -955,9 +1057,9 @@ export const Landing = () => {
                     <div className="max-w-6xl mx-auto px-6">
                         <div className="text-center mb-16">
                             <div className="w-12 h-1 bg-blue-500 mx-auto mb-6"></div>
-                            <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">How it works</h2>
+                            <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">{t('howItWorks.title')}</h2>
                             <p className="text-lg text-gray-600 animate-on-scroll max-w-2xl mx-auto">
-                                Transform your data into actionable insights with our simple three-step process
+                                {t('howItWorks.subtitle')}
                             </p>
                         </div>
                         
@@ -978,8 +1080,8 @@ export const Landing = () => {
                             <div className="grid md:grid-cols-3 gap-12 relative">
                                 {[
                                     {
-                                        title: "Upload data",
-                                        description: "Connect databases, upload files, or integrate with your existing tools",
+                                        title: t('howItWorks.step1'),
+                                        description: t('howItWorks.step1Desc'),
                                         icon: (
                                             <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                                                 <div className="space-y-1">
@@ -991,8 +1093,8 @@ export const Landing = () => {
                                         )
                                     },
                                     {
-                                        title: "AI processes",
-                                        description: "Our advanced algorithms analyze patterns and extract meaningful insights",
+                                        title: t('howItWorks.step2'),
+                                        description: t('howItWorks.step2Desc'),
                                         icon: (
                                             <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                                                 <div className="grid grid-cols-3 gap-1">
@@ -1010,8 +1112,8 @@ export const Landing = () => {
                                         )
                                     },
                                     {
-                                        title: "Get insights",
-                                        description: "Receive beautiful visualizations and actionable reports instantly",
+                                        title: t('howItWorks.step3'),
+                                        description: t('howItWorks.step3Desc'),
                                         icon: (
                                             <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                                                 <div className="flex items-end space-x-1">
@@ -1034,8 +1136,8 @@ export const Landing = () => {
                                         {/* Icon */}
                                         <div className="flex justify-center mt-6">
                                             {step.icon}
-                                        </div>
-                                        
+                                            </div>
+                                            
                                         {/* Content */}
                                         <h3 className="text-xl font-semibold mb-3 text-black">{step.title}</h3>
                                         <p className="text-gray-600 leading-relaxed">{step.description}</p>
@@ -1049,34 +1151,34 @@ export const Landing = () => {
                 {/* Pricing Section */}
                 <section id="pricing" className="py-20 max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">Simple pricing</h2>
-                        <p className="text-xl text-gray-600 animate-on-scroll">Choose the plan that's right for you</p>
+                        <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">{t('pricing.title')}</h2>
+                        <p className="text-xl text-gray-600 animate-on-scroll">{t('pricing.subtitle')}</p>
                     </div>
                     
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         {[
                             {
-                                name: "Free",
+                                name: t('pricing.free'),
                                 price: "$0",
                                 period: "",
                                 description: "Perfect for small teams and individuals",
-                                features: ["Up to 10 data sources", "Basic visualizations", "20MB storage", "Email support"],
+                                features: [t('pricing.freeFeatures')],
                                 popular: false
                             },
                             {
-                                name: "Pro",
+                                name: t('pricing.pro'),
                                 price: "$10",
-                                period: "/month",
+                                period: `/${t('pricing.month')}`,
                                 description: "For growing businesses and professionals",
-                                features: ["Unlimited data sources", "Advanced visualizations", "500MB storage", "Priority support", "Custom reports"],
+                                features: [t('pricing.proFeatures')],
                                 popular: true
                             },
                             {
-                                name: "Enterprise",
-                                price: "Lets discuss",
+                                name: t('pricing.enterprise'),
+                                price: t('pricing.letsDiscuss'),
                                 period: "",
                                 description: "For large organizations",
-                                features: ["Everything in Professional", "Unlimited storage", "24/7 support", "Custom integrations", "On-premise deployment", "Custom reports"],
+                                features: [t('pricing.enterpriseFeatures')],
                                 popular: false
                             }
                         ].map((plan, index) => (
@@ -1111,7 +1213,7 @@ export const Landing = () => {
                                         ? 'bg-black text-white hover:bg-gray-800' 
                                         : 'border border-gray-300 text-black hover:border-gray-400'
                                 }`}>
-                                    Get Started
+                                    {t('pricing.getStarted')}
                                 </button>
                             </div>
                         ))}
@@ -1140,16 +1242,15 @@ export const Landing = () => {
                     {/* Content */}
                     <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
                         <h2 className="text-5xl md:text-6xl font-bold mb-4 text-black leading-tight animate-on-scroll">
-                            Ready to transform <br />
-                            <span className="text-gray-600">your data?</span>
+                            {t('cta.title')}
                         </h2>
                         
                         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12 animate-fade-in-delay">
                             <Link to="/chat" className="bg-black text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors text-lg font-medium">
-                                Start for free
+                                {t('cta.getStarted')}
                             </Link>
                             <button className="text-gray-600 hover:text-black transition-colors px-8 py-4 text-lg font-medium border border-gray-300 rounded-lg hover:border-gray-400">
-                                Talk to sales
+                                {t('cta.talkToSales')}
                     </button>
                         </div>
                     </div>
