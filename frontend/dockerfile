@@ -13,6 +13,9 @@ RUN npm install
 # Install TypeScript globally (to use 'tsc' command)
 RUN npm install -g typescript
 
+# Copy .env from root directory
+COPY ../.env .env
+
 # Copy source code
 COPY . .
 
