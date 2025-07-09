@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import logging
 from pathlib import Path
+import time
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -84,11 +85,25 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Add request logging middleware for debugging
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    logger.info(f"🔍 Incoming request: {request.method} {request.url.path}")
+    logger.info(f"🔍 Headers: {dict(request.headers)}")
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    logger.info(f"🔍 Response: {response.status_code} - Time: {process_time:.3f}s")
+    return response
+
 # Configure CORS - must be added before including routers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://quokkaai.site", # Allow all origins for development
+        "https://quokkaai.site", 
+        "*"# Allow all origins for development
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
@@ -125,6 +140,29 @@ async def root():
 async def health_check():
     """Health endpoint for deployment checks."""
     return {"status": "ok"}
+
+@app.get("/test")
+async def test_endpoint():
+    """Test endpoint to check routing."""
+    return {"message": "Test endpoint working", "endpoints": "available"}
+
+@app.get("/api/test")
+async def api_test_endpoint():
+    """Test endpoint with /api prefix."""
+    return {"message": "API test endpoint working"}
+
+@app.get("/debug/routes")
+async def debug_routes():
+    """Debug endpoint to show all available routes."""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods) if route.methods else [],
+                "name": getattr(route, 'name', None)
+            })
+    return {"routes": routes}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)     
