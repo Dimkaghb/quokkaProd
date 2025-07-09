@@ -84,7 +84,7 @@ export const documentsAPI = {
       formData.append('tags', tags.join(','))
     }
 
-    const response = await api.post<DocumentUploadResponse>('/documents/upload', formData, {
+    const response = await api.post<DocumentUploadResponse>('/api/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -94,7 +94,7 @@ export const documentsAPI = {
 
   // Get all documents in user's library
   getUserDocuments: async (): Promise<DocumentListResponse> => {
-    const response = await api.get<DocumentListResponse>('/documents/')
+    const response = await api.get<DocumentListResponse>('/api/documents/')
     return response.data
   },
 
@@ -112,13 +112,13 @@ export const documentsAPI = {
 
   // Delete document
   deleteDocument: async (documentId: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete(`/documents/${documentId}`)
+    const response = await api.delete(`/api/documents/${documentId}`)
     return response.data
   },
 
   // Health check
   healthCheck: async (): Promise<{ status: string }> => {
-    const response = await api.get('/documents/health/check')
+    const response = await api.get('/api/documents/health/check')
     return response.data
   },
 }

@@ -96,18 +96,18 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Include routers
+# Include routers with /api prefix
 if AUTH_AVAILABLE:
-    app.include_router(auth_router)
+    app.include_router(auth_router, prefix="/api")
 else:
     logger.warning("Auth router not included (auth components not available)")
 
-app.include_router(agents_router)
+app.include_router(agents_router, prefix="/api")
 
 # Include new module routers
 if NEW_MODULES_AVAILABLE:
-    app.include_router(documents_router)
-    app.include_router(chat_router)
+    app.include_router(documents_router, prefix="/api")
+    app.include_router(chat_router, prefix="/api")
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")

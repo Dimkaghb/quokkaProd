@@ -62,7 +62,7 @@ export class DocumentViewerService {
 
   private async loadPdfDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/documents/${document.id}/content`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -92,7 +92,7 @@ export class DocumentViewerService {
 
   private async loadWordDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/documents/${document.id}/content`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -161,7 +161,7 @@ export class DocumentViewerService {
 
   private async loadExcelDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/documents/${document.id}/content`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -243,7 +243,7 @@ export class DocumentViewerService {
 
   private async loadTextDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/documents/${document.id}/content`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -303,7 +303,7 @@ export class DocumentViewerService {
 
   private async loadCsvDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/documents/${document.id}/content`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }

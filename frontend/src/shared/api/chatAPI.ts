@@ -137,13 +137,13 @@ export const chatAPI = {
   
   // Get all user threads
   getThreads: async (): Promise<ThreadListResponse> => {
-    const response = await api.get<ThreadListResponse>('/chat/threads')
+    const response = await api.get<ThreadListResponse>('/api/chat/threads')
     return response.data
   },
 
   // Create new thread
   createThread: async (request: CreateThreadRequest): Promise<ThreadResponse> => {
-    const response = await api.post<ThreadResponse>('/chat/threads', request)
+    const response = await api.post<ThreadResponse>('/api/chat/threads', request)
     return response.data
   },
 
@@ -164,7 +164,7 @@ export const chatAPI = {
 
   // Delete thread
   deleteThread: async (threadId: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete(`/chat/threads/${threadId}`)
+    const response = await api.delete(`/api/chat/threads/${threadId}`)
     return response.data
   },
 
@@ -203,7 +203,7 @@ export const chatAPI = {
       formData.append('tags', tags.join(','))
     }
 
-    const response = await api.post('/documents/upload', formData, {
+    const response = await api.post('/api/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -220,7 +220,7 @@ export const chatAPI = {
     document?: UserDocument
     message: string
   }> => {
-    const response = await api.put(`/documents/${documentId}`, updates)
+    const response = await api.put(`/api/documents/${documentId}`, updates)
     return response.data
   },
 
@@ -229,7 +229,7 @@ export const chatAPI = {
     success: boolean
     message: string
   }> => {
-    const response = await api.delete(`/documents/${documentId}`)
+    const response = await api.delete(`/api/documents/${documentId}`)
     return response.data
   },
 
@@ -244,7 +244,7 @@ export const chatAPI = {
     selected_documents: string[]
     status: string
   }> => {
-    const response = await api.post(`/chat/threads/${threadId}/documents`, {
+    const response = await api.post(`/api/chat/threads/${threadId}/documents`, {
       selected_documents: selectedDocuments
     })
     return response.data
@@ -262,7 +262,7 @@ export const chatAPI = {
       max_inactive_minutes: number
     }
   }> => {
-    const response = await api.get(`/chat/threads/${threadId}/agent/stats`)
+    const response = await api.get(`/api/chat/threads/${threadId}/agent/stats`)
     return response.data
   },
 
@@ -280,7 +280,7 @@ export const chatAPI = {
     }>
     message: string
   }> => {
-    const response = await api.get(`/chat/threads/${threadId}/context`)
+    const response = await api.get(`/api/chat/threads/${threadId}/context`)
     return response.data
   },
 
@@ -292,7 +292,7 @@ export const chatAPI = {
     total_count: number
     message: string
   }> => {
-    const response = await api.get(`/chat/threads/${threadId}/documents`)
+    const response = await api.get(`/api/chat/threads/${threadId}/documents`)
     return response.data
   },
 }

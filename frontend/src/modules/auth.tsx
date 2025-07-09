@@ -114,7 +114,7 @@ export const Auth = () => {
     try {
       if (isLogin) {
         // Login
-        const response = await api.post('/auth/login', {
+        const response = await api.post('/api/auth/login', {
           email: formData.email,
           password: formData.password
         })
@@ -122,7 +122,7 @@ export const Auth = () => {
         const { access_token } = response.data
         
         // Get user info
-        const userResponse = await api.get('/auth/me', {
+        const userResponse = await api.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${access_token}` }
         })
         
@@ -133,14 +133,14 @@ export const Auth = () => {
         
       } else {
         // Signup
-        await api.post('/auth/signup', {
+        await api.post('/api/auth/signup', {
           name: formData.name,
           email: formData.email,
           password: formData.password
         })
         
         // Auto-login after signup
-        const loginResponse = await api.post('/auth/login', {
+        const loginResponse = await api.post('/api/auth/login', {
           email: formData.email,
           password: formData.password
         })
@@ -148,7 +148,7 @@ export const Auth = () => {
         const { access_token } = loginResponse.data
         
         // Get user info
-        const userResponse = await api.get('/auth/me', {
+        const userResponse = await api.get('/api/auth/me', {
           headers: { Authorization: `Bearer ${access_token}` }
         })
         

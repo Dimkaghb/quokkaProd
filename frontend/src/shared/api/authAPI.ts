@@ -61,7 +61,7 @@ export const authAPI = {
   // Login user
   login: async (email: string, password: string): Promise<LoginResponse> => {
     try {
-      const response = await api.post<LoginResponse>('/auth/login', {
+      const response = await api.post<LoginResponse>('/api/auth/login', {
         email,
         password,
       })
@@ -74,7 +74,7 @@ export const authAPI = {
   // Register new user
   signup: async (name: string, email: string, password: string): Promise<SignupResponse> => {
     try {
-      const response = await api.post<SignupResponse>('/auth/signup', {
+      const response = await api.post<SignupResponse>('/api/auth/signup', {
         name,
         email,
         password,
@@ -88,7 +88,7 @@ export const authAPI = {
   // Get current user profile
   getProfile: async (): Promise<User> => {
     try {
-      const response = await api.get<User>('/auth/profile')
+      const response = await api.get<User>('/api/auth/profile')
       return response.data
     } catch (error: any) {
       throw error
@@ -98,7 +98,7 @@ export const authAPI = {
   // Update user profile
   updateProfile: async (name: string): Promise<User> => {
     try {
-      const response = await api.put<User>('/auth/profile', {
+      const response = await api.put<User>('/api/auth/profile', {
         name,
       })
       return response.data
@@ -110,7 +110,7 @@ export const authAPI = {
   // Refresh token
   refreshToken: async (): Promise<{ token: string }> => {
     try {
-      const response = await api.post<{ token: string }>('/auth/refresh')
+      const response = await api.post<{ token: string }>('/api/auth/refresh')
       return response.data
     } catch (error: any) {
       throw error
@@ -120,7 +120,7 @@ export const authAPI = {
   // Logout (optional API call for server-side logout)
   logout: async (): Promise<void> => {
     try {
-      await api.post('/auth/logout')
+      await api.post('/api/auth/logout')
     } catch (error: any) {
       // Ignore logout errors
       console.warn('Logout API call failed:', error)
@@ -130,7 +130,7 @@ export const authAPI = {
   // Forgot password
   forgotPassword: async (email: string): Promise<{ message: string }> => {
     try {
-      const response = await api.post<{ message: string }>('/auth/forgot-password', {
+      const response = await api.post<{ message: string }>('/api/auth/forgot-password', {
         email,
       })
       return response.data
@@ -142,7 +142,7 @@ export const authAPI = {
   // Reset password
   resetPassword: async (token: string, password: string): Promise<{ message: string }> => {
     try {
-      const response = await api.post<{ message: string }>('/auth/reset-password', {
+      const response = await api.post<{ message: string }>('/api/auth/reset-password', {
         token,
         password,
       })
