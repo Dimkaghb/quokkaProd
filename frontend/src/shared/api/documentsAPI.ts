@@ -100,13 +100,13 @@ export const documentsAPI = {
 
   // Get document details by ID
   getDocument: async (documentId: string): Promise<DocumentUploadResponse> => {
-    const response = await api.get<DocumentUploadResponse>(`/documents/${documentId}`)
+    const response = await api.get<DocumentUploadResponse>(`/api/documents/${documentId}`)
     return response.data
   },
 
   // Update document metadata
   updateDocument: async (documentId: string, updates: DocumentUpdateRequest): Promise<DocumentUploadResponse> => {
-    const response = await api.put<DocumentUploadResponse>(`/documents/${documentId}`, updates)
+    const response = await api.put<DocumentUploadResponse>(`/api/documents/${documentId}`, updates)
     return response.data
   },
 

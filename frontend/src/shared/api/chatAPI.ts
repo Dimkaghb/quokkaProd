@@ -149,7 +149,7 @@ export const chatAPI = {
 
   // Get thread details
   getThread: async (threadId: string): Promise<ThreadResponse> => {
-    const response = await api.get<ThreadResponse>(`/chat/threads/${threadId}`)
+    const response = await api.get<ThreadResponse>(`/api/chat/threads/${threadId}`)
     return response.data
   },
 
@@ -158,7 +158,7 @@ export const chatAPI = {
     threadId: string, 
     updates: { title?: string; selected_documents?: string[] }
   ): Promise<ThreadResponse> => {
-    const response = await api.put<ThreadResponse>(`/chat/threads/${threadId}`, updates)
+    const response = await api.put<ThreadResponse>(`/api/chat/threads/${threadId}`, updates)
     return response.data
   },
 
@@ -173,13 +173,13 @@ export const chatAPI = {
   // Get thread messages
   getMessages: async (threadId: string, limit?: number): Promise<MessagesListResponse> => {
     const params = limit ? { limit } : {}
-    const response = await api.get<MessagesListResponse>(`/chat/threads/${threadId}/messages`, { params })
+    const response = await api.get<MessagesListResponse>(`/api/chat/threads/${threadId}/messages`, { params })
     return response.data
   },
 
   // Send message to thread (with AI response)
   sendMessage: async (threadId: string, request: SendMessageRequest): Promise<MessageResponse> => {
-    const response = await api.post<MessageResponse>(`/chat/threads/${threadId}/messages`, request)
+    const response = await api.post<MessageResponse>(`/api/chat/threads/${threadId}/messages`, request)
     return response.data
   },
 
@@ -187,7 +187,7 @@ export const chatAPI = {
 
   // Get user documents library
   getDocuments: async (): Promise<DocumentListResponse> => {
-    const response = await api.get<DocumentListResponse>('/documents')
+    const response = await api.get<DocumentListResponse>('/api/documents')
     return response.data
   },
 
