@@ -111,18 +111,18 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Include routers with /api prefix
+# Include routers (nginx handles /api prefix removal)
 if AUTH_AVAILABLE:
-    app.include_router(auth_router, prefix="/api")
+    app.include_router(auth_router)
 else:
     logger.warning("Auth router not included (auth components not available)")
 
-app.include_router(agents_router, prefix="/api")
+app.include_router(agents_router)
 
 # Include new module routers
 if NEW_MODULES_AVAILABLE:
-    app.include_router(documents_router, prefix="/api")
-    app.include_router(chat_router, prefix="/api")
+    app.include_router(documents_router)
+    app.include_router(chat_router)
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")
@@ -162,7 +162,12 @@ async def debug_routes():
                 "methods": list(route.methods) if route.methods else [],
                 "name": getattr(route, 'name', None)
             })
-    return {"routes": routes}
+    return {
+        "message": "Available routes", 
+        "routes": routes,
+        "auth_available": AUTH_AVAILABLE,
+        "new_modules_available": NEW_MODULES_AVAILABLE
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)     
