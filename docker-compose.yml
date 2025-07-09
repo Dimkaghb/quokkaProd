@@ -1,17 +1,16 @@
 services:
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL}
+      context: .
+      dockerfile: frontend/Dockerfile
+      # args:
+      #   - VITE_API_URL=${VITE_API_URL}
     ports:
       - "3000:3000"
     depends_on:
       - backend
-    environment:
-      - NODE_ENV=production
-      - VITE_API_URL=https://quokkaai.site
+    # environment:
+    #   - NODE_ENV=production
 
   backend:
     build:
