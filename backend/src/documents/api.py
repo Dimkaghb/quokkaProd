@@ -270,19 +270,37 @@ async def get_document_content(
         Document file content
     """
     try:
+        logger.info(f"Request for document content: user={current_user.email}, document_id={document_id}")
         # Get document details to verify ownership
         document = await get_document_details(str(current_user.id), document_id)
         
         if not document:
+            logger.warning(f"Document not found or no access: user={current_user.email}, document_id={document_id}")
             raise HTTPException(
                 status_code=404,
                 detail="Document not found or you don't have access"
             )
         
-        # Use the stored file path directly (it's already a relative path)
+        logger.info(f"Found document: {document.original_filename}, file_path: {document.file_path}")
+        
+        # Use the stored file path (relative to app working directory in container)
         file_path = Path(document.file_path)
         
+        logger.info(f"Looking for file: {file_path.absolute()} (stored path: {document.file_path})")
+        
         if not file_path.exists():
+            logger.error(f"Document file not found: {file_path.absolute()} (document.file_path: {document.file_path})")
+            # List directory contents for debugging
+            try:
+                parent_dir = file_path.parent
+                if parent_dir.exists():
+                    files = list(parent_dir.iterdir())
+                    logger.error(f"Directory {parent_dir} contains: {[f.name for f in files]}")
+                else:
+                    logger.error(f"Parent directory {parent_dir} does not exist")
+            except Exception as e:
+                logger.error(f"Error listing directory: {e}")
+            
             raise HTTPException(
                 status_code=404,
                 detail="Document file not found on server"

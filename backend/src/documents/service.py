@@ -51,8 +51,10 @@ async def process_uploaded_file(
     with open(file_path, "wb") as f:
         f.write(file_content)
     
-    # Store relative path
+    # Store relative path for database
     relative_path = f"data/documents/user_{user_id}/{unique_filename}"
+    
+    logger.info(f"File saved to: {file_path.absolute()}, stored path: {relative_path}")
     
     # Create document record (without processing summary for now)
     document = await create_document(
