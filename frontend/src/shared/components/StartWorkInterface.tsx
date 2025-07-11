@@ -7,7 +7,7 @@ import {
   Upload, 
   MessageSquare, 
   Brain, 
-  HelpCircle, 
+  Zap, 
   BarChart3, 
   TrendingUp, 
   FileText, 
@@ -17,6 +17,7 @@ import {
 import logo3 from '../../assets/logo3.png';
 import { useLanguageStore } from '../stores/languageStore';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { DataCleaningModal } from './DataCleaningModal';
 
 interface StartWorkInterfaceProps {
   onStartWork: (query?: string) => void;
@@ -26,6 +27,7 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
   const { t } = useLanguageStore();
   const [query, setQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [isDataCleaningModalOpen, setIsDataCleaningModalOpen] = useState(false);
 
   // Check if we're on mobile
   useEffect(() => {
@@ -70,10 +72,10 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
       onClick: () => onStartWork('Add AI-based columns')
     },
     {
-      icon: HelpCircle,
-      title: t('startWork.expertHelp'),
-      description: t('startWork.expertHelpDesc'),
-      onClick: () => onStartWork('Help with data analysis')
+      icon: Zap,
+      title: t('dataCleaning.title'),
+      description: t('startWork.cleanDataDesc'),
+      onClick: () => setIsDataCleaningModalOpen(true)
     }
   ];
 
@@ -367,6 +369,12 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
           </p>
         </div>
       </div>
+      
+      {/* Data Cleaning Modal */}
+      <DataCleaningModal
+        isOpen={isDataCleaningModalOpen}
+        onClose={() => setIsDataCleaningModalOpen(false)}
+      />
     </div>
   );
 }; 

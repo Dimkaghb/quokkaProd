@@ -31,6 +31,15 @@ except ImportError:
 # Import agents router
 from src.data_analize.api import router as agents_router
 
+# Import data cleaning router
+try:
+    from src.data_cleaning.api import router as data_cleaning_router
+    DATA_CLEANING_AVAILABLE = True
+    logger.info("✅ Data cleaning module loaded successfully")
+except ImportError as e:
+    logger.warning(f"Data cleaning module not available: {e}")
+    DATA_CLEANING_AVAILABLE = False
+
 # Import new module routers (documents and chat)
 try:
     from src.documents.api import router as documents_router
@@ -102,8 +111,12 @@ async def log_requests(request: Request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://quokkaai.site", 
-        "*"# Allow all origins for development
+        "https://quokkaai.site",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "*"  # Allow all origins for development
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
@@ -113,16 +126,23 @@ app.add_middleware(
 
 # Include routers (nginx handles /api prefix removal)
 if AUTH_AVAILABLE:
-    app.include_router(auth_router)
+    app.include_router(auth_router, prefix="/api")
 else:
     logger.warning("Auth router not included (auth components not available)")
 
-app.include_router(agents_router)
+app.include_router(agents_router, prefix="/api")
+
+# Include data cleaning router
+if DATA_CLEANING_AVAILABLE:
+    app.include_router(data_cleaning_router, prefix="/api")
+    logger.info("✅ Data cleaning router included")
+else:
+    logger.warning("Data cleaning router not included")
 
 # Include new module routers
 if NEW_MODULES_AVAILABLE:
-    app.include_router(documents_router)
-    app.include_router(chat_router)
+    app.include_router(documents_router, prefix="/api")
+    app.include_router(chat_router, prefix="/api")
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")

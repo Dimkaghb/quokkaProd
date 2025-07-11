@@ -83,6 +83,13 @@ class DataAnalysisResponse(BaseModel):
     error: Optional[str] = Field(default=None, description="Error message if any")
 
 
+class LargeDataClarificationRequest(BaseModel):
+    """Request model for large dataset clarification."""
+    file_path: str = Field(description="Path to the data file")
+    user_clarification: str = Field(description="User's clarification about what to visualize")
+    selected_columns: Optional[List[str]] = Field(default=None, description="Specific columns user wants to focus on")
+
+
 def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -142,8 +149,28 @@ async def upload_and_visualize(
         
         logger.info(f"File saved successfully, creating visualization...")
         
-        # Create intelligent visualization using the new simplified system
+        # Create intelligent visualization using the enhanced system
         chart_config = create_intelligent_visualization(str(file_path), user_query)
+        
+        # Check if we need user clarification for large datasets
+        if chart_config.get('needs_clarification'):
+            logger.info(f"Large dataset detected, requesting user clarification")
+            
+            # Prepare file info
+            file_info = {
+                'filename': file.filename,
+                'size': len(content),
+                'type': file.filename.split('.')[-1].lower(),
+                'upload_time': datetime.utcnow().isoformat(),
+                'file_id': file_id
+            }
+            
+            return VisualizationResponse(
+                success=True,
+                chart_config=chart_config,
+                analytical_text=chart_config.get('message'),
+                file_info=file_info
+            )
         
         logger.info(f"Visualization created successfully")
         
@@ -410,6 +437,15 @@ async def create_custom_visualization(
             data = read_data(request.file_path)
             chart_config = process_data_with_llm(data, request.user_query, request.file_path)
             
+            # Check if we need user clarification for large datasets
+            if chart_config.get('needs_clarification'):
+                logger.info(f"Large dataset detected, requesting user clarification")
+                return VisualizationResponse(
+                    success=True,
+                    chart_config=chart_config,
+                    analytical_text=chart_config.get('message')
+                )
+            
         # Case 2: Data-based customization (for existing visualizations)
         elif request.current_data:
             # Convert data to DataFrame
@@ -432,6 +468,79 @@ async def create_custom_visualization(
         raise
     except Exception as e:
         logger.error(f"Error in create_custom_visualization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return VisualizationResponse(
+            success=False,
+            error=str(e)
+        ) 
+
+
+@router.post("/clarify-large-data", response_model=VisualizationResponse)
+async def clarify_large_data_visualization(
+    request: LargeDataClarificationRequest,
+    current_user: User = Depends(get_current_user)
+) -> VisualizationResponse:
+    """
+    Handle user clarification for large dataset visualization.
+    
+    Args:
+        request: Large data clarification request
+        current_user: Current authenticated user
+        
+    Returns:
+        Visualization configuration based on user clarification
+    """
+    try:
+        logger.info(f"Processing large data clarification: {request.user_clarification}")
+        
+        # Check if file exists
+        if not os.path.exists(request.file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Read data
+        data = read_data(request.file_path)
+        logger.info(f"Data loaded: {data.shape} rows x {data.shape[1]} columns")
+        
+        # If user specified columns, filter the data
+        if request.selected_columns:
+            # Validate columns exist
+            missing_columns = [col for col in request.selected_columns if col not in data.columns]
+            if missing_columns:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Columns not found: {missing_columns}"
+                )
+            
+            # Filter data to selected columns
+            data = data[request.selected_columns]
+            logger.info(f"Data filtered to selected columns: {data.shape}")
+        
+        # Process with LLM using user's clarification
+        chart_config = process_data_with_llm(data, request.user_clarification, request.file_path)
+        
+        # Prepare file info
+        file_name = os.path.basename(request.file_path)
+        file_info = {
+            'filename': file_name,
+            'filtered_columns': request.selected_columns,
+            'resulting_shape': data.shape
+        }
+        
+        logger.info(f"Large data visualization created successfully")
+        
+        return VisualizationResponse(
+            success=True,
+            chart_config=chart_config,
+            analytical_text=chart_config.get('analyticalText'),
+            file_info=file_info
+        )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in clarify_large_data_visualization: {str(e)}")
         import traceback
         traceback.print_exc()
         
