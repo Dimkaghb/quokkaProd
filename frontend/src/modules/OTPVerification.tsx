@@ -94,13 +94,13 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
     setOtpError('')
     
     try {
-      await api.post('/api/auth/verify-otp', {
+      await api.post('/auth/verify-otp', {
         email,
         otp_code: code
       })
       
       // Auto-login after successful verification
-      const loginResponse = await api.post('/api/auth/login', {
+      const loginResponse = await api.post('/auth/login', {
         email,
         password
       })
@@ -108,7 +108,7 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
       const { access_token } = loginResponse.data
       
       // Get user info
-      const userResponse = await api.get('/api/auth/me', {
+      const userResponse = await api.get('/auth/me', {
         headers: { Authorization: `Bearer ${access_token}` }
       })
       
@@ -138,7 +138,7 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
     setOtpError('')
     
     try {
-      await api.post('/api/auth/request-otp', {
+      await api.post('/auth/request-otp', {
         email,
         name,
         password

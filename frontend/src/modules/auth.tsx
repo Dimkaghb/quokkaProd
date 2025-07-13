@@ -121,7 +121,7 @@ export const Auth = () => {
     try {
       if (isLogin) {
         // Login
-        const response = await api.post('/api/auth/login', {
+        const response = await api.post('/auth/login', {
           email: formData.email,
           password: formData.password
         })
@@ -129,7 +129,7 @@ export const Auth = () => {
         const { access_token } = response.data
         
         // Get user info
-        const userResponse = await api.get('/api/auth/me', {
+        const userResponse = await api.get('/auth/me', {
           headers: { Authorization: `Bearer ${access_token}` }
         })
         
@@ -140,7 +140,7 @@ export const Auth = () => {
         
       } else {
         // Signup with OTP verification
-        await api.post('/api/auth/request-otp', {
+        await api.post('/auth/request-otp', {
           name: formData.name,
           email: formData.email,
           password: formData.password
