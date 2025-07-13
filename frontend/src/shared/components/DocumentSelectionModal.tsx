@@ -22,6 +22,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [deletingDocuments, setDeletingDocuments] = useState<Set<string>>(new Set())
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -89,8 +90,38 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
     }
   }
 
+  const handleDeleteDocument = async (documentId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return
+    }
+
+    setDeletingDocuments(prev => new Set(prev).add(documentId))
+
+    try {
+      await documentsAPI.deleteDocument(documentId)
+      
+      // Remove from documents list
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId))
+      // Remove from selected documents if it was selected
+      setSelectedDocuments(prev => prev.filter(doc => doc.id !== documentId))
+      
+      showToast('Document deleted successfully', 'success')
+    } catch (error) {
+      console.error('Delete failed:', error)
+      showToast('Failed to delete document', 'error')
+    } finally {
+      setDeletingDocuments(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(documentId)
+        return newSet
+      })
+    }
+  }
+
   const filteredDocuments = documents.filter(doc =>
-    doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.original_filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   )
@@ -256,7 +287,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-medium text-gray-900 truncate">
-                          {document.filename}
+                          {document.original_filename}
                         </h3>
                         <div className="flex items-center space-x-2">
                           {document.tags.map((tag: string, index: number) => (
@@ -280,7 +311,21 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                         <span>{document.chunks_count} chunks</span>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center space-x-2">
+                      <button
+                        onClick={(e) => handleDeleteDocument(document.id, e)}
+                        disabled={deletingDocuments.has(document.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete document"
+                      >
+                        {deletingDocuments.has(document.id) ? (
+                          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                         selectedDocuments.some(doc => doc.id === document.id)
                           ? 'border-blue-500 bg-blue-500'

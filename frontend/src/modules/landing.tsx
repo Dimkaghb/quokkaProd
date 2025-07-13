@@ -148,7 +148,7 @@ export const Landing = () => {
                 }
 
                 .animate-infinite-scroll {
-                    animation: infinite-scroll 50s linear infinite;
+                    animation: infinite-scroll 25s linear infinite;
                 }
 
                 .animate-infinite-scroll:hover {
@@ -156,7 +156,7 @@ export const Landing = () => {
                 }
 
                 .animate-infinite-scroll-reverse {
-                    animation: infinite-scroll-reverse 55s linear infinite;
+                    animation: infinite-scroll-reverse 30s linear infinite;
                 }
 
                 .animate-infinite-scroll-reverse:hover {
@@ -164,7 +164,7 @@ export const Landing = () => {
                 }
 
                 .animate-infinite-chart-scroll {
-                    animation: chart-scroll 60s linear infinite;
+                    animation: chart-scroll 35s linear infinite;
                 }
 
                 @keyframes chart-scroll {
@@ -182,7 +182,7 @@ export const Landing = () => {
                 <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
                     scrollY > 50 ? 'bg-white/90 backdrop-blur-md border-b border-gray-200' : 'bg-white'
                 }`}>
-                                            <div className="flex justify-between items-center px-4 py-3 max-w-6xl mx-auto">
+                                            <div className="flex justify-between items-center px-4 py-3 max-w-6xl mx-auto safe-area-inset-left safe-area-inset-right">
                         <div className="flex items-center space-x-3 animate-fade-in-up">
                             <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
                                 <img 
@@ -226,7 +226,7 @@ export const Landing = () => {
                     
                     {/* Mobile Menu */}
                     <div className={`lg:hidden transition-all duration-300 ${mobileMenuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden bg-white border-t border-gray-200`}>
-                        <div className="px-6 py-6 space-y-4">
+                        <div className="px-4 py-4 space-y-3 safe-area-inset-left safe-area-inset-right">
                             <button onClick={() => scrollToSection('features')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.features')}</button>
                             <button onClick={() => scrollToSection('how-it-works')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.howItWorks')}</button>
                             <button onClick={() => scrollToSection('pricing')} className="block w-full text-left py-2 text-gray-600 hover:text-black transition-colors">{t('nav.pricing')}</button>
@@ -243,7 +243,7 @@ export const Landing = () => {
                 </nav>
 
                 {/* Hero Section */}
-                <section className="pt-24 pb-16 max-w-3xl mx-auto px-4 text-center">
+                <section className="pt-24 pb-16 max-w-3xl mx-auto px-4 text-center safe-area-inset-left safe-area-inset-right">
                     <div className="mb-6 animate-fade-in-up">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-black leading-tight">
                             {t('landing.hero.title')}
@@ -263,10 +263,10 @@ export const Landing = () => {
                 </section>
 
                                 {/* Main Dashboard Preview */}
-                <section className="py-8 md:py-16 max-w-6xl mx-auto px-2 md:px-4">
-                    <div className="bg-gray-50 rounded-lg md:rounded-xl p-2 md:p-6 data-grid animate-on-scroll">
+                <section className="py-8 md:py-16 max-w-6xl mx-auto px-4 md:px-4">
+                    <div className="bg-gray-50 rounded-lg md:rounded-xl p-3 md:p-6 data-grid animate-on-scroll">
                         {/* macOS Window */}
-                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl md:shadow-2xl border border-gray-200 overflow-hidden max-h-96 md:max-h-none">
+                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl md:shadow-2xl border border-gray-200 overflow-hidden max-h-80 md:max-h-none">
                             {/* macOS Title Bar */}
                             <div className="bg-gray-100 border-b border-gray-200 p-2 md:p-4 flex items-center">
                                 <div className="flex items-center space-x-1 md:space-x-2">
@@ -784,7 +784,7 @@ export const Landing = () => {
                 </section>
 
                 {/* Data Sources Section */}
-                <section className="py-20 max-w-7xl mx-auto px-6">
+                <section className="py-12 md:py-20 max-w-7xl mx-auto px-4 md:px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold mb-4 text-black animate-on-scroll">{t('landing.dataSources.title')}</h2>
                         <p className="text-xl text-gray-600 animate-on-scroll">{t('landing.dataSources.subtitle')}</p>
@@ -793,12 +793,12 @@ export const Landing = () => {
                     {/* Infinite Carousel */}
                     <div className="relative overflow-hidden">
                         {/* Fade edges */}
-                        <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                        <div className="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                        <div className="absolute left-0 top-0 w-16 md:w-32 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                        <div className="absolute right-0 top-0 w-16 md:w-32 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
                         
                         {/* First Row - Moving Right */}
-                        <div className="flex space-x-12 mb-8 animate-infinite-scroll">
-                            <div className="flex space-x-12 min-w-max">
+                        <div className="flex space-x-6 md:space-x-12 mb-6 md:mb-8 animate-infinite-scroll">
+                            <div className="flex space-x-6 md:space-x-12 min-w-max">
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg" alt="Excel" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                 </div>
@@ -839,8 +839,8 @@ export const Landing = () => {
                                     </div>
 
                         {/* Second Row - Moving Left */}
-                        <div className="flex space-x-12 animate-infinite-scroll-reverse">
-                            <div className="flex space-x-12 min-w-max">
+                        <div className="flex space-x-6 md:space-x-12 animate-infinite-scroll-reverse">
+                            <div className="flex space-x-6 md:space-x-12 min-w-max">
                                 <div className="p-4 hover:scale-105 transition-transform flex-shrink-0">
                                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" alt="AWS" className="w-16 h-16 mx-auto opacity-60 hover:opacity-100 transition-opacity" />
                                     </div>

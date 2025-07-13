@@ -36,7 +36,7 @@ export const Chatbot: React.FC = () => {
     loadUserThreads();
     // Select the new thread
     setSelectedThread(threadId);
-    showToast('New analysis created successfully', 'success');
+    // showToast('New analysis created successfully', 'success'); // Removed annoying toast
   };
 
   const handleThreadSelect = async (threadId: string) => {
@@ -89,7 +89,7 @@ export const Chatbot: React.FC = () => {
         if (selectedDocuments.length > 0) {
           setShowContextWindow(true);
         }
-        showToast(`New analysis created with ${selectedDocuments.length} documents`, 'success');
+        // showToast(`New analysis created with ${selectedDocuments.length} documents`, 'success'); // Removed annoying toast
       } else {
         showToast('Failed to create analysis thread', 'error');
       }

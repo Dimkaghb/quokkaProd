@@ -143,7 +143,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }));
         
         setMessages(threadMessages);
-        showToast(t('chat.threadLoaded'), 'success');
+        // showToast(t('chat.threadLoaded'), 'success'); // Removed annoying toast
       } else {
         showToast(t('chat.threadLoadError'), 'error');
         console.error('Failed to load thread context:', response);
@@ -171,7 +171,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (onThreadCreated) {
           onThreadCreated(response.thread.id);
         }
-        showToast(t('chat.threadCreated'), 'success');
+        // showToast(t('chat.threadCreated'), 'success'); // Removed annoying toast
         return response.thread.id;
       } else {
         throw new Error(response.message || 'Failed to create thread');
@@ -270,7 +270,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         };
         
         setMessages(prev => [...prev, assistantMessage]);
-        showToast(t('chat.messageSent'), 'success');
+        // showToast(t('chat.messageSent'), 'success'); // Removed annoying toast
       } else {
         throw new Error(response.message || 'Failed to send message');
       }
@@ -339,7 +339,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <button
           onClick={() => setContextWindowOpen(!contextWindowOpen)}
           className={cn(
-            "fixed top-4 right-4 z-50 flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-lg",
+            "fixed z-50 flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-lg",
+            isMobile ? "top-20 right-4" : "top-4 right-4", // Adjust position on mobile to avoid header overlap
             contextWindowOpen 
               ? "bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200" 
               : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"

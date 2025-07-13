@@ -211,7 +211,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <span className="font-semibold text-gray-900">quokkaAI</span>
           </div>
           
-          <div className="flex items-center space-x-1 relative z-10">
+          <div className="flex items-center space-x-2 relative z-10">
             <LanguageSwitcher variant="ghost" className="h-9 w-9 p-1" />
             <Button
               variant="ghost"
@@ -545,7 +545,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                           <IconComponent className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
                           <div className="flex-1 min-w-0">
                             <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
-                              {doc.filename}
+                              {doc.original_filename}
                             </p>
                             <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-xs")}>
                               {formatFileSize(doc.file_size)}
