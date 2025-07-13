@@ -104,3 +104,109 @@ async def update_user_profile(email: str, name: str):
             return user
     
     return None
+
+# OTP CRUD Operations
+async def create_otp_record(email: str, otp_code: str, user_data: dict):
+    """Create OTP record in database"""
+    db = get_database()
+    
+    otp_id = str(uuid.uuid4())
+    otp_record = {
+        "_id": otp_id,
+        "id": otp_id,
+        "email": email,
+        "otp_code": otp_code,
+        "user_data": user_data,
+        "created_at": datetime.utcnow(),
+        "is_verified": False
+    }
+    
+    if db.mongodb_connected:
+        try:
+            # Remove any existing OTP for this email
+            await db.otp_collection.delete_many({"email": email})
+            # Insert new OTP record
+            await db.otp_collection.insert_one(otp_record)
+            logger.info(f"OTP record created for {email} in MongoDB")
+            return otp_record
+        except Exception as e:
+            logger.error(f"Error creating OTP record in MongoDB: {e}")
+            # Fall back to in-memory storage
+            pass
+    
+    # In-memory storage fallback
+    db.in_memory_otps[otp_id] = otp_record
+    logger.info(f"OTP record created for {email} in memory storage")
+    return otp_record
+
+async def get_otp_record(email: str):
+    """Get OTP record by email"""
+    db = get_database()
+    
+    if db.mongodb_connected:
+        try:
+            otp_record = await db.otp_collection.find_one({"email": email})
+            return otp_record
+        except Exception as e:
+            logger.error(f"Error querying OTP from MongoDB: {e}")
+            # Fall back to in-memory storage
+            pass
+    
+    # In-memory storage fallback
+    for otp_id, otp_record in db.in_memory_otps.items():
+        if otp_record["email"] == email:
+            return otp_record
+    return None
+
+async def verify_and_delete_otp(email: str, otp_code: str):
+    """Verify OTP and return user data if valid"""
+    db = get_database()
+    
+    otp_record = await get_otp_record(email)
+    if not otp_record:
+        return None
+    
+    # Check if OTP matches
+    if otp_record["otp_code"] != otp_code:
+        return None
+    
+    # Check if OTP is expired (1 minute)
+    from datetime import timedelta
+    expiry_time = otp_record["created_at"] + timedelta(minutes=1)
+    if datetime.utcnow() > expiry_time:
+        # Delete expired OTP
+        await delete_otp_record(email)
+        return None
+    
+    # Get user data
+    user_data = otp_record["user_data"]
+    
+    # Delete OTP record after successful verification
+    await delete_otp_record(email)
+    
+    return user_data
+
+async def delete_otp_record(email: str):
+    """Delete OTP record by email"""
+    db = get_database()
+    
+    if db.mongodb_connected:
+        try:
+            await db.otp_collection.delete_many({"email": email})
+            logger.info(f"OTP record deleted for {email} from MongoDB")
+        except Exception as e:
+            logger.error(f"Error deleting OTP record from MongoDB: {e}")
+            # Fall back to in-memory storage
+            pass
+    
+    # In-memory storage fallback
+    otp_ids_to_delete = []
+    for otp_id, otp_record in db.in_memory_otps.items():
+        if otp_record["email"] == email:
+            otp_ids_to_delete.append(otp_id)
+    
+    for otp_id in otp_ids_to_delete:
+        del db.in_memory_otps[otp_id]
+    
+    if otp_ids_to_delete:
+        logger.info(f"OTP record deleted for {email} from memory storage")

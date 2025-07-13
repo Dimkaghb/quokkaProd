@@ -153,6 +153,22 @@ const translations = {
     'auth.passwordPlaceholder': 'Enter your password',
     'auth.confirmPasswordPlaceholder': 'Confirm your password',
     
+    // OTP Verification
+    'otp.verifyEmail': 'Verify Your Email',
+    'otp.codeSent': 'We\'ve sent a 6-digit verification code to',
+    'otp.enterCode': 'Please enter the complete 6-digit code',
+    'otp.codeExpires': 'Code expires in',
+    'otp.codeExpired': 'Code has expired',
+    'otp.verifying': 'Verifying...',
+    'otp.verifyCode': 'Verify Code',
+    'otp.didntReceive': 'Didn\'t receive the code?',
+    'otp.resend': 'Resend',
+    'otp.resendAvailable': 'Resend available in',
+    'otp.verificationFailed': 'Verification failed',
+    'otp.invalidCode': 'Invalid or expired verification code',
+    'otp.resendFailed': 'Failed to resend verification code',
+    'otp.sendingCode': 'Sending verification code...',
+    
     // Chat
     'chat.welcome': 'Hello! I\'m your AI data analysis assistant. Upload a file or ask me anything about data analysis, and I\'ll help you create visualizations and insights!',
     'chat.typeMessage': 'Type your message here...',
@@ -488,6 +504,22 @@ const translations = {
     'auth.emailPlaceholder': 'Введите ваш email',
     'auth.passwordPlaceholder': 'Введите ваш пароль',
     'auth.confirmPasswordPlaceholder': 'Подтвердите ваш пароль',
+    
+    // OTP Verification
+    'otp.verifyEmail': 'Подтвердите ваш email',
+    'otp.codeSent': 'Мы отправили 6-значный код подтверждения на',
+    'otp.enterCode': 'Пожалуйста, введите полный 6-значный код',
+    'otp.codeExpires': 'Код истекает через',
+    'otp.codeExpired': 'Код истек',
+    'otp.verifying': 'Проверка...',
+    'otp.verifyCode': 'Подтвердить код',
+    'otp.didntReceive': 'Не получили код?',
+    'otp.resend': 'Отправить повторно',
+    'otp.resendAvailable': 'Повторная отправка доступна через',
+    'otp.verificationFailed': 'Проверка не удалась',
+    'otp.invalidCode': 'Неверный или истекший код подтверждения',
+    'otp.resendFailed': 'Не удалось отправить код повторно',
+    'otp.sendingCode': 'Отправка кода подтверждения...',
     
     // Chat
     'chat.welcome': 'Привет! Я ваш ИИ-помощник по анализу данных. Загрузите файл или задайте любой вопрос об анализе данных, и я помогу вам создать визуализации и инсайты!',

@@ -52,6 +52,16 @@ export interface SignupResponse {
   message: string
 }
 
+export interface OTPRequestResponse {
+  message: string
+  email: string
+}
+
+export interface OTPVerifyResponse {
+  message: string
+  user: User
+}
+
 export interface AuthError {
   message: string
   errors?: Record<string, string>
@@ -78,6 +88,33 @@ export const authAPI = {
         name,
         email,
         password,
+      })
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
+  // Request OTP for email verification
+  requestOTP: async (email: string, name: string, password: string): Promise<OTPRequestResponse> => {
+    try {
+      const response = await api.post<OTPRequestResponse>('/api/auth/request-otp', {
+        email,
+        name,
+        password,
+      })
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
+  // Verify OTP and create account
+  verifyOTP: async (email: string, otpCode: string): Promise<OTPVerifyResponse> => {
+    try {
+      const response = await api.post<OTPVerifyResponse>('/api/auth/verify-otp', {
+        email,
+        otp_code: otpCode,
       })
       return response.data
     } catch (error: any) {

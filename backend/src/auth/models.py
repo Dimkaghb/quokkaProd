@@ -23,3 +23,21 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+# OTP Models
+class OTPRequest(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+
+class OTPVerify(BaseModel):
+    email: EmailStr
+    otp_code: str
+
+class OTPResponse(BaseModel):
+    message: str
+    email: str
+
+class RegistrationResponse(BaseModel):
+    message: str
+    user: User

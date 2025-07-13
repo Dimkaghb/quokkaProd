@@ -8,10 +8,12 @@ class Database:
     client: AsyncIOMotorClient = None
     db = None
     users_collection = None
+    otp_collection = None
     mongodb_connected = False
     
     # In-memory storage for development when MongoDB is not available
     in_memory_users = {}
+    in_memory_otps = {}
 
 database = Database()
 
@@ -37,6 +39,7 @@ async def connect_to_mongo():
         
         database.db = database.client[settings.DATABASE_NAME]
         database.users_collection = database.db.users
+        database.otp_collection = database.db.otps
         
         # Test the connection
         await database.client.admin.command('ping')

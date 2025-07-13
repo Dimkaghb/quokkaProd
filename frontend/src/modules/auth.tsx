@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../shared/stores/authStore'
 import { useLanguageStore } from '../shared/stores/languageStore'
 import { LanguageSwitcher } from '../shared/components/LanguageSwitcher'
+import { OTPVerification } from './OTPVerification'
 import axios from 'axios'
 import logo3 from '../assets/logo3.png'
 
@@ -58,6 +59,12 @@ const floatingAnimations = `
 export const Auth = () => {
   const { t } = useLanguageStore()
   const [isLogin, setIsLogin] = useState(true)
+  const [showOTP, setShowOTP] = useState(false)
+  const [otpData, setOtpData] = useState({
+    email: '',
+    name: '',
+    password: ''
+  })
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -132,30 +139,22 @@ export const Auth = () => {
         navigate('/dashboard')
         
       } else {
-        // Signup
-        await api.post('/api/auth/signup', {
+        // Signup with OTP verification
+        await api.post('/api/auth/request-otp', {
           name: formData.name,
           email: formData.email,
           password: formData.password
         })
         
-        // Auto-login after signup
-        const loginResponse = await api.post('/api/auth/login', {
+        // Store data for OTP verification
+        setOtpData({
           email: formData.email,
+          name: formData.name,
           password: formData.password
         })
         
-        const { access_token } = loginResponse.data
-        
-        // Get user info
-        const userResponse = await api.get('/api/auth/me', {
-          headers: { Authorization: `Bearer ${access_token}` }
-        })
-        
-        // Login with user data and token
-        login(userResponse.data, access_token)
-        
-        navigate('/dashboard')
+        // Show OTP verification screen
+        setShowOTP(true)
       }
       
     } catch (err) {
@@ -199,6 +198,23 @@ export const Auth = () => {
     setFormData({ email: '', password: '', name: '', confirmPassword: '' })
     setErrors({})
     clearError()
+  }
+
+  const handleBackFromOTP = () => {
+    setShowOTP(false)
+    setOtpData({ email: '', name: '', password: '' })
+  }
+
+  // Show OTP verification screen
+  if (showOTP) {
+    return (
+      <OTPVerification
+        email={otpData.email}
+        name={otpData.name}
+        password={otpData.password}
+        onBack={handleBackFromOTP}
+      />
+    )
   }
 
   return (
@@ -486,7 +502,7 @@ export const Auth = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {t('auth.processing')}
+                    {isLogin ? t('auth.processing') : t('otp.sendingCode')}
                   </div>
                 ) : (
                   isLogin ? t('auth.signInButton') : t('auth.signUpButton')

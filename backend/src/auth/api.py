@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from .models import UserCreate, User, Token
-from .crud import create_user, authenticate_user, update_user_profile
+from .models import UserCreate, User, Token, OTPRequest, OTPVerify, OTPResponse, RegistrationResponse
+from .crud import create_user, authenticate_user, update_user_profile, create_otp_record, verify_and_delete_otp
 from .utils import create_access_token
 from .dependencies import get_current_user
+from .otp_service import otp_service
 from datetime import timedelta
 from pydantic import BaseModel
 import logging
@@ -24,19 +25,99 @@ class UserResponse(BaseModel):
 class UpdateProfileRequest(BaseModel):
     name: str
 
-@router.post("/signup")
-async def signup(user: UserCreate):
+@router.post("/request-otp", response_model=OTPResponse)
+async def request_otp(otp_request: OTPRequest):
+    """
+    Request OTP for email verification during registration
+    """
     try:
-        logger.info(f"Signup attempt for email: {user.email}")
-        db_user = await create_user(user)
-        if db_user is None:
-            logger.warning(f"Signup failed - email already registered: {user.email}")
+        logger.info(f"OTP request for email: {otp_request.email}")
+        
+        # Check if user already exists
+        from .crud import get_user_by_email
+        existing_user = await get_user_by_email(otp_request.email)
+        if existing_user:
+            logger.warning(f"OTP request failed - email already registered: {otp_request.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered"
             )
         
-        logger.info(f"Successful signup for email: {user.email}")
+        # Generate OTP
+        otp_code = otp_service.generate_otp()
+        
+        # Prepare user data for later creation
+        user_data = {
+            "name": otp_request.name,
+            "email": otp_request.email,
+            "password": otp_request.password
+        }
+        
+        # Store OTP in database
+        await create_otp_record(otp_request.email, otp_code, user_data)
+        
+        # Send OTP via email
+        email_sent = await otp_service.send_otp_email(otp_request.email, otp_code)
+        
+        if not email_sent:
+            logger.error(f"Failed to send OTP email to {otp_request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send verification email"
+            )
+        
+        logger.info(f"OTP sent successfully to {otp_request.email}")
+        return OTPResponse(
+            message="Verification code sent to your email",
+            email=otp_request.email
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OTP request error for {otp_request.email}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send verification code: {str(e)}"
+        )
+
+@router.post("/verify-otp", response_model=RegistrationResponse)
+async def verify_otp(otp_verify: OTPVerify):
+    """
+    Verify OTP and create user account
+    """
+    try:
+        logger.info(f"OTP verification attempt for email: {otp_verify.email}")
+        
+        # Verify OTP and get user data
+        user_data = await verify_and_delete_otp(otp_verify.email, otp_verify.otp_code)
+        
+        if not user_data:
+            logger.warning(f"Invalid OTP for email: {otp_verify.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification code"
+            )
+        
+        # Create user from verified data
+        user_create = UserCreate(
+            name=user_data["name"],
+            email=user_data["email"],
+            password=user_data["password"]
+        )
+        
+        db_user = await create_user(user_create)
+        
+        if not db_user:
+            logger.error(f"Failed to create user after OTP verification: {otp_verify.email}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user account"
+            )
+        
+        logger.info(f"User created successfully after OTP verification: {otp_verify.email}")
+        
+        # Format response
         created_at_str = ""
         if db_user.get("created_at"):
             if hasattr(db_user["created_at"], 'isoformat'):
@@ -44,17 +125,56 @@ async def signup(user: UserCreate):
             else:
                 created_at_str = str(db_user["created_at"])
         
-        return {
-            "id": str(db_user.get("id") or db_user.get("_id")),
-            "name": db_user.get("name", ""),
-            "email": db_user.get("email", ""),
-            "created_at": created_at_str,
-            "is_active": db_user.get("is_active", True)
-        }
+        user_response = User(
+            id=str(db_user.get("id") or db_user.get("_id")),
+            name=db_user.get("name", ""),
+            email=db_user.get("email", ""),
+            created_at=db_user.get("created_at"),
+            is_active=db_user.get("is_active", True)
+        )
+        
+        return RegistrationResponse(
+            message="Account created successfully",
+            user=user_response
+        )
+        
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Signup error for {user.email}: {str(e)}")
+        logger.error(f"OTP verification error for {otp_verify.email}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Verification failed: {str(e)}"
+        )
+
+@router.post("/signup")
+async def signup(user: UserCreate):
+    """
+    Legacy signup endpoint - now redirects to OTP flow
+    """
+    try:
+        logger.info(f"Legacy signup attempt for email: {user.email}")
+        
+        # Check if user already exists
+        from .crud import get_user_by_email
+        existing_user = await get_user_by_email(user.email)
+        if existing_user:
+            logger.warning(f"Legacy signup failed - email already registered: {user.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered. Please use the OTP verification flow."
+            )
+        
+        # Redirect to OTP flow
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please use /auth/request-otp endpoint for registration with email verification"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Legacy signup error for {user.email}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Signup failed: {str(e)}"
