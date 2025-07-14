@@ -9,7 +9,7 @@ import uuid
 import os
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -18,14 +18,20 @@ try:
     from src.auth.models import User
     AUTH_AVAILABLE = True
 except ImportError:
-    # Fallback when auth is not available
+    # Fallback when auth is not available - DISABLE ALL ENDPOINTS
     AUTH_AVAILABLE = False
     
     async def get_current_user():
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service not available"
+        )
     
     async def get_current_user_optional():
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service not available"
+        )
     
     class User:
         id = "test-user"
@@ -403,4 +409,4 @@ async def add_to_documents(
 @router.get("/health")
 async def health_check() -> Dict[str, str]:
     """Health check endpoint for data cleaning service."""
-    return {"status": "ok", "service": "data-cleaning"} 
+    return {"status": "ok", "service": "data-cleaning"}

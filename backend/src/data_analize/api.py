@@ -3,7 +3,7 @@ API endpoints for the data analysis and visualization module.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from pathlib import Path
 import shutil
 import uuid
@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from src.auth.dependencies import get_current_user, get_current_user_optional
+from src.auth.dependencies import get_current_user
 from src.auth.models import User
 
 from .visualization import create_intelligent_visualization, read_data, customize_visualization, process_data_with_llm
@@ -99,7 +99,7 @@ def allowed_file(filename: str) -> bool:
 async def upload_and_visualize(
     file: UploadFile = File(...),
     user_query: str = Form(""),
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: User = Depends(get_current_user)
 ) -> VisualizationResponse:
     """
     Upload a file and create intelligent visualization with optional user query.
@@ -547,4 +547,4 @@ async def clarify_large_data_visualization(
         return VisualizationResponse(
             success=False,
             error=str(e)
-        ) 
+        )

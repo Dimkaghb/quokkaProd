@@ -204,9 +204,10 @@ async def login(login_data: LoginRequest):
             }
             
             user_response = {
-                "access_token": access_token, 
+                "token": access_token, 
                 "token_type": "bearer",
-                "user": user_info
+                "user": user_info,
+                "message": "Login successful"
             }
             
             logger.debug(f"Login response: {user_response}")

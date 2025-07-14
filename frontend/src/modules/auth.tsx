@@ -126,15 +126,10 @@ export const Auth = () => {
           password: formData.password
         })
         
-        const { access_token } = response.data
-        
-        // Get user info
-        const userResponse = await api.get('/auth/me', {
-          headers: { Authorization: `Bearer ${access_token}` }
-        })
+        const { token, user } = response.data
         
         // Login with user data and token
-        login(userResponse.data, access_token)
+        login(user, token)
         
         navigate('/dashboard')
         
