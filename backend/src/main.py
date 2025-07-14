@@ -126,7 +126,7 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Include routers (nginx handles /api prefix removal)
+# Include routers with /api prefix for production
 if AUTH_AVAILABLE:
     app.include_router(auth_router)
 else:

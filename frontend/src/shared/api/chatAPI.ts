@@ -297,4 +297,4 @@ export const chatAPI = {
   },
 }
 
-export default chatAPI 
+export default chatAPI

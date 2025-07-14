@@ -212,4 +212,4 @@ export const dataAnalysisAPI = {
   }
 }
 
-export default dataAnalysisAPI 
+export default dataAnalysisAPI

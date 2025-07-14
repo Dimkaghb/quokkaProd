@@ -162,4 +162,4 @@ export const dataCleaningAPI = {
   }
 }
 
-export default dataCleaningAPI 
+export default dataCleaningAPI

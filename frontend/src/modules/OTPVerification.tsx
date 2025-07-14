@@ -332,4 +332,4 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
       </div>
     </div>
   )
-} 
+}

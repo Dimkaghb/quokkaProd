@@ -123,4 +123,4 @@ export const documentsAPI = {
   },
 }
 
-export default documentsAPI 
+export default documentsAPI
