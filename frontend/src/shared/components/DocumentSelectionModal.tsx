@@ -160,8 +160,8 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-lg border border-gray-200">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div>
@@ -172,7 +172,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -181,13 +181,13 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         {/* Tabs */}
         <div className="border-b border-gray-200 flex-shrink-0">
           <nav className="flex space-x-8 px-6">
-            <button className="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
+            <button className="py-4 px-2 border-b-2 border-gray-900 text-gray-900 font-semibold">
               Files
             </button>
-            <button className="py-4 px-2 text-gray-500 hover:text-gray-700">
+            <button className="py-4 px-2 text-gray-500 hover:text-gray-700 transition-colors">
               Data Sources
             </button>
-            <button className="py-4 px-2 text-gray-500 hover:text-gray-700">
+            <button className="py-4 px-2 text-gray-500 hover:text-gray-700 transition-colors">
               Enrichments
             </button>
           </nav>
@@ -205,7 +205,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search files"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -223,14 +223,14 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
               />
               <label
                 htmlFor="file-upload"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors cursor-pointer flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <span>Upload files</span>
               </label>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+              <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -261,7 +261,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
               <p className="text-gray-600 mb-4">Upload your first document to get started</p>
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
               >
                 Upload Document
               </label>
@@ -271,10 +271,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
               {filteredDocuments.map((document) => (
                 <div
                   key={document.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
                     selectedDocuments.some(doc => doc.id === document.id)
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-gray-900 bg-gray-50 shadow-sm'
+                      : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
                   }`}
                   onClick={() => handleDocumentToggle(document)}
                 >
@@ -326,10 +326,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                           </svg>
                         )}
                       </button>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                         selectedDocuments.some(doc => doc.id === document.id)
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-300'
+                          ? 'border-gray-900 bg-gray-900'
+                          : 'border-gray-300 hover:border-gray-400'
                       }`}>
                         {selectedDocuments.some(doc => doc.id === document.id) && (
                           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,7 +361,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
               <button
                 onClick={() => onConfirm(selectedDocuments, initialQuery)}
                 disabled={isUploading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isUploading ? (
                   <>
@@ -380,4 +380,4 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   )
 }
 
-export default DocumentSelectionModal 
+export default DocumentSelectionModal

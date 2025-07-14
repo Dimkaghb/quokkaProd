@@ -212,7 +212,7 @@ const translations = {
     'startWork.quantitativeDesc': 'Generate tables, charts, insights & more.',
     'startWork.qualitativeAnalysis': 'Qualitative Analysis',
     'startWork.qualitativeDesc': 'Add intelligent columns and insights with AI.',
-    'startWork.cleanPrepData': 'Clean/Prep Data',
+    'startWork.cleanPrepData': 'Data Processing',
     'startWork.uncoverInsights': 'Uncover Insights',
     'startWork.generateCharts': 'Generate Charts',
     'startWork.identifyCorrelations': 'Identify Correlations',
@@ -564,7 +564,7 @@ const translations = {
     'startWork.quantitativeDesc': 'Генерируйте таблицы, графики, инсайты и многое другое.',
     'startWork.qualitativeAnalysis': 'Качественный анализ',
     'startWork.qualitativeDesc': 'Добавляйте интеллектуальные колонки и инсайты с помощью ИИ.',
-    'startWork.cleanPrepData': 'Очистить/подготовить данные',
+    'startWork.cleanPrepData': 'Обработка данных',
     'startWork.uncoverInsights': 'Найти инсайты',
     'startWork.generateCharts': 'Создать графики',
     'startWork.identifyCorrelations': 'Найти корреляции',
@@ -745,4 +745,4 @@ export const useLanguageStore = create<LanguageState>()(
       storage: createJSONStorage(() => localStorage),
     }
   )
-) 
+)

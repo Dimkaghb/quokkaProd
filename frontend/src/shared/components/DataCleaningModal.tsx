@@ -233,25 +233,25 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Zap className="w-5 h-5" />
-            <span>{t('Data Cleaning')}</span>
+          <DialogTitle className="flex items-center space-x-2 text-gray-900">
+            <Zap className="w-5 h-5 text-gray-700" />
+            <span>Clean up your data</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* File Upload Section */}
-          <Card>
+          <Card className="border border-gray-200 bg-white">
             <CardContent className="p-6">
-              <h3 className="font-semibold mb-4">{t('Upload File')}</h3>
+              <h3 className="font-semibold mb-4 text-gray-900">Upload File</h3>
               
               {!file ? (
                 <div
                   className={cn(
                     "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-                    dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+                    dragActive ? "border-gray-900 bg-gray-50" : "border-gray-300 hover:border-gray-400"
                   )}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -259,16 +259,16 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                   onDrop={handleDrop}
                 >
                   <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-lg font-medium mb-2">{t('Drop File')}</p>
-                  <p className="text-sm text-gray-600 mb-4">{t('Or Click Browse')}</p>
+                  <p className="text-lg font-medium mb-2 text-gray-900">Drop your file here</p>
+                  <p className="text-sm text-gray-600 mb-4">or click to browse</p>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
-                    className="mb-2"
+                    className="mb-2 bg-gray-900 hover:bg-gray-800 text-white border-0"
                   >
-                    {t('Select File')}
+                    Select File
                   </Button>
                   <p className="text-xs text-gray-500">
-                    {t('Supported Formats')}: CSV, Excel (.xlsx, .xls)
+                    Supported formats: CSV, Excel (.xlsx, .xls)
                   </p>
                   <input
                     ref={fileInputRef}
@@ -279,11 +279,11 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                   />
                 </div>
               ) : (
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center space-x-3">
-                    <FileText className="w-8 h-8 text-blue-600" />
+                    <FileText className="w-8 h-8 text-gray-700" />
                     <div>
-                      <p className="font-medium">{file.name}</p>
+                      <p className="font-medium text-gray-900">{file.name}</p>
                       <p className="text-sm text-gray-600">
                         {(file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
@@ -296,6 +296,7 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                       setFile(null);
                       setCleaningResult(null);
                     }}
+                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -306,9 +307,9 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
 
           {/* Cleaning Operations Section */}
           {file && (
-            <Card>
+            <Card className="border border-gray-200 bg-white">
               <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">{t('Select Operations')}</h3>
+                <h3 className="font-semibold mb-4 text-gray-900">Select Operations</h3>
                 <div className="space-y-3">
                   {cleaningOperations.map((operation) => {
                     const Icon = operation.icon;
@@ -320,7 +321,7 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                         className={cn(
                           "flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-all",
                           isSelected 
-                            ? "border-blue-500 bg-blue-50" 
+                            ? "border-gray-900 bg-gray-50" 
                             : "border-gray-200 hover:border-gray-300"
                         )}
                         onClick={() => handleOperationToggle(operation.id)}
@@ -329,18 +330,18 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                           <div className={cn(
                             "w-5 h-5 rounded border-2 flex items-center justify-center",
                             isSelected 
-                              ? "bg-blue-600 border-blue-600" 
-                              : "border-gray-300"
+                              ? "bg-gray-900 border-gray-900" 
+                              : "border-gray-300 bg-white"
                           )}>
                             {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
                           </div>
                         </div>
                         <Icon className={cn(
                           "w-5 h-5 mt-1",
-                          isSelected ? "text-blue-600" : "text-gray-400"
+                          isSelected ? "text-gray-900" : "text-gray-400"
                         )} />
                         <div className="flex-1">
-                          <p className="font-medium">{operation.name}</p>
+                          <p className={cn("font-medium", isSelected ? "text-gray-900" : "text-gray-700")}>{operation.name}</p>
                           <p className="text-sm text-gray-600">{operation.description}</p>
                         </div>
                       </div>
@@ -353,16 +354,16 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
 
           {/* Results Section */}
           {cleaningResult && (
-            <Card>
+            <Card className="border border-gray-200 bg-white">
               <CardContent className="p-6">
                 {cleaningResult.success ? (
                   <div className="text-center">
-                    <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                    <h3 className="font-semibold text-green-800 mb-2">
-                      {t('Cleaning Success')}
+                    <CheckCircle className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Data cleaned successfully
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      {t('Cleaning Success Description')}
+                      Your data has been processed and is ready for download
                     </p>
                     
                     {/* Action Buttons */}
@@ -370,17 +371,17 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                       {/* Download Button */}
                       <Button 
                         onClick={handleDownload} 
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-gray-900 hover:bg-gray-800 text-white border-0"
                         disabled={isUploading}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        {t('Download Cleaned File')}
+                        Download Cleaned File
                       </Button>
 
                       {/* Add to Documents Button */}
                       <Button 
                         onClick={handleAddToDocuments} 
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
                         disabled={isUploading}
                       >
                         {isUploading ? (
@@ -388,14 +389,14 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                         ) : (
                           <FileText className="w-4 h-4 mr-2" />
                         )}
-                        {t('Add to Documents')}
+                        Add to Documents
                       </Button>
 
                       {/* Cancel Button */}
                       <Button 
                         onClick={handleCancel} 
                         variant="outline"
-                        className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                        className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                         disabled={isUploading}
                       >
                         {isUploading ? (
@@ -403,18 +404,18 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
                         ) : (
                           <X className="w-4 h-4 mr-2" />
                         )}
-                        {t('Cancel')}
+                        Cancel
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-                    <h3 className="font-semibold text-red-800 mb-2">
-                      {t('Cleaning Failed')}
+                    <AlertCircle className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">
+                      Cleaning failed
                     </h3>
                     <p className="text-gray-600">
-                      {cleaningResult.error || t('Cleaning Error')}
+                      {cleaningResult.error || 'An error occurred while processing your data'}
                     </p>
                   </div>
                 )}
@@ -424,24 +425,28 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={handleClose}>
-              {t('common.cancel')}
+            <Button 
+              variant="outline" 
+              onClick={handleClose}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
             </Button>
             {file && selectedOperations.length > 0 && !cleaningResult && (
               <Button 
                 onClick={handleCleanData} 
                 disabled={isUploading}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-gray-900 hover:bg-gray-800 text-white border-0"
               >
                 {isUploading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('Cleaning')}
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4 mr-2" />
-                    {t('Clean Data')}
+                    Clean Data
                   </>
                 )}
               </Button>
@@ -451,4 +456,4 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
       </DialogContent>
     </Dialog>
   );
-}; 
+};

@@ -73,8 +73,8 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
     },
     {
       icon: Zap,
-      title: t('dataCleaning.title'),
-      description: t('startWork.cleanDataDesc'),
+      title: 'Clean up your data',
+      description: 'Remove duplicates, handle missing values, and standardize your data format',
       onClick: () => setIsDataCleaningModalOpen(true)
     }
   ];
@@ -380,4 +380,4 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
       />
     </div>
   );
-}; 
+};
