@@ -41,3 +41,5 @@ class OTPResponse(BaseModel):
 class RegistrationResponse(BaseModel):
     message: str
     user: User
+    token: Optional[str] = None
+    token_type: Optional[str] = None

@@ -117,6 +117,9 @@ async def verify_otp(otp_verify: OTPVerify):
         
         logger.info(f"User created successfully after OTP verification: {otp_verify.email}")
         
+        # Create access token for the new user
+        access_token = create_access_token(data={"sub": db_user["email"]})
+        
         # Format response
         created_at_str = ""
         if db_user.get("created_at"):
@@ -135,7 +138,9 @@ async def verify_otp(otp_verify: OTPVerify):
         
         return RegistrationResponse(
             message="Account created successfully",
-            user=user_response
+            user=user_response,
+            token=access_token,
+            token_type="bearer"
         )
         
     except HTTPException:

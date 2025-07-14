@@ -94,26 +94,33 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
     setOtpError('')
     
     try {
-      await api.post('/auth/verify-otp', {
+      const verifyResponse = await api.post('/auth/verify-otp', {
         email,
         otp_code: code
       })
       
-      // Auto-login after successful verification
-      const loginResponse = await api.post('/auth/login', {
-        email,
-        password
-      })
+      const { user, token } = verifyResponse.data
       
-      const { access_token } = loginResponse.data
-      
-      // Get user info
-      const userResponse = await api.get('/auth/me', {
-        headers: { Authorization: `Bearer ${access_token}` }
-      })
-      
-      // Login with user data and token
-      login(userResponse.data, access_token)
+      if (token) {
+        // Use token from verify-otp response
+        login(user, token)
+      } else {
+        // Fallback: Auto-login after successful verification
+        const loginResponse = await api.post('/auth/login', {
+          email,
+          password
+        })
+        
+        const { access_token } = loginResponse.data
+        
+        // Get user info
+        const userResponse = await api.get('/auth/me', {
+          headers: { Authorization: `Bearer ${access_token}` }
+        })
+        
+        // Login with user data and token
+        login(userResponse.data, access_token)
+      }
       
       navigate('/dashboard')
       

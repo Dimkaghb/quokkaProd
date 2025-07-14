@@ -60,6 +60,8 @@ export interface OTPRequestResponse {
 export interface OTPVerifyResponse {
   message: string
   user: User
+  token?: string
+  token_type?: string
 }
 
 export interface AuthError {
