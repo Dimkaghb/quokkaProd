@@ -79,7 +79,7 @@ export const dataCleaningAPI = {
     formData.append('operations', JSON.stringify(operations))
 
     const response = await api.post<DataCleaningResult>(
-      '/api/data-cleaning/upload-and-clean', 
+      '/data-cleaning/upload-and-clean', 
       formData,
       {
         headers: {
@@ -92,7 +92,7 @@ export const dataCleaningAPI = {
 
   // Download cleaned file
   downloadCleanedFile: async (filename: string): Promise<Blob> => {
-    const response = await api.get(`/api/data-cleaning/download/${filename}`, {
+    const response = await api.get(`/data-cleaning/download/${filename}`, {
       responseType: 'blob',
     })
     return response.data
@@ -100,20 +100,20 @@ export const dataCleaningAPI = {
 
   // Get supported cleaning operations
   getSupportedOperations: async (): Promise<SupportedOperationsResult> => {
-    const response = await api.get<SupportedOperationsResult>('/api/data-cleaning/supported-operations')
+    const response = await api.get<SupportedOperationsResult>('/data-cleaning/supported-operations')
     return response.data
   },
 
   // Health check
   healthCheck: async (): Promise<{ status: string; service: string }> => {
-    const response = await api.get<{ status: string; service: string }>('/api/data-cleaning/health')
+    const response = await api.get<{ status: string; service: string }>('/data-cleaning/health')
     return response.data
   },
 
   // Generate download URL for cleaned file
   getDownloadUrl: (filename: string): string => {
     const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    return `${baseURL}/api/data-cleaning/download/${filename}`
+    return `${baseURL}/data-cleaning/download/${filename}`
   },
 
   // Download file directly by triggering browser download
@@ -145,7 +145,7 @@ export const dataCleaningAPI = {
     message: string
     deleted_files: string[]
   }> => {
-    const response = await api.delete(`/api/data-cleaning/cancel/${filename}`)
+    const response = await api.delete(`/data-cleaning/cancel/${filename}`)
     return response.data
   },
 
@@ -157,7 +157,7 @@ export const dataCleaningAPI = {
     document_path: string
     deleted_temp_files: string[]
   }> => {
-    const response = await api.post(`/api/data-cleaning/add-to-docs/${filename}`)
+    const response = await api.post(`/data-cleaning/add-to-docs/${filename}`)
     return response.data
   }
 }

@@ -107,7 +107,7 @@ export const dataAnalysisAPI = {
       formData.append('user_query', userQuery)
     }
 
-    const response = await api.post<VisualizationResult>('/api/data-analysis/upload', formData, {
+    const response = await api.post<VisualizationResult>('/data-analysis/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -117,7 +117,7 @@ export const dataAnalysisAPI = {
 
   // Analyze data file for recommendations
   analyzeDataFile: async (filePath: string, userQuery?: string): Promise<DataAnalysisResult> => {
-    const response = await api.post<DataAnalysisResult>('/api/data-analysis/analyze', {
+    const response = await api.post<DataAnalysisResult>('/data-analysis/analyze', {
       file_path: filePath,
       user_query: userQuery || ''
     })
@@ -146,13 +146,13 @@ export const dataAnalysisAPI = {
       throw new Error('Either filePath or currentData must be provided')
     }
 
-    const response = await api.post<VisualizationResult>('/api/data-analysis/custom-visualization', requestData)
+    const response = await api.post<VisualizationResult>('/data-analysis/custom-visualization', requestData)
     return response.data
   },
 
   // Create visualization from existing file
   createVisualization: async (filePath: string, chartType?: string, query?: string): Promise<VisualizationResult> => {
-    const response = await api.post<VisualizationResult>('/api/data-analysis/visualize', {
+    const response = await api.post<VisualizationResult>('/data-analysis/visualize', {
       file_path: filePath,
       chart_type: chartType,
       query: query || ''
@@ -171,7 +171,7 @@ export const dataAnalysisAPI = {
     }>
     total_count: number
   }> => {
-    const response = await api.get('/api/data-analysis/files')
+    const response = await api.get('/data-analysis/files')
     return response.data
   },
 
@@ -180,7 +180,7 @@ export const dataAnalysisAPI = {
     success: boolean
     message: string
   }> => {
-    const response = await api.delete(`/api/data-analysis/files/${filename}`)
+    const response = await api.delete(`/data-analysis/files/${filename}`)
     return response.data
   },
 
@@ -190,7 +190,7 @@ export const dataAnalysisAPI = {
     formats: string[]
     descriptions: Record<string, string>
   }> => {
-    const response = await api.get('/api/data-analysis/supported-formats')
+    const response = await api.get('/data-analysis/supported-formats')
     return response.data
   },
 
@@ -199,7 +199,7 @@ export const dataAnalysisAPI = {
     status: string
     service: string
   }> => {
-    const response = await api.get('/api/data-analysis/health')
+    const response = await api.get('/data-analysis/health')
     return response.data
   },
 

@@ -119,30 +119,30 @@ app.add_middleware(
         "*"  # Allow all origins for development
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
 
 # Include routers (nginx handles /api prefix removal)
 if AUTH_AVAILABLE:
-    app.include_router(auth_router, prefix="/api")
+    app.include_router(auth_router, prefix="/")
 else:
     logger.warning("Auth router not included (auth components not available)")
 
-app.include_router(agents_router, prefix="/api")
+app.include_router(agents_router, prefix="/")
 
 # Include data cleaning router
 if DATA_CLEANING_AVAILABLE:
-    app.include_router(data_cleaning_router, prefix="/api")
+    app.include_router(data_cleaning_router, prefix="/")
     logger.info("✅ Data cleaning router included")
 else:
     logger.warning("Data cleaning router not included")
 
 # Include new module routers
 if NEW_MODULES_AVAILABLE:
-    app.include_router(documents_router, prefix="/api")
-    app.include_router(chat_router, prefix="/api")
+    app.include_router(documents_router, prefix="/")
+    app.include_router(chat_router, prefix="/")
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")
