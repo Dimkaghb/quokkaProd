@@ -3,7 +3,7 @@ API endpoints for the data analysis and visualization module.
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pathlib import Path
 import shutil
 import uuid

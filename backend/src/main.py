@@ -91,7 +91,9 @@ app = FastAPI(
     title="QuokkaAI API",
     description="Backend API for QuokkaAI intelligent data analysis assistant",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/check/docs",
+    redoc_url="/check/redoc"
 )
 
 # Add request logging middleware for debugging
@@ -126,23 +128,23 @@ app.add_middleware(
 
 # Include routers (nginx handles /api prefix removal)
 if AUTH_AVAILABLE:
-    app.include_router(auth_router, prefix="/")
+    app.include_router(auth_router)
 else:
     logger.warning("Auth router not included (auth components not available)")
 
-app.include_router(agents_router, prefix="/")
+app.include_router(agents_router)
 
 # Include data cleaning router
 if DATA_CLEANING_AVAILABLE:
-    app.include_router(data_cleaning_router, prefix="/")
+    app.include_router(data_cleaning_router)
     logger.info("✅ Data cleaning router included")
 else:
     logger.warning("Data cleaning router not included")
 
 # Include new module routers
 if NEW_MODULES_AVAILABLE:
-    app.include_router(documents_router, prefix="/")
-    app.include_router(chat_router, prefix="/")
+    app.include_router(documents_router)
+    app.include_router(chat_router)
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")
@@ -190,4 +192,4 @@ async def debug_routes():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)     
+    uvicorn.run(app, host="0.0.0.0", port=8000)
