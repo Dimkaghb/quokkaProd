@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useThreadStore } from '../shared/stores/threadStore'
 import { useAuthStore } from '../shared/stores/authStore'
+import { useLanguageStore } from '../shared/stores/languageStore'
 import ChatSidebar from '../shared/components/ChatSidebar'
 
 export const ThreadChatbot: React.FC = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const { t } = useLanguageStore()
   const {
     currentThread,
     messages,
@@ -143,14 +145,14 @@ export const ThreadChatbot: React.FC = () => {
               <div>
                 <h1 className="text-lg font-semibold text-white">{currentThread.title}</h1>
                 <p className="text-sm text-gray-400">
-                  {messages.length} messages
-                  {selectedDocuments.length > 0 && ` • ${selectedDocuments.length} documents selected`}
+                  {t('threadChatbot.messagesCount', { count: messages.length.toString() })}
+                  {selectedDocuments.length > 0 && ` • ${t('threadChatbot.documentsSelected', { count: selectedDocuments.length.toString() })}`}
                 </p>
               </div>
             ) : (
               <div>
                 <h1 className="text-lg font-semibold text-white">QuokkaAI</h1>
-                <p className="text-sm text-gray-400">Select a chat or start a new conversation</p>
+                <p className="text-sm text-gray-400">{t('threadChatbot.selectChatOrStart')}</p>
               </div>
             )}
           </div>
@@ -163,12 +165,12 @@ export const ThreadChatbot: React.FC = () => {
               <button
                 onClick={handleLogout}
                 className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center space-x-1"
-                title="Logout"
+                title={t('threadChatbot.logout')}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span>Logout</span>
+                <span>{t('threadChatbot.logout')}</span>
               </button>
             </div>
 
@@ -180,7 +182,7 @@ export const ThreadChatbot: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>Back to Landing</span>
+              <span>{t('threadChatbot.backToLanding')}</span>
             </button>
             
             {currentThread && (
@@ -192,7 +194,7 @@ export const ThreadChatbot: React.FC = () => {
                     : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                 }`}
               >
-                📄 Documents ({selectedDocuments.length})
+                📄 {t('threadChatbot.documents')} ({selectedDocuments.length})
               </button>
             )}
           </div>
@@ -202,7 +204,7 @@ export const ThreadChatbot: React.FC = () => {
         {showDocumentSelector && currentThread && (
           <div className="border-b border-gray-800 bg-gray-900 p-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-medium text-white">Select Documents for this Chat</h3>
+              <h3 className="font-medium text-white">{t('threadChatbot.selectDocumentsForChat')}</h3>
               <button
                 onClick={() => setShowDocumentSelector(false)}
                 className="text-gray-400 hover:text-white"
@@ -214,11 +216,11 @@ export const ThreadChatbot: React.FC = () => {
             {isLoadingDocuments ? (
               <div className="text-center text-gray-400">
                 <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                Loading documents...
+                {t('threadChatbot.loadingDocuments')}
               </div>
             ) : documents.length === 0 ? (
               <p className="text-gray-400 text-sm">
-                No documents uploaded yet. Upload documents in the old chatbot interface to use them here.
+                {t('threadChatbot.noDocumentsUploaded')}
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
@@ -250,7 +252,7 @@ export const ThreadChatbot: React.FC = () => {
                           {Math.round(doc.file_size / 1024)} KB
                         </span>
                         <span className="text-xs text-gray-500">
-                          {doc.chunks_count} chunks
+                          {doc.chunks_count} {t('threadChatbot.chunks')}
                         </span>
                       </div>
                     </div>
@@ -269,7 +271,7 @@ export const ThreadChatbot: React.FC = () => {
               onClick={clearError}
               className="text-red-400 hover:text-red-300 text-xs mt-1"
             >
-              Dismiss
+              {t('threadChatbot.dismiss')}
             </button>
           </div>
         )}
@@ -282,12 +284,12 @@ export const ThreadChatbot: React.FC = () => {
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-black text-2xl">🐨</span>
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-2">Welcome to QuokkaAI</h2>
+                <h2 className="text-xl font-semibold text-white mb-2">{t('threadChatbot.welcomeTitle')}</h2>
                 <p className="text-gray-400 mb-4">
-                  Your intelligent data analysis assistant with thread-based conversations
+                  {t('threadChatbot.welcomeDescription')}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Select a chat from the sidebar or create a new one to get started
+                  {t('threadChatbot.welcomeSubtext')}
                 </p>
               </div>
             </div>
@@ -299,7 +301,7 @@ export const ThreadChatbot: React.FC = () => {
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center text-gray-400">
-                  <p>Start the conversation by sending a message below</p>
+                  <p>{t('threadChatbot.startConversation')}</p>
                 </div>
               ) : (
                 messages.map((message) => (
@@ -324,9 +326,9 @@ export const ThreadChatbot: React.FC = () => {
                       {/* Visualization support */}
                       {message.metadata?.visualization && (
                         <div className="mt-4 p-3 bg-gray-900 rounded border">
-                          <p className="text-sm font-medium text-gray-300 mb-2">📊 Visualization</p>
+                          <p className="text-sm font-medium text-gray-300 mb-2">📊 {t('threadChatbot.visualization')}</p>
                           {/* Add visualization rendering here when needed */}
-                          <p className="text-xs text-gray-400">Visualization available</p>
+                          <p className="text-xs text-gray-400">{t('threadChatbot.visualizationAvailable')}</p>
                         </div>
                       )}
                       
@@ -334,7 +336,7 @@ export const ThreadChatbot: React.FC = () => {
                       <div className="flex items-center justify-between mt-2 text-xs text-gray-400">
                         <span>{formatTimestamp(message.timestamp)}</span>
                         {message.metadata?.confidence && (
-                          <span>Confidence: {Math.round(message.metadata.confidence * 100)}%</span>
+                          <span>{t('threadChatbot.confidence', { percent: Math.round(message.metadata.confidence * 100).toString() })}</span>
                         )}
                       </div>
                     </div>
@@ -370,7 +372,7 @@ export const ThreadChatbot: React.FC = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  placeholder="Type your message..."
+                  placeholder={t('threadChatbot.typeMessage')}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white 
                            placeholder-gray-400 resize-none focus:outline-none focus:ring-2 
                            focus:ring-blue-500 focus:border-transparent"
@@ -419,4 +421,4 @@ export const ThreadChatbot: React.FC = () => {
   )
 }
 
-export default ThreadChatbot 
+export default ThreadChatbot

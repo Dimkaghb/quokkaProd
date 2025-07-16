@@ -3,6 +3,7 @@ import { documentsAPI } from '../api/documentsAPI'
 import type { UserDocument } from '../api/documentsAPI'
 import { useToast } from './Toast'
 import { LoadingSpinner } from './LoadingSpinner'
+import { useLanguageStore } from '../stores/languageStore'
 
 interface DocumentSelectionModalProps {
   isOpen: boolean
@@ -24,6 +25,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   const [isUploading, setIsUploading] = useState(false)
   const [deletingDocuments, setDeletingDocuments] = useState<Set<string>>(new Set())
   const { showToast } = useToast()
+  const { t } = useLanguageStore()
 
   useEffect(() => {
     if (isOpen) {
@@ -93,7 +95,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   const handleDeleteDocument = async (documentId: string, event: React.MouseEvent) => {
     event.stopPropagation()
     
-    if (!confirm('Are you sure you want to delete this document?')) {
+    if (!confirm(t('documentSelection.confirmDelete'))) {
       return
     }
 
@@ -165,8 +167,8 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Select Documents</h2>
-            <p className="text-gray-600 mt-1">Choose documents to include in your analysis</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t('documentSelection.title')}</h2>
+            <p className="text-gray-600 mt-1">{t('documentSelection.description')}</p>
           </div>
           <button
             onClick={onClose}
@@ -182,13 +184,13 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         <div className="border-b border-gray-200 flex-shrink-0">
           <nav className="flex space-x-8 px-6">
             <button className="py-4 px-2 border-b-2 border-gray-900 text-gray-900 font-semibold">
-              Files
+              {t('documentSelection.files')}
             </button>
             <button className="py-4 px-2 text-gray-500 hover:text-gray-700 transition-colors">
-              Data Sources
+              {t('documentSelection.dataSources')}
             </button>
             <button className="py-4 px-2 text-gray-500 hover:text-gray-700 transition-colors">
-              Enrichments
+              {t('documentSelection.enrichments')}
             </button>
           </nav>
         </div>
@@ -204,7 +206,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search files"
+                placeholder={t('documentSelection.searchFiles')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
               />
             </div>
@@ -228,13 +230,13 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <span>Upload files</span>
+                <span>{t('documentSelection.uploadFiles')}</span>
               </label>
               <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>Upload Google Sheets</span>
+                <span>{t('documentSelection.uploadGoogleSheets')}</span>
               </button>
             </div>
           </div>
@@ -257,13 +259,13 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-              <p className="text-gray-600 mb-4">Upload your first document to get started</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('documentSelection.noDocumentsFound')}</h3>
+              <p className="text-gray-600 mb-4">{t('documentSelection.uploadFirstDocument')}</p>
               <label
                 htmlFor="file-upload"
                 className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                Upload Document
+                {t('documentSelection.uploadDocument')}
               </label>
             </div>
           ) : (
@@ -316,7 +318,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                         onClick={(e) => handleDeleteDocument(document.id, e)}
                         disabled={deletingDocuments.has(document.id)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete document"
+                        title={t('documentSelection.deleteDocument')}
                       >
                         {deletingDocuments.has(document.id) ? (
                           <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
@@ -349,14 +351,14 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
         <div className="border-t border-gray-200 p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              {selectedDocuments.length} file{selectedDocuments.length !== 1 ? 's' : ''} selected
+              {t('documentSelection.filesSelected', { count: selectedDocuments.length.toString() })}
             </div>
             <div className="flex items-center space-x-3">
               <button
                 onClick={onClose}
                 className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
               >
-                Cancel
+                {t('documentSelection.cancel')}
               </button>
               <button
                 onClick={() => onConfirm(selectedDocuments, initialQuery)}
@@ -366,10 +368,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
                 {isUploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Uploading...</span>
+                    <span>{t('documentSelection.uploading')}</span>
                   </>
                 ) : (
-                  <span>Confirm selection</span>
+                  <span>{t('documentSelection.confirmSelection')}</span>
                 )}
               </button>
             </div>

@@ -433,8 +433,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   {threads.length === 0 ? (
                     <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
                       <MessageSquare className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
-                      <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>No analyses yet</p>
-                      <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>Create your first analysis to get started</p>
+                      <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noAnalyses')}</p>
+                      <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.createFirstAnalysis')}</p>
                     </div>
                   ) : (
                     threads.map((thread) => (
@@ -461,7 +461,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                               <Clock className={cn(isMobile ? "w-3 h-3" : "w-3 h-3")} />
                               <span>{new Date(thread.updated_at).toLocaleDateString()}</span>
                               {thread.message_count && !isMobile && (
-                                <span className="text-gray-400">• {thread.message_count} messages</span>
+                                <span className="text-gray-400">• {thread.message_count} {t('workspaceLayout.messages')}</span>
                               )}
                             </div>
                           </div>
@@ -502,8 +502,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 ) : documents.length === 0 ? (
                   <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
                     <FileText className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
-                    <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>No documents yet</p>
-                    <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>Upload files to start analyzing</p>
+                    <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noDocuments')}</p>
+                    <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.uploadToStart')}</p>
                   </div>
                 ) : (
                   <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
@@ -531,7 +531,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                     })}
                     {documents.length > 5 && (
                       <p className={cn("text-gray-500 text-center", isMobile ? "text-xs pt-1" : "text-xs pt-2")}>
-                        +{documents.length - 5} more files
+                        {t('workspaceLayout.moreFiles', { count: (documents.length - 5).toString() })}
                       </p>
                     )}
                   </div>
