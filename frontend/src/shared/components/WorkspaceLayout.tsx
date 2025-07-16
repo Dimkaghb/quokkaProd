@@ -211,16 +211,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <span className="font-semibold text-gray-900">quokkaAI</span>
           </div>
           
-          <div className="flex items-center space-x-2 relative z-10">
+          <div className="flex items-center space-x-2">
             <LanguageSwitcher variant="ghost" className="h-9 w-9 p-1" />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNewChat}
-              className="h-9 w-9"
-            >
-              <Plus className="w-5 h-5" />
-            </Button>
           </div>
         </div>
       )}
@@ -397,23 +389,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   </div>
                 </Button>
 
-                {/* Documents Icon */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-10 h-10 hover:bg-gray-100 rounded-lg"
-                  title={`${documents.length} ${t('dashboard.documents')}`}
-                >
-                  <div className="relative">
-                    <FileText className="w-5 h-5 text-gray-600" />
-                    {documents.length > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-                        {documents.length > 9 ? '9+' : documents.length}
-                      </span>
-                    )}
-                  </div>
-                </Button>
-
                 {/* Analytics Icon */}
                 <Button
                   variant="ghost"
@@ -584,4 +559,4 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       </div>
     </div>
   );
-}; 
+};

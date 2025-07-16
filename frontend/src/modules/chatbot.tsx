@@ -47,10 +47,8 @@ export const Chatbot: React.FC = () => {
       const response = await chatAPI.getThreadDocuments(threadId);
       if (response.success) {
         setCurrentDocuments(response.documents);
-        // Show context window if documents are available
-        if (response.documents.length > 0) {
-          setShowContextWindow(true);
-        }
+        // Don't automatically show context window - let user open it manually
+        setShowContextWindow(false);
       }
     } catch (error) {
       console.error('Error fetching thread documents:', error);
@@ -85,10 +83,8 @@ export const Chatbot: React.FC = () => {
         setSelectedThread(response.thread.id);
         // Store current documents
         setCurrentDocuments(selectedDocuments);
-        // Show context window if documents are selected
-        if (selectedDocuments.length > 0) {
-          setShowContextWindow(true);
-        }
+        // Don't automatically show context window - let user open it manually
+        setShowContextWindow(false);
         // showToast(`New analysis created with ${selectedDocuments.length} documents`, 'success'); // Removed annoying toast
       } else {
         showToast('Failed to create analysis thread', 'error');

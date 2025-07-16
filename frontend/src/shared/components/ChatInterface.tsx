@@ -356,11 +356,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {!isMobile && threadTitle && (
         <div className="border-b border-gray-100 px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center space-x-3">
               <h1 className="text-base font-semibold text-gray-900">{threadTitle}</h1>
+              <LanguageSwitcher />
             </div>
             <div className="flex items-center space-x-2">
-              <LanguageSwitcher />
+              {/* Empty space for future actions */}
             </div>
           </div>
         </div>
@@ -560,4 +561,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       />
     </div>
   );
-}; 
+};

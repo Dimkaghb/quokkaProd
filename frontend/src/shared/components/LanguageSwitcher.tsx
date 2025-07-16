@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import { Button } from '../../components/ui/button';
-import { Globe, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface LanguageSwitcherProps {
   variant?: 'default' | 'ghost' | 'outline';
@@ -35,11 +35,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <Button 
           variant={variant} 
           size={size} 
-          className={`flex items-center space-x-2 ${className}`}
+          className={`flex items-center justify-center ${className}`}
         >
-          <Globe className="w-4 h-4" />
-          <span className="hidden sm:inline">{currentLanguage?.flag}</span>
-          <span className="hidden md:inline">{currentLanguage?.name}</span>
+          <span className="text-lg">{currentLanguage?.flag}</span>
         </Button>
       </DropdownMenuTrigger>
       
@@ -62,4 +60,4 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}; 
+};

@@ -349,6 +349,21 @@ def process_data_with_llm(data: pd.DataFrame, user_prompt: str = "", file_path: 
 - ScatterChart: корреляции между числовыми переменными
 - RadarChart: многомерные сравнения
 - ComposedChart: комбинированные визуализации
+- RadialBarChart: круговые столбчатые диаграммы, прогресс
+- Treemap: иерархические данные, вложенные прямоугольники
+- FunnelChart: воронки процессов (например, продажи)
+- Sankey: потоки между состояниями (экспериментальный)
+
+ВЫБОР ТИПА ГРАФИКА (если пользователь не указал):
+- Временные данные → LineChart или AreaChart
+- Категории + числа → BarChart
+- Пропорции/доли → PieChart (до 8 категорий)
+- Корреляции → ScatterChart
+- Иерархические данные → Treemap
+- Процессы/воронки → FunnelChart
+- Многомерные данные → RadarChart
+- Прогресс/достижения → RadialBarChart
+- Потоки данных → Sankey
 
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ:
 - Если пользователь просит сортировку/группировку - примени к данным
@@ -445,6 +460,21 @@ AVAILABLE CHART TYPES:
 - ScatterChart: correlations between numeric variables
 - RadarChart: multi-dimensional comparisons
 - ComposedChart: combined visualizations
+- RadialBarChart: circular bar charts, progress indicators
+- Treemap: hierarchical data, nested rectangles
+- FunnelChart: process funnels (e.g., sales funnel)
+- Sankey: flow between states (experimental)
+
+CHART TYPE SELECTION (if user doesn't specify):
+- Time-based data → LineChart or AreaChart
+- Categories + numbers → BarChart
+- Proportions/shares → PieChart (up to 8 categories)
+- Correlations → ScatterChart
+- Hierarchical data → Treemap
+- Process/funnels → FunnelChart
+- Multi-dimensional data → RadarChart
+- Progress/achievements → RadialBarChart
+- Data flows → Sankey
 
 MANDATORY REQUIREMENTS:
 - If user asks for sorting/grouping - apply to data
@@ -680,18 +710,51 @@ def create_fallback_visualization(data: pd.DataFrame, user_prompt: str, user_lan
         # Apply user requests to data
         processed_data = apply_user_requests_to_data(data, user_prompt)
         
-        # Determine chart type
+        # Intelligent chart type selection
         numeric_cols = processed_data.select_dtypes(include=['number']).columns.tolist()
         categorical_cols = processed_data.select_dtypes(include=['object', 'category']).columns.tolist()
+        datetime_cols = processed_data.select_dtypes(include=['datetime64']).columns.tolist()
         
-        if len(categorical_cols) >= 1 and len(numeric_cols) >= 1:
-            chart_type = "BarChart"
+        # Check for time series data
+        if datetime_cols or any('date' in col.lower() or 'time' in col.lower() for col in processed_data.columns):
+            chart_type = "LineChart"
+            x_key = datetime_cols[0] if datetime_cols else [col for col in processed_data.columns if 'date' in col.lower() or 'time' in col.lower()][0]
+            y_key = numeric_cols[0] if numeric_cols else categorical_cols[0]
+        
+        # Check for hierarchical data (nested categories)
+        elif len(categorical_cols) >= 2 and len(numeric_cols) >= 1:
+            chart_type = "Treemap"
             x_key = categorical_cols[0]
             y_key = numeric_cols[0]
+        
+        # Check for proportional data (percentages, parts of whole)
+        elif len(categorical_cols) == 1 and len(numeric_cols) == 1:
+            # Check if data looks like proportions
+            numeric_data = processed_data[numeric_cols[0]]
+            if numeric_data.sum() <= 100 and numeric_data.min() >= 0:
+                chart_type = "PieChart"
+            else:
+                chart_type = "BarChart"
+            x_key = categorical_cols[0]
+            y_key = numeric_cols[0]
+        
+        # Check for funnel-like data (decreasing values)
+        elif len(categorical_cols) >= 1 and len(numeric_cols) >= 1:
+            numeric_data = processed_data[numeric_cols[0]].sort_values(ascending=False)
+            if len(numeric_data) <= 10 and numeric_data.is_monotonic_decreasing:
+                chart_type = "FunnelChart"
+            else:
+                chart_type = "BarChart"
+            x_key = categorical_cols[0]
+            y_key = numeric_cols[0]
+        
+        # Check for correlation/relationship data
         elif len(numeric_cols) >= 2:
             chart_type = "ScatterChart"
             x_key = numeric_cols[0]
             y_key = numeric_cols[1]
+        
+        # Default fallback
         else:
             chart_type = "BarChart"
             x_key = list(processed_data.columns)[0]

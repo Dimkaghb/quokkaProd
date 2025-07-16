@@ -16,6 +16,12 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ComposedChart,
+  RadialBarChart,
+  RadialBar,
+  Treemap,
+  FunnelChart,
+  Funnel,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -293,6 +299,88 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
           </ComposedChart>
         );
 
+      case 'radialbarchart':
+      case 'radialbar':
+        return (
+          <RadialBarChart 
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={isMobile ? "10%" : "20%"}
+            outerRadius={isMobile ? "80%" : "90%"}
+          >
+            <RadialBar
+              dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey}
+              cornerRadius={10}
+              fill={config.colors[0] || COLORS[0]}
+            />
+            <PolarAngleAxis 
+              type="number" 
+              domain={[0, 'dataMax']}
+              angleAxisId={0}
+              tick={false}
+            />
+            <Tooltip />
+            {!isMobile && <Legend />}
+          </RadialBarChart>
+        );
+
+      case 'treemap':
+        return (
+          <Treemap
+            data={data}
+            dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey}
+            stroke="#fff"
+            fill={config.colors[0] || COLORS[0]}
+          >
+            <Tooltip />
+          </Treemap>
+        );
+
+      case 'funnelchart':
+      case 'funnel':
+        return (
+          <FunnelChart data={data}>
+            <Tooltip />
+            <Funnel
+              dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey}
+              data={data}
+              isAnimationActive
+            >
+              <LabelList position="center" fill="#fff" stroke="none" />
+              {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Funnel>
+          </FunnelChart>
+        );
+
+      case 'sankey':
+        // Note: Sankey is experimental in Recharts
+        // For now, we'll fallback to a bar chart with a note
+        return (
+          <div className="text-center p-4">
+            <p className="text-gray-600 mb-4">Sankey charts are experimental. Showing as bar chart instead:</p>
+            <BarChart {...commonProps}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey={config.xKey} 
+                {...axisProps}
+                angle={isMobile ? -45 : 0}
+                textAnchor={isMobile ? 'end' : 'middle'}
+                height={isMobile ? 60 : 30}
+              />
+              <YAxis {...axisProps} />
+              <Tooltip />
+              {!isMobile && <Legend />}
+              <Bar 
+                dataKey={Array.isArray(config.yKey) ? config.yKey[0] : config.yKey} 
+                fill={config.colors[0] || COLORS[0]}
+              />
+            </BarChart>
+          </div>
+        );
+
       default:
         // Fallback to bar chart
         return (
@@ -343,6 +431,9 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
       )}>
         <p>X-Axis: {config.xLabel} | Y-Axis: {config.yLabel}</p>
         <p>Data Points: {data.length} | Chart Type: {chartType}</p>
+        {(chartType.toLowerCase() === 'sankey') && (
+          <p className="text-yellow-600 text-xs mt-1">Note: Sankey charts are experimental in Recharts</p>
+        )}
       </div>
 
       {/* AI Analysis */}
@@ -363,4 +454,4 @@ export const RechartsVisualization: React.FC<RechartsVisualizationProps> = ({ ch
       )}
     </div>
   );
-}; 
+};

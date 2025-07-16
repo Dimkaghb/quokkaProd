@@ -130,19 +130,18 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
       "flex-1 flex flex-col items-center justify-start bg-white overflow-y-auto relative",
       isMobile ? "px-4 py-6" : "px-6 py-8"
     )}>
-      {/* Language Switcher - Fixed top right */}
-      <div className={cn(
-        "fixed z-50",
-        isMobile ? "top-4 right-4" : "top-6 right-6"
-      )}>
-        <LanguageSwitcher />
-      </div>
+      {/* Language Switcher - Only on desktop */}
+      {!isMobile && (
+        <div className="absolute top-4 right-4 z-10">
+          <LanguageSwitcher />
+        </div>
+      )}
       
       <div className="max-w-4xl w-full text-center flex-shrink-0">
         {/* Header */}
         <div className={cn(
           "mb-6",
-          isMobile ? "mt-16" : "mt-16 mb-8" // Increased top margin to avoid language switcher overlap
+          isMobile ? "mt-8" : "mt-16 mb-8" // Reduced top margin since no language switcher overlap
         )}>
           <div className={cn(
             "mx-auto mb-4 bg-black rounded-2xl flex items-center justify-center shadow-lg",
