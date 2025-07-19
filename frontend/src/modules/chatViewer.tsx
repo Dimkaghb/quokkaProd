@@ -152,15 +152,15 @@ export const ChatViewer: React.FC = () => {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
+              className={`${
+                message.role === 'user' ? 'flex justify-end' : 'w-full'
               }`}
             >
               <div
-                className={`max-w-3xl p-4 rounded-lg ${
+                className={`${
                   message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'max-w-3xl bg-blue-600 text-white p-4 rounded-lg'
+                    : 'w-full bg-transparent text-gray-900 p-6 text-base'
                 }`}
               >
                 <div className="flex items-center mb-2">
@@ -191,4 +191,4 @@ export const ChatViewer: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};

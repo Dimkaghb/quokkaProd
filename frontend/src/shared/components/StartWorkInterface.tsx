@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { cn } from '../../lib/utils';
 import { 
@@ -11,8 +10,7 @@ import {
   BarChart3, 
   TrendingUp, 
   FileText, 
-  Search,
-  Send
+  Search
 } from 'lucide-react';
 import logo3 from '../../assets/logo3.png';
 import { useLanguageStore } from '../stores/languageStore';
@@ -25,7 +23,6 @@ interface StartWorkInterfaceProps {
 
 export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartWork }) => {
   const { t } = useLanguageStore();
-  const [query, setQuery] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [isDataCleaningModalOpen, setIsDataCleaningModalOpen] = useState(false);
 
@@ -39,18 +36,6 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onStartWork(query.trim() || undefined);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  };
 
   const quickActions = [
     {
@@ -170,62 +155,49 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
           </p>
         </div>
 
-        {/* Main Input */}
-        <form onSubmit={handleSubmit} className={cn(
-          isMobile ? "mb-6" : "mb-8"
+        {/* Welcome Banner */}
+        <div className={cn(
+          "bg-gray-50 border border-gray-200 rounded-xl text-center shadow-sm",
+          isMobile ? "p-4 mb-6" : "p-8 mb-8"
         )}>
-          <div className="relative max-w-2xl mx-auto">
-            <Input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={isMobile ? t('startWork.placeholderMobile') : t('startWork.placeholder')}
-              className={cn(
-                "w-full border-gray-200 rounded-2xl focus:border-gray-300 shadow-sm",
-                isMobile ? [
-                  "px-4 py-3 text-base", // Prevent zoom on iOS
-                  "pr-20" // Space for buttons
-                ] : [
-                  "px-6 py-4 text-lg",
-                  "pr-24"
-                ]
-              )}
-            />
-            <div className={cn(
-              "absolute top-1/2 transform -translate-y-1/2 flex items-center space-x-1",
-              isMobile ? "right-2" : "right-4 space-x-2"
-            )}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => onStartWork()}
-                className={cn(
-                  "text-gray-400 hover:text-gray-600 touch-manipulation",
-                  isMobile ? "h-8 w-8" : ""
-                )}
-              >
-                <Upload className={cn(
-                  isMobile ? "w-4 h-4" : "w-5 h-5"
-                )} />
-              </Button>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "text-gray-400 hover:text-gray-600 touch-manipulation",
-                  isMobile ? "h-8 w-8" : ""
-                )}
-              >
-                <Send className={cn(
-                  isMobile ? "w-4 h-4" : "w-5 h-5"
-                )} />
-              </Button>
+          <h2 className={cn(
+            "font-semibold text-gray-800 mb-6",
+            isMobile ? "text-lg" : "text-xl"
+          )}>
+            {t('startWork.welcomeBanner')}
+          </h2>
+          <div className={cn(
+            "space-y-3 text-gray-700",
+            isMobile ? "text-sm" : "text-base"
+          )}>
+            <div className="flex items-center justify-center gap-2">
+              <span>{t('startWork.uploadTable')}</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <span>{t('startWork.clickNewAnalysis')}</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <span>{t('startWork.startAsking')}</span>
             </div>
           </div>
-        </form>
+        </div>
+
+        {/* File Upload Button */}
+        <div className={cn(
+          "flex justify-center mb-8",
+          isMobile ? "mb-6" : "mb-10"
+        )}>
+          <Button
+            onClick={() => onStartWork()}
+            className={cn(
+              "bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium flex items-center gap-3 shadow-sm transition-colors",
+              isMobile ? "px-8 py-4 text-base" : "px-12 py-4 text-lg"
+            )}
+          >
+            <Upload className={cn(isMobile ? "w-5 h-5" : "w-6 h-6")} />
+            {t('startWork.uploadData')}
+          </Button>
+        </div>
 
         {/* Quick Actions */}
         <div className={cn(

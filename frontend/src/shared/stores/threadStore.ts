@@ -2,6 +2,35 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { chatAPI, type ChatThread, type ChatMessage, type UserDocument } from '../api/chatAPI'
 
+// Helper function to generate thread title from message content
+const generateThreadTitle = (message: string): string => {
+  if (!message || !message.trim()) {
+    return "Новый чат"
+  }
+  
+  const trimmedMessage = message.trim()
+  const words = trimmedMessage.split(' ').filter(word => word.length > 0)
+  
+  let title: string
+  if (words.length <= 5) {
+    title = trimmedMessage
+  } else {
+    title = words.slice(0, 5).join(" ")
+  }
+  
+  // Truncate to 50 characters if needed
+  if (title.length > 50) {
+    title = title.substring(0, 47) + "..."
+  }
+  
+  return title
+}
+
+// Helper function to check if title is default
+const isDefaultTitle = (title: string): boolean => {
+  return title === "Новый чат" || title === "New Chat"
+}
+
 interface ThreadState {
   // Current state
   threads: ChatThread[]
@@ -109,19 +138,28 @@ export const useThreadStore = create<ThreadState>()(
           })
           
           if (response.success && response.thread) {
+            // Generate proper title from first message
+            let threadTitle = response.thread.title
+            if (isDefaultTitle(threadTitle)) {
+              threadTitle = generateThreadTitle(firstMessage)
+            }
+            
+            // Update the thread with proper title
+            const updatedThread = { ...response.thread, title: threadTitle }
+            
             // Add new thread to the beginning of the list
             set(state => ({
-              threads: [response.thread!, ...state.threads],
-              currentThread: response.thread!,
-              selectedThreadId: response.thread!.id,
-              selectedDocuments: response.thread!.selected_documents,
+              threads: [updatedThread, ...state.threads],
+              currentThread: updatedThread,
+              selectedThreadId: updatedThread.id,
+              selectedDocuments: updatedThread.selected_documents,
               isLoading: false
             }))
             
             // Load messages for the new thread
             await get().loadMessages(response.thread.id)
             
-            return response.thread
+            return updatedThread
           } else {
             throw new Error(response.message || 'Failed to create thread')
           }
@@ -240,6 +278,9 @@ export const useThreadStore = create<ThreadState>()(
 
         set({ isSendingMessage: true, error: null })
         
+        // Check if this is the first user message
+        const isFirstUserMessage = get().messages.filter(m => m.role === 'user').length === 0
+        
         // Add optimistic user message
         const tempUserMessage: ChatMessage = {
           id: `temp-${Date.now()}`,
@@ -279,14 +320,24 @@ export const useThreadStore = create<ThreadState>()(
               }
             })
 
-            // Update thread message count
-            set(state => ({
-              threads: state.threads.map(t => 
-                t.id === currentThread.id 
-                  ? { ...t, message_count: t.message_count + 2, updated_at: new Date().toISOString() }
-                  : t
-              )
-            }))
+            // Update thread message count and title if it's the first user message
+            set(state => {
+              let updatedTitle = currentThread.title
+              
+              // If this was the first user message and title is still default, update it
+              if (isFirstUserMessage && isDefaultTitle(currentThread.title)) {
+                updatedTitle = generateThreadTitle(content)
+              }
+              
+              return {
+                threads: state.threads.map(t => 
+                  t.id === currentThread.id 
+                    ? { ...t, title: updatedTitle, message_count: t.message_count + 2, updated_at: new Date().toISOString() }
+                    : t
+                ),
+                currentThread: { ...currentThread, title: updatedTitle }
+              }
+            })
           } else {
             throw new Error(response.message || 'Failed to send message')
           }
@@ -408,4 +459,4 @@ export const useThreadStore = create<ThreadState>()(
   )
 )
 
-export default useThreadStore 
+export default useThreadStore

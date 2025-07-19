@@ -123,7 +123,7 @@ const translations = {
     'dashboard.newAnalysis': 'New Analysis',
     'dashboard.recentAnalyses': 'Recent Analyses',
     'dashboard.messages': 'messages',
-    'dashboard.ready': 'Hello! I\'m ready to analyze',
+    'dashboard.ready': '👋 Welcome to QuokkaAI! Here you can ask questions and create custom visualizations based on the files you selected.',
     
     // Auth
     'auth.signIn': 'Sign In',
@@ -170,7 +170,7 @@ const translations = {
     'otp.sendingCode': 'Sending verification code...',
     
     // Chat
-    'chat.welcome': 'Hello! I\'m your AI data analysis assistant. Upload a file or ask me anything about data analysis, and I\'ll help you create visualizations and insights!',
+    'chat.welcome': '👋 Welcome to QuokkaAI! Here you can ask questions and create custom visualizations based on the files you selected.',
     'chat.typeMessage': 'Type your message here...',
     'chat.uploadFile': 'Upload file',
     'chat.sendMessage': 'Send message',
@@ -221,6 +221,14 @@ const translations = {
     'startWork.extractEntities': 'Extract Entities',
     'startWork.topicModeling': 'Topic Modeling',
     'startWork.footer': 'Powered by advanced AI • Secure & Private • Enterprise Ready',
+    'startWork.welcomeBanner': '👋 Welcome to QuokkaAI! To get started:',
+    'startWork.uploadTable': 'Upload a table 📁',
+    'startWork.clickNewAnalysis': 'Click "New Analysis" ➕',
+    'startWork.startAsking': 'Start asking questions 💬',
+    
+    // Chat welcome message
+    'chat.welcomeTitle': '👋 Welcome to QuokkaAI!',
+    'chat.welcomeSubtitle': 'Here you can ask questions and create custom visualizations based on the files you selected.',
     
     // Profile
     'profile.accountSettings': 'Account Settings',
@@ -563,7 +571,7 @@ const translations = {
     'dashboard.newAnalysis': 'Новый анализ',
     'dashboard.recentAnalyses': 'Недавние анализы',
     'dashboard.messages': 'сообщений',
-    'dashboard.ready': 'Привет! Я готов к анализу',
+    'dashboard.ready': '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
     
     // Auth
     'auth.signIn': 'Войти',
@@ -610,7 +618,7 @@ const translations = {
     'otp.sendingCode': 'Отправка кода подтверждения...',
     
     // Chat
-    'chat.welcome': 'Привет! Я ваш ИИ-помощник по анализу данных. Загрузите файл или задайте любой вопрос об анализе данных, и я помогу вам создать визуализации и инсайты!',
+    'chat.welcome': '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
     'chat.typeMessage': 'Введите ваше сообщение...',
     'chat.uploadFile': 'Загрузить файл',
     'chat.sendMessage': 'Отправить сообщение',
@@ -661,6 +669,14 @@ const translations = {
     'startWork.extractEntities': 'Извлечь сущности',
     'startWork.topicModeling': 'Моделирование тем',
     'startWork.footer': 'Работает на продвинутом ИИ • Безопасно и конфиденциально • Готово для предприятий',
+    'startWork.welcomeBanner': '👋 Добро пожаловать в QuokkaAI! Чтобы начать:',
+    'startWork.uploadTable': 'Загрузите таблицу 📁',
+    'startWork.clickNewAnalysis': 'Нажмите "Новый анализ" ➕',
+    'startWork.startAsking': 'Начните задавать вопросы 💬',
+    
+    // Chat welcome message
+    'chat.welcomeTitle': '👋 Привет! Добро пожаловать в QuokkaAI!',
+    'chat.welcomeSubtitle': 'Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
     
     // Profile
     'profile.accountSettings': 'Настройки аккаунта',

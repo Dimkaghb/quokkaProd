@@ -307,13 +307,13 @@ export const ThreadChatbot: React.FC = () => {
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`${message.role === 'user' ? 'flex justify-end' : 'w-full'}`}
                   >
                     <div
-                      className={`max-w-3xl rounded-lg px-4 py-3 ${
+                      className={`${
                         message.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-800 text-gray-100 border border-gray-700'
+                          ? 'max-w-3xl bg-blue-600 text-white rounded-lg px-4 py-3'
+                          : 'w-full bg-transparent text-gray-100 px-6 py-4 text-base'
                       }`}
                     >
                       <div

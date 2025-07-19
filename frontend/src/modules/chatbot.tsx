@@ -69,7 +69,7 @@ export const Chatbot: React.FC = () => {
       
       // Create thread with selected documents
       const documentIds = selectedDocuments.map(doc => doc.id);
-      const firstMessage = query || 'Hello! I\'m ready to analyze the selected documents.';
+      const firstMessage = query || '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.';
       
       const response = await chatAPI.createThread({
         first_message: firstMessage,

@@ -173,16 +173,8 @@ export const useChatStore = create<ChatState>()(
         if (state.messages.length === 0) {
           const welcomeMessage: Message = {
             id: 'welcome',
-            type: 'system',
-            content: `👋 Welcome to QuokkaAI! I'm your intelligent data analysis assistant.
-
-I can help you with:
-🔍 **Web Search** - Find current facts, statistics, and numerical data
-📊 **Data Analysis** - Analyze your documents and datasets  
-📈 **Visualization** - Create charts and graphs from your data
-🤖 **Smart Insights** - Get actionable insights from complex data
-
-What would you like to explore today?`,
+            type: 'agent',
+            content: '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
             timestamp: new Date(),
             status: 'sent'
           }
@@ -214,4 +206,4 @@ What would you like to explore today?`,
       }
     }
   )
-) 
+)

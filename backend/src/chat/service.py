@@ -38,20 +38,23 @@ async def create_new_thread(
         if not has_access:
             raise ValueError("You don't have access to one or more selected documents")
     
-    # Create thread
+    # Create thread with title from first message
     thread = await create_thread(
         user_id=user_id,
         first_message=first_message,
         selected_documents=selected_documents
     )
     
-    # Add first user message
+    # Add welcome message from system first
+    welcome_message = "👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал."
     await add_message(
         thread_id=thread.id,
         user_id=user_id,
-        role="user",
-        content=first_message
+        role="assistant",
+        content=welcome_message
     )
+    
+    # Note: First user message will be added separately when sending the message
     
     logger.info(f"Created thread {thread.id} for user {user_id}")
     return thread
@@ -105,6 +108,11 @@ async def send_message_to_thread(
     if not thread:
         raise ValueError("Thread not found or you don't have access")
     
+    # Check if this is the first user message (thread has only welcome message)
+    messages = await get_thread_messages(thread_id, user_id)
+    user_messages = [msg for msg in messages if msg.role == "user"]
+    is_first_user_message = len(user_messages) == 0
+    
     # Add user message
     user_message = await add_message(
         thread_id=thread_id,
@@ -112,6 +120,16 @@ async def send_message_to_thread(
         role="user",
         content=message_content
     )
+    
+    # Update thread title if this is the first user message
+    if is_first_user_message and thread.title == "Новый чат":
+        from .crud import _generate_title_from_message
+        new_title = _generate_title_from_message(message_content)
+        await update_thread(
+            user_id=user_id,
+            thread_id=thread_id,
+            updates={"title": new_title}
+        )
     
     logger.info(f"User message added to thread {thread_id}")
     return user_message
@@ -328,4 +346,4 @@ async def get_thread_context(user_id: str, thread_id: str) -> Dict[str, Any]:
             }
             for doc in documents
         ]
-    } 
+    }

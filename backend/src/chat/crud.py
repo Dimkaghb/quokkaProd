@@ -28,10 +28,24 @@ def _generate_thread_title(first_message: str) -> str:
     Returns:
         Generated title (max 50 chars)
     """
+    # Return "Новый чат" by default - title will be updated when first user message is sent
+    return "Новый чат"
+
+
+def _generate_title_from_message(message: str) -> str:
+    """
+    Generate thread title from user message.
+    
+    Args:
+        message: User message content
+        
+    Returns:
+        Generated title (max 50 chars)
+    """
     # Take first 5 words or 50 characters, whichever is shorter
-    words = first_message.strip().split()
+    words = message.strip().split()
     if len(words) <= 5:
-        title = first_message.strip()
+        title = message.strip()
     else:
         title = " ".join(words[:5])
     
@@ -39,7 +53,7 @@ def _generate_thread_title(first_message: str) -> str:
     if len(title) > 50:
         title = title[:47] + "..."
     
-    return title if title else "New Chat"
+    return title if title else "Новый чат"
 
 
 async def create_thread(
@@ -62,7 +76,7 @@ async def create_thread(
     
     # Generate unique thread ID and title
     thread_id = str(uuid.uuid4())
-    title = _generate_thread_title(first_message)
+    title = _generate_title_from_message(first_message)
     
     # Create thread dict
     thread_dict = {
@@ -72,7 +86,7 @@ async def create_thread(
         "title": title,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
-        "message_count": 1,  # Include first message
+        "message_count": 1,  # Include only welcome message initially
         "selected_documents": selected_documents or [],
         "is_active": True
     }
@@ -416,4 +430,4 @@ async def get_thread_document_selections(thread_id: str) -> List[str]:
             # Fall back to in-memory storage
     
     # In-memory storage fallback
-    return _thread_documents_storage.get(thread_id, []) 
+    return _thread_documents_storage.get(thread_id, [])

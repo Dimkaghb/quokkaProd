@@ -387,20 +387,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {/* Message Content */}
               <div className={cn(
                 "w-full",
-                message.type === 'user' ? 'flex justify-end' : 'flex justify-start'
+                message.type === 'user' ? 'flex justify-end' : 'w-full'
               )}>
                 <div className={cn(
-                  "max-w-none w-full",
-                  message.type === 'user' ? 'bg-gray-50 border border-gray-200' : 'bg-white',
-                  "rounded-lg"
-                )}>
-                  <div className={cn(
-                    isMobile ? "p-3" : "p-4"
+                    message.type === 'user' ? 'max-w-3xl bg-gray-50 border border-gray-200' : 'w-full bg-transparent',
+                    "rounded-lg"
                   )}>
+                    <div className={cn(
+                      message.type === 'user' ? (isMobile ? "p-3" : "p-4") : (isMobile ? "p-4" : "p-6")
+                    )}>
                     <div className="prose prose-sm max-w-none">
                       <p className={cn(
                         "whitespace-pre-wrap leading-relaxed text-gray-900",
-                        isMobile ? "text-sm" : "text-sm"
+                        message.type === 'user' 
+                          ? (isMobile ? "text-sm" : "text-sm")
+                          : (isMobile ? "text-base" : "text-base")
                       )}>
                         {message.content}
                       </p>
@@ -431,7 +432,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               
               {/* Timestamp */}
               <div className={cn(
-                "flex items-center text-xs text-gray-400",
+                "flex items-center text-xs text-gray-500",
                 message.type === 'user' ? 'justify-end' : 'justify-start'
               )}>
                 <span>{formatTime(message.timestamp)}</span>
