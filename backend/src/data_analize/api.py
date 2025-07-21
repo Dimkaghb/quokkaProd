@@ -34,11 +34,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/data-analysis", tags=["data-analysis"])
 
 # Configuration
-UPLOAD_FOLDER = Path("data/uploads")
+DOCUMENTS_BASE_FOLDER = Path("data/documents")
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv', 'pdf', 'txt', 'docx'}
 
-# Create directories if they don't exist
-UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+# Create base documents directory if it doesn't exist
+DOCUMENTS_BASE_FOLDER.mkdir(parents=True, exist_ok=True)
+
+def get_user_documents_folder(user_id: str) -> Path:
+    """Get user-specific documents folder path."""
+    user_folder = DOCUMENTS_BASE_FOLDER / f"user_{user_id}"
+    user_folder.mkdir(parents=True, exist_ok=True)
+    return user_folder
 
 
 class VisualizationRequest(BaseModel):
@@ -113,7 +119,7 @@ async def upload_and_visualize(
         Visualization configuration and analysis
     """
     try:
-        logger.info(f"Received file upload: {file.filename} with query: '{user_query}'")
+        logger.info(f"Received file upload: {file.filename} with query: '{user_query}' for user {current_user.id}")
         
         if not file.filename:
             raise HTTPException(status_code=400, detail='No file selected')
@@ -128,8 +134,11 @@ async def upload_and_visualize(
         file_id = str(uuid.uuid4())
         logger.info(f"Generated file ID: {file_id}")
         
-        # Save uploaded file
-        file_path = UPLOAD_FOLDER / f'{file_id}_{file.filename}'
+        # Get user-specific documents folder
+        user_folder = get_user_documents_folder(str(current_user.id))
+        
+        # Save uploaded file to user's documents folder
+        file_path = user_folder / f'{file_id}_{file.filename}'
         logger.info(f"Saving file to: {file_path}")
         
         # Read file content
@@ -162,7 +171,8 @@ async def upload_and_visualize(
                 'size': len(content),
                 'type': file.filename.split('.')[-1].lower(),
                 'upload_time': datetime.utcnow().isoformat(),
-                'file_id': file_id
+                'file_id': file_id,
+                'user_id': str(current_user.id)
             }
             
             return VisualizationResponse(
@@ -180,7 +190,8 @@ async def upload_and_visualize(
             'size': len(content),
             'type': file.filename.split('.')[-1].lower(),
             'upload_time': datetime.utcnow().isoformat(),
-            'file_id': file_id
+            'file_id': file_id,
+            'user_id': str(current_user.id)
         }
         
         # Create a chat thread for this analysis if user is authenticated and chat is available
@@ -202,22 +213,16 @@ async def upload_and_visualize(
         return VisualizationResponse(
             success=True,
             chart_config=chart_config,
-            analytical_text=chart_config.get('analyticalText'),
+            analytical_text=chart_config.get('analytical_text', 'Analysis completed successfully'),
             file_info=file_info,
             thread_id=thread_id
         )
-            
+        
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in upload_and_visualize: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
-        return VisualizationResponse(
-            success=False,
-            error=str(e)
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/visualize", response_model=VisualizationResponse)
@@ -270,30 +275,35 @@ async def create_visualization(
 async def list_uploaded_files(
     current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
-    """List all uploaded files."""
+    """List all uploaded files for the current user."""
     try:
         files = []
         
-        if UPLOAD_FOLDER.exists():
-            for file_path in UPLOAD_FOLDER.iterdir():
+        # Get user-specific documents folder
+        user_folder = get_user_documents_folder(str(current_user.id))
+        
+        if user_folder.exists():
+            for file_path in user_folder.iterdir():
                 if file_path.is_file():
                     stat = file_path.stat()
                     files.append({
                         'filename': file_path.name,
                         'size': stat.st_size,
                         'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                        'path': str(file_path)
+                        'path': str(file_path),
+                        'user_id': str(current_user.id)
                     })
         
         return {
             'success': True,
             'files': files,
-            'total_count': len(files)
+            'total_count': len(files),
+            'user_id': str(current_user.id)
         }
         
     except Exception as e:
-        logger.error(f"Error listing files: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error listing files for user {current_user.id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to list files")
 
 
 @router.delete("/files/{filename}")
@@ -301,25 +311,33 @@ async def delete_file(
     filename: str,
     current_user: User = Depends(get_current_user)
 ) -> Dict[str, Any]:
-    """Delete an uploaded file."""
+    """Delete an uploaded file for the current user."""
     try:
-        file_path = UPLOAD_FOLDER / filename
+        # Get user-specific documents folder
+        user_folder = get_user_documents_folder(str(current_user.id))
+        file_path = user_folder / filename
         
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="File not found")
         
+        # Verify the file belongs to the user's folder (security check)
+        if not str(file_path).startswith(str(user_folder)):
+            raise HTTPException(status_code=403, detail="Access denied")
+        
         file_path.unlink()
+        logger.info(f"Deleted file {filename} for user {current_user.id}")
         
         return {
             'success': True,
-            'message': f'File {filename} deleted successfully'
+            'message': f'File {filename} deleted successfully',
+            'user_id': str(current_user.id)
         }
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting file: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error deleting file {filename} for user {current_user.id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete file")
 
 
 @router.get("/health")
@@ -361,14 +379,29 @@ async def analyze_data(
         Data analysis with recommendations and suggested questions
     """
     try:
-        logger.info(f"Analyzing data file: {request.file_path}")
+        logger.info(f"Analyzing data file: {request.file_path} for user {current_user.id}")
+        
+        # Get user-specific documents folder
+        user_folder = get_user_documents_folder(str(current_user.id))
+        
+        # Construct full file path and validate it's within user's folder
+        file_path = Path(request.file_path)
+        if not file_path.is_absolute():
+            # If relative path, assume it's relative to user's folder
+            full_file_path = user_folder / file_path
+        else:
+            full_file_path = file_path
+        
+        # Security check: ensure file is within user's folder
+        if not str(full_file_path).startswith(str(user_folder)):
+            raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
         
         # Check if file exists
-        if not os.path.exists(request.file_path):
+        if not full_file_path.exists():
             raise HTTPException(status_code=404, detail="File not found")
         
         # Read data
-        data = read_data(request.file_path)
+        data = read_data(str(full_file_path))
         
         # Perform AI analysis
         analysis = analyze_data_with_ai(data, request.user_query)
@@ -384,7 +417,7 @@ async def analyze_data(
                 "reasoning": rec.reasoning
             })
         
-        logger.info(f"Analysis completed successfully")
+        logger.info(f"Analysis completed successfully for user {current_user.id}")
         
         return DataAnalysisResponse(
             success=True,
@@ -398,10 +431,7 @@ async def analyze_data(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in analyze_data: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
+        logger.error(f"Error in analyze_data for user {current_user.id}: {str(e)}")
         return DataAnalysisResponse(
             success=False,
             error=str(e)
@@ -425,17 +455,32 @@ async def create_custom_visualization(
         Custom visualization configuration and analysis
     """
     try:
-        logger.info(f"Creating custom visualization for query: {request.user_query}")
+        logger.info(f"Creating custom visualization for query: {request.user_query} for user {current_user.id}")
         
         # Case 1: File-based customization
         if request.file_path:
+            # Get user-specific documents folder
+            user_folder = get_user_documents_folder(str(current_user.id))
+            
+            # Construct full file path and validate it's within user's folder
+            file_path = Path(request.file_path)
+            if not file_path.is_absolute():
+                # If relative path, assume it's relative to user's folder
+                full_file_path = user_folder / file_path
+            else:
+                full_file_path = file_path
+            
+            # Security check: ensure file is within user's folder
+            if not str(full_file_path).startswith(str(user_folder)):
+                raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
+            
             # Check if file exists
-            if not os.path.exists(request.file_path):
+            if not full_file_path.exists():
                 raise HTTPException(status_code=404, detail="File not found")
             
             # Read data and create visualization
-            data = read_data(request.file_path)
-            chart_config = process_data_with_llm(data, request.user_query, request.file_path)
+            data = read_data(str(full_file_path))
+            chart_config = process_data_with_llm(data, request.user_query, str(full_file_path))
             
             # Check if we need user clarification for large datasets
             if chart_config.get('needs_clarification'):
@@ -456,21 +501,18 @@ async def create_custom_visualization(
         else:
             raise HTTPException(status_code=400, detail="Either file_path or current_data must be provided")
         
-        logger.info(f"Custom visualization created successfully")
+        logger.info(f"Custom visualization created successfully for user {current_user.id}")
         
         return VisualizationResponse(
             success=True,
             chart_config=chart_config,
-            analytical_text=chart_config.get('analyticalText')
+            analytical_text=chart_config.get('analytical_text')
         )
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in create_custom_visualization: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        
+        logger.error(f"Error in create_custom_visualization for user {current_user.id}: {str(e)}")
         return VisualizationResponse(
             success=False,
             error=str(e)
@@ -493,14 +535,29 @@ async def clarify_large_data_visualization(
         Visualization configuration based on user clarification
     """
     try:
-        logger.info(f"Processing large data clarification: {request.user_clarification}")
+        logger.info(f"Processing large data clarification: {request.user_clarification} for user {current_user.id}")
+        
+        # Get user-specific documents folder
+        user_folder = get_user_documents_folder(str(current_user.id))
+        
+        # Construct full file path and validate it's within user's folder
+        file_path = Path(request.file_path)
+        if not file_path.is_absolute():
+            # If relative path, assume it's relative to user's folder
+            full_file_path = user_folder / file_path
+        else:
+            full_file_path = file_path
+        
+        # Security check: ensure file is within user's folder
+        if not str(full_file_path).startswith(str(user_folder)):
+            raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
         
         # Check if file exists
-        if not os.path.exists(request.file_path):
+        if not full_file_path.exists():
             raise HTTPException(status_code=404, detail="File not found")
         
         # Read data
-        data = read_data(request.file_path)
+        data = read_data(str(full_file_path))
         logger.info(f"Data loaded: {data.shape} rows x {data.shape[1]} columns")
         
         # If user specified columns, filter the data
@@ -518,17 +575,34 @@ async def clarify_large_data_visualization(
             logger.info(f"Data filtered to selected columns: {data.shape}")
         
         # Process with LLM using user's clarification
-        chart_config = process_data_with_llm(data, request.user_clarification, request.file_path)
+        chart_config = process_data_with_llm(data, request.user_clarification, str(full_file_path))
         
         # Prepare file info
-        file_name = os.path.basename(request.file_path)
+        file_name = full_file_path.name
         file_info = {
             'filename': file_name,
             'filtered_columns': request.selected_columns,
-            'resulting_shape': data.shape
+            'resulting_shape': data.shape,
+            'user_id': str(current_user.id)
         }
         
-        logger.info(f"Large data visualization created successfully")
+        logger.info(f"Large data visualization created successfully for user {current_user.id}")
+        
+        return VisualizationResponse(
+            success=True,
+            chart_config=chart_config,
+            analytical_text=chart_config.get('analytical_text'),
+            file_info=file_info
+        )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in clarify_large_data_visualization for user {current_user.id}: {str(e)}")
+        return VisualizationResponse(
+            success=False,
+            error=str(e)
+        )
         
         return VisualizationResponse(
             success=True,

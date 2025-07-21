@@ -66,6 +66,7 @@ export interface ChatMessage {
     analysis?: string
     sources?: string[]
     selected_documents?: string[]
+    quick_prompts?: string[]
   }
 }
 

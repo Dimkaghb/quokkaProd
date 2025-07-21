@@ -43,13 +43,25 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/data-cleaning", tags=["data-cleaning"])
 
 # Configuration
-UPLOAD_FOLDER = Path("data/uploads")
-CLEANED_FOLDER = Path("data/cleaned")
+DOCUMENTS_BASE_FOLDER = Path("data/documents")
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
 
-# Create directories if they don't exist
-UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-CLEANED_FOLDER.mkdir(parents=True, exist_ok=True)
+# Create base documents directory if it doesn't exist
+DOCUMENTS_BASE_FOLDER.mkdir(parents=True, exist_ok=True)
+
+
+def get_user_documents_folder(user_id: str) -> Path:
+    """Get user-specific documents folder path."""
+    user_folder = DOCUMENTS_BASE_FOLDER / f"user_{user_id}"
+    user_folder.mkdir(parents=True, exist_ok=True)
+    return user_folder
+
+
+def get_user_temp_folder(user_id: str) -> Path:
+    """Get user-specific temporary folder for cleaning operations."""
+    temp_folder = DOCUMENTS_BASE_FOLDER / f"user_{user_id}" / "temp"
+    temp_folder.mkdir(parents=True, exist_ok=True)
+    return temp_folder
 
 
 class DataCleaningRequest(BaseModel):
@@ -113,12 +125,15 @@ async def upload_and_clean_data(
         if not operations_list:
             raise HTTPException(status_code=400, detail='No cleaning operations specified')
         
+        # Get user-specific folders
+        user_temp_folder = get_user_temp_folder(str(user_id))
+        
         # Generate unique ID for this upload
         file_id = str(uuid.uuid4())
-        logger.info(f"Generated file ID: {file_id}")
+        logger.info(f"Generated file ID: {file_id} for user {user_id}")
         
-        # Save uploaded file
-        file_path = UPLOAD_FOLDER / f'{file_id}_{file.filename}'
+        # Save uploaded file to user's temp folder
+        file_path = user_temp_folder / f'{file_id}_{file.filename}'
         logger.info(f"Saving file to: {file_path}")
         
         # Read file content
@@ -136,16 +151,16 @@ async def upload_and_clean_data(
         with open(file_path, 'wb') as f:
             f.write(content)
         
-        logger.info(f"File saved successfully, starting data cleaning...")
+        logger.info(f"File saved successfully for user {user_id}, starting data cleaning...")
         
         # Initialize data cleaning service
         cleaning_service = DataCleaningService()
         
-        # Perform cleaning operations
+        # Perform cleaning operations (output to same temp folder)
         cleaned_file_path = await cleaning_service.clean_data(
             str(file_path), 
             operations_list, 
-            str(CLEANED_FOLDER)
+            str(user_temp_folder)
         )
         
         # Generate download URL
@@ -159,10 +174,11 @@ async def upload_and_clean_data(
             'size': len(content),
             'type': file.filename.split('.')[-1].lower(),
             'cleaning_time': datetime.utcnow().isoformat(),
-            'file_id': file_id
+            'file_id': file_id,
+            'user_id': str(user_id)
         }
         
-        logger.info(f"Data cleaning completed successfully for file {file.filename}")
+        logger.info(f"Data cleaning completed successfully for file {file.filename} for user {user_id}")
         
         return DataCleaningResponse(
             success=True,
@@ -175,7 +191,7 @@ async def upload_and_clean_data(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in upload_and_clean_data: {str(e)}")
+        logger.error(f"Error in upload_and_clean_data for user {user_id}: {str(e)}")
         import traceback
         traceback.print_exc()
         
@@ -203,7 +219,13 @@ async def download_cleaned_file(
         File download response
     """
     try:
-        file_path = CLEANED_FOLDER / filename
+        user_id = getattr(current_user, 'id', 'anonymous') if current_user else 'anonymous'
+        user_temp_folder = get_user_temp_folder(str(user_id))
+        file_path = user_temp_folder / filename
+        
+        # Security check: ensure file is within user's temp folder
+        if not str(file_path).startswith(str(user_temp_folder)):
+            raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
         
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="File not found")
@@ -218,7 +240,7 @@ async def download_cleaned_file(
         if auto_delete:
             # Schedule file deletion after response is sent
             import asyncio
-            asyncio.create_task(_cleanup_file_after_download(str(file_path), filename))
+            asyncio.create_task(_cleanup_file_after_download(str(file_path), filename, str(user_id)))
             response.headers["X-Auto-Delete"] = "true"
         
         return response
@@ -226,11 +248,11 @@ async def download_cleaned_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error downloading file {filename}: {str(e)}")
+        logger.error(f"Error downloading file {filename} for user {user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-async def _cleanup_file_after_download(file_path: str, filename: str):
+async def _cleanup_file_after_download(file_path: str, filename: str, user_id: str):
     """Clean up file after a short delay to ensure download completes."""
     try:
         # Wait a bit to ensure download starts
@@ -238,7 +260,7 @@ async def _cleanup_file_after_download(file_path: str, filename: str):
         
         if os.path.exists(file_path):
             os.unlink(file_path)
-            logger.info(f"Auto-deleted cleaned file: {filename}")
+            logger.info(f"Auto-deleted cleaned file: {filename} for user {user_id}")
             
             # Also try to find and delete the original uploaded file
             # Extract file_id from cleaned filename
@@ -246,14 +268,15 @@ async def _cleanup_file_after_download(file_path: str, filename: str):
             if len(parts) >= 4:  # cleaned_timestamp_fileid_originalname
                 file_id = parts[2]
                 
-                # Search for original file in uploads folder
-                for upload_file in UPLOAD_FOLDER.glob(f"{file_id}_*"):
-                    if upload_file.exists():
+                # Search for original file in user's temp folder
+                user_temp_folder = get_user_temp_folder(user_id)
+                for upload_file in user_temp_folder.glob(f"{file_id}_*"):
+                    if upload_file.exists() and upload_file != Path(file_path):
                         upload_file.unlink()
-                        logger.info(f"Auto-deleted original file: {upload_file.name}")
+                        logger.info(f"Auto-deleted original file: {upload_file.name} for user {user_id}")
                         
     except Exception as e:
-        logger.error(f"Error during file cleanup: {e}")
+        logger.error(f"Error during file cleanup for user {user_id}: {e}")
 
 
 @router.get("/supported-operations")
@@ -301,33 +324,42 @@ async def cancel_and_cleanup(
         Success message
     """
     try:
-        cleaned_file_path = CLEANED_FOLDER / filename
+        user_id = getattr(current_user, 'id', 'anonymous') if current_user else 'anonymous'
+        user_temp_folder = get_user_temp_folder(str(user_id))
+        cleaned_file_path = user_temp_folder / filename
         deleted_files = []
+        
+        # Security check: ensure file is within user's temp folder
+        if not str(cleaned_file_path).startswith(str(user_temp_folder)):
+            raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
         
         # Delete cleaned file if exists
         if cleaned_file_path.exists():
             cleaned_file_path.unlink()
-            deleted_files.append(f"cleaned/{filename}")
-            logger.info(f"Deleted cleaned file: {filename}")
+            deleted_files.append(f"temp/{filename}")
+            logger.info(f"Deleted cleaned file: {filename} for user {user_id}")
         
         # Find and delete original uploaded file
         parts = filename.split('_')
         if len(parts) >= 4:  # cleaned_timestamp_fileid_originalname
             file_id = parts[2]
             
-            for upload_file in UPLOAD_FOLDER.glob(f"{file_id}_*"):
-                if upload_file.exists():
+            for upload_file in user_temp_folder.glob(f"{file_id}_*"):
+                if upload_file.exists() and upload_file != cleaned_file_path:
                     upload_file.unlink()
-                    deleted_files.append(f"uploads/{upload_file.name}")
-                    logger.info(f"Deleted original file: {upload_file.name}")
+                    deleted_files.append(f"temp/{upload_file.name}")
+                    logger.info(f"Deleted original file: {upload_file.name} for user {user_id}")
         
         return {
             "message": "Files deleted successfully",
-            "deleted_files": deleted_files
+            "deleted_files": deleted_files,
+            "user_id": str(user_id)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error during file cleanup: {e}")
+        logger.error(f"Error during file cleanup for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to cleanup files")
 
 
@@ -347,16 +379,20 @@ async def add_to_documents(
         Success message with document info
     """
     try:
-        cleaned_file_path = CLEANED_FOLDER / filename
+        user_id = getattr(current_user, 'id', 'anonymous') if current_user else 'anonymous'
+        user_temp_folder = get_user_temp_folder(str(user_id))
+        user_documents_folder = get_user_documents_folder(str(user_id))
+        
+        cleaned_file_path = user_temp_folder / filename
+        
+        # Security check: ensure file is within user's temp folder
+        if not str(cleaned_file_path).startswith(str(user_temp_folder)):
+            raise HTTPException(status_code=403, detail="Access denied: File not in user's folder")
         
         if not cleaned_file_path.exists():
             raise HTTPException(status_code=404, detail="Cleaned file not found")
         
-        # Create documents directory if it doesn't exist
-        documents_folder = Path("backend/data/documents")
-        documents_folder.mkdir(parents=True, exist_ok=True)
-        
-        # Copy file to documents with a clean name
+        # Extract original filename from cleaned filename
         parts = filename.split('_')
         if len(parts) >= 4:  # cleaned_timestamp_fileid_originalname
             original_name = '_'.join(parts[3:])  # Get original filename
@@ -366,43 +402,44 @@ async def add_to_documents(
         # Generate unique document name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         doc_filename = f"{timestamp}_{original_name}"
-        doc_path = documents_folder / doc_filename
+        doc_path = user_documents_folder / doc_filename
         
-        # Copy the file
+        # Copy the file to user's documents folder
         import shutil
         shutil.copy2(cleaned_file_path, doc_path)
         
-        logger.info(f"Added cleaned file to documents: {doc_filename}")
+        logger.info(f"Added cleaned file to documents: {doc_filename} for user {user_id}")
         
-        # Delete original files since they're now saved as documents
+        # Delete temporary files since they're now saved as documents
         deleted_files = []
         
         # Delete cleaned file
         if cleaned_file_path.exists():
             cleaned_file_path.unlink()
-            deleted_files.append(f"cleaned/{filename}")
+            deleted_files.append(f"temp/{filename}")
         
         # Delete original uploaded file
         parts = filename.split('_')
         if len(parts) >= 4:
             file_id = parts[2]
-            for upload_file in UPLOAD_FOLDER.glob(f"{file_id}_*"):
-                if upload_file.exists():
+            for upload_file in user_temp_folder.glob(f"{file_id}_*"):
+                if upload_file.exists() and upload_file != cleaned_file_path:
                     upload_file.unlink()
-                    deleted_files.append(f"uploads/{upload_file.name}")
+                    deleted_files.append(f"temp/{upload_file.name}")
         
         return {
             "message": "File added to documents successfully",
             "document_name": doc_filename,
             "original_name": original_name,
             "document_path": str(doc_path),
-            "deleted_temp_files": deleted_files
+            "deleted_temp_files": deleted_files,
+            "user_id": str(user_id)
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error adding file to documents: {e}")
+        logger.error(f"Error adding file to documents for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to add file to documents")
 
 

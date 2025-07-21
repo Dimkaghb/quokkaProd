@@ -350,7 +350,8 @@ async def send_message_to_thread(
                 "ai_response_type": ai_response.get("type"),
                 "confidence": ai_response.get("confidence"),
                 "visualization": ai_response.get("visualization"),
-                "sources": ai_response.get("sources", [])
+                "sources": ai_response.get("sources", []),
+                "quick_prompts": ai_response.get("quick_prompts", [])
             }
         )
         
@@ -373,7 +374,8 @@ async def send_message_to_thread(
                 "ai_response_type": ai_response.get("type"),
                 "confidence": ai_response.get("confidence"),
                 "visualization": ai_response.get("visualization"),
-                "sources": ai_response.get("sources", [])
+                "sources": ai_response.get("sources", []),
+                "quick_prompts": ai_response.get("quick_prompts", [])
             }
         )
         
@@ -608,7 +610,86 @@ async def get_thread_documents(
         )
 
 
+@router.post("/quick-prompts/generate", response_model=Dict[str, Any])
+async def generate_quick_prompts_endpoint(
+    request: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Generate enhanced LLM-based quick prompts for given context.
+    
+    Args:
+        request: Dictionary containing:
+            - message: The user message or context
+            - previous_response: Optional previous AI response
+            - thread_id: Optional thread ID for context
+        current_user: Authenticated user
+        
+    Returns:
+        JSON response with 2-3 quick prompt suggestions
+    """
+    try:
+        from .quick_prompts import generate_quick_prompts
+        
+        message = request.get("message", "")
+        previous_response = request.get("previous_response", "")
+        thread_id = request.get("thread_id")
+        
+        if not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Message is required for quick prompt generation"
+            )
+        
+        # Get thread context if thread_id is provided
+        thread_context = None
+        if thread_id:
+            try:
+                thread = await get_thread_details(str(current_user.id), thread_id)
+                if thread:
+                    # Get recent messages for context
+                    from .service import get_thread_messages
+                    messages = await get_thread_messages(str(current_user.id), thread_id, limit=5)
+                    thread_context = {
+                        "thread_title": thread.title,
+                        "recent_messages": [
+                            {
+                                "type": msg.message_type,
+                                "content": msg.content
+                            }
+                            for msg in messages
+                        ]
+                    }
+            except Exception as e:
+                logger.warning(f"Could not get thread context: {e}")
+        
+        # Generate quick prompts
+        quick_prompts = generate_quick_prompts(
+            ai_response=previous_response,
+            response_type="general",
+            user_message=message,
+            current_data=None,
+            visualization=None
+        )
+        
+        return {
+            "success": True,
+            "quick_prompts": quick_prompts,
+            "count": len(quick_prompts),
+            "message": f"Generated {len(quick_prompts)} quick prompts successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating quick prompts: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate quick prompts: {str(e)}"
+        )
+
+
 @router.get("/health/check")
 async def health_check():
     """Health check for chat module."""
-    return {"status": "ok", "module": "chat"} 
+    return {"status": "ok", "module": "chat"}

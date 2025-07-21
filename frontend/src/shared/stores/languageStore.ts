@@ -123,7 +123,7 @@ const translations = {
     'dashboard.newAnalysis': 'New Analysis',
     'dashboard.recentAnalyses': 'Recent Analyses',
     'dashboard.messages': 'messages',
-    'dashboard.ready': '👋 Welcome to QuokkaAI! Here you can ask questions and create custom visualizations based on the files you selected.',
+    'dashboard.ready': '👋 Welcome to QuokkaAI! You can request visualizations, analyses and then customize them via chat. Make sure you upload suitable data for your requests, e.g., statistical data for charts.',
     
     // Auth
     'auth.signIn': 'Sign In',
@@ -170,7 +170,7 @@ const translations = {
     'otp.sendingCode': 'Sending verification code...',
     
     // Chat
-    'chat.welcome': '👋 Welcome to QuokkaAI! Here you can ask questions and create custom visualizations based on the files you selected.',
+    'chat.welcome': '👋 Welcome to QuokkaAI! You can ask for visualizations, analyses, and then customize them with chat. Make sure you uploaded suitable data for your queries, for example, statistic data for the chart.',
     'chat.typeMessage': 'Type your message here...',
     'chat.uploadFile': 'Upload file',
     'chat.sendMessage': 'Send message',
@@ -571,7 +571,7 @@ const translations = {
     'dashboard.newAnalysis': 'Новый анализ',
     'dashboard.recentAnalyses': 'Недавние анализы',
     'dashboard.messages': 'сообщений',
-    'dashboard.ready': '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
+    'dashboard.ready': '👋 Привет! Добро пожаловать в QuokkaAI! Ты можешь запрашивать визуализации, анализы и затем настраивать их через чат. Убедись, что ты загрузил подходящие данные для своих запросов, например, статистические данные для графиков.',
     
     // Auth
     'auth.signIn': 'Войти',
@@ -618,7 +618,7 @@ const translations = {
     'otp.sendingCode': 'Отправка кода подтверждения...',
     
     // Chat
-    'chat.welcome': '👋 Привет! Добро пожаловать в QuokkaAI! Здесь ты можешь задавать вопросы и создавать кастомные визуализации по файлам, которые ты выбрал.',
+    'chat.welcome': '👋 Привет! Добро пожаловать в QuokkaAI! Ты можешь запрашивать визуализации, анализы и затем настраивать их через чат. Убедись, что ты загрузил подходящие данные для своих запросов, например, статистические данные для графиков.',
     'chat.typeMessage': 'Введите ваше сообщение...',
     'chat.uploadFile': 'Загрузить файл',
     'chat.sendMessage': 'Отправить сообщение',

@@ -45,7 +45,7 @@ async def upload_document(
     """
     try:
         # Validate file type
-        allowed_extensions = ['.csv', '.xlsx', '.xls', '.pdf', '.json', '.txt', '.md']
+        allowed_extensions = ['.csv', '.xlsx', '.xls', '.pdf', '.json', '.txt', '.md', '.docx']
         file_ext = Path(file.filename).suffix.lower()
         
         if file_ext not in allowed_extensions:

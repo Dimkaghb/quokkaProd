@@ -22,6 +22,7 @@ interface Message {
   visualization?: any;
   analysis?: string;
   metadata?: any;
+  quick_prompts?: string[];
 }
 
 interface ChatInterfaceProps {
@@ -139,7 +140,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           timestamp: new Date(msg.timestamp),
           visualization: msg.metadata?.visualization,
           analysis: msg.metadata?.analysis,
-          metadata: msg.metadata
+          metadata: msg.metadata,
+          quick_prompts: msg.metadata?.quick_prompts || []
         }));
         
         setMessages(threadMessages);
@@ -266,7 +268,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           timestamp: new Date(response.assistant_message.timestamp || Date.now()),
           visualization: response.assistant_message.metadata?.visualization,
           analysis: response.assistant_message.metadata?.analysis,
-          metadata: response.assistant_message.metadata
+          metadata: response.assistant_message.metadata,
+          quick_prompts: response.assistant_message.metadata?.quick_prompts || []
         };
         
         setMessages(prev => [...prev, assistantMessage]);
@@ -424,6 +427,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         isMobile && "p-2"
                       )}>
                         <p className="text-xs text-blue-800 leading-relaxed">{message.analysis}</p>
+                      </div>
+                    )}
+                    
+                    {/* Quick Prompts - Only show for assistant messages */}
+                    {message.type === 'assistant' && message.quick_prompts && message.quick_prompts.length > 0 && (
+                      <div className={cn(
+                        "mt-4 space-y-2",
+                        isMobile && "mt-3"
+                      )}>
+                        <p className="text-xs text-gray-600 font-medium mb-2">Quick prompts:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {message.quick_prompts.map((prompt, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setInputValue(prompt)}
+                              className={cn(
+                                "px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg",
+                                "transition-colors duration-200 text-left text-blue-700",
+                                "hover:shadow-sm active:bg-blue-200 hover:border-blue-300",
+                                isMobile && "text-xs px-2 py-1.5"
+                              )}
+                              title="Click to use this prompt"
+                            >
+                              {prompt}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

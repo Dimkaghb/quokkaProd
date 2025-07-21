@@ -16,6 +16,7 @@ from src.data_analize.visualization import process_user_request
 from src.documents.service import get_documents_for_thread
 from .memory_models import ThreadAgentConfig, ThreadMemorySnapshot, ThreadMemoryMessage
 from .memory_crud import add_message_to_memory, load_thread_memory, update_thread_context
+from .quick_prompts import generate_quick_prompts
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,21 @@ class ThreadAgentManager:
                 result['confidence'] = 0.8
             if not result.get('sources'):
                 result['sources'] = []
+            
+            # Generate quick prompts based on the response
+            try:
+                quick_prompts = generate_quick_prompts(
+                    ai_response=result.get('answer', ''),
+                    response_type=result.get('type', 'general'),
+                    visualization=result.get('visualization'),
+                    current_data=current_data,
+                    user_message=message
+                )
+                result['quick_prompts'] = quick_prompts
+                logger.info(f"Generated {len(quick_prompts)} quick prompts for thread {thread_id}")
+            except Exception as e:
+                logger.error(f"Error generating quick prompts: {e}")
+                result['quick_prompts'] = []
             
             logger.info(f"Message processed for thread: {thread_id}, result type: {result.get('type')}, has_visualization: {'visualization' in result}")
             return result

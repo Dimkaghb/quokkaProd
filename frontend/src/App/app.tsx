@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Profile } from '../modules/profile'
 import { ToastContainer } from '../shared/components/Toast'
+import QuickPromptsTest from '../shared/components/QuickPromptsTest'
 
 export const App = () => {
   const queryClient = useMemo(() => new QueryClient(), [])
@@ -33,6 +34,14 @@ export const App = () => {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/test-quick-prompts" 
+            element={
+              <ProtectedRoute>
+                <QuickPromptsTest />
               </ProtectedRoute>
             } 
           />          
