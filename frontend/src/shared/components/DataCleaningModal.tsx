@@ -161,12 +161,17 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
   const handleDownload = async () => {
     if (cleaningResult?.fileName) {
       try {
-        await dataCleaningAPI.triggerDownload(
-          cleaningResult.fileName,
-          cleaningResult.originalFileName ? 
-            `cleaned_${cleaningResult.originalFileName}` : 
-            cleaningResult.fileName
-        );
+        const blob = await dataCleaningAPI.downloadFile(cleaningResult.fileName);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = cleaningResult.originalFileName ? 
+          `cleaned_${cleaningResult.originalFileName}` : 
+          cleaningResult.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         console.error('Download failed:', error);
         // Fallback to direct URL download
