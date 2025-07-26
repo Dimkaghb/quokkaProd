@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true })
           
           // Verify token with backend using the correct endpoint
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/auth/profile`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/auth/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

@@ -103,7 +103,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const loadDocuments = async () => {
     try {
       setIsLoadingDocuments(true);
-      const response = await documentsAPI.listDocuments();
+      const response = await documentsAPI.getDocuments();
       if (response.success) {
         setDocuments(response.documents);
       }

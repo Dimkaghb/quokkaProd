@@ -84,7 +84,7 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       
-      const response = await fetch(`${apiUrl}/contact/enterprise`, {
+      const response = await fetch(`${apiUrl}/api/contact/enterprise`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -98,28 +98,41 @@ export const OTPVerification = ({ email, name, password, onBack }: OTPVerificati
         email,
         otp_code: code
       })
-      
-      const { user, token } = verifyResponse.data
-      
-      if (token) {
-        // Use token from verify-otp response
-        login(user, token)
-      } else {
-        // Fallback: Auto-login after successful verification
-        const loginResponse = await api.post('/auth/login', {
-          email,
-          password
-        })
+
+      if (verifyResponse.data.success) {
+        const { access_token } = verifyResponse.data
         
-        const { access_token } = loginResponse.data
-        
-        // Get user info
-        const userResponse = await api.get('/auth/me', {
-          headers: { Authorization: `Bearer ${access_token}` }
-        })
-        
-        // Login with user data and token
-        login(userResponse.data, access_token)
+        if (access_token) {
+          // Store token and get user info
+          localStorage.setItem('quokka-auth-storage', JSON.stringify({
+            state: { token: access_token },
+            version: 0
+          }))
+          
+          // Get user info
+          const userResponse = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${access_token}` }
+          })
+          
+          // Login with user data and token
+          login(userResponse.data, access_token)
+        } else {
+          // Fallback: Auto-login after successful verification
+          const loginResponse = await api.post('/auth/login', {
+            email,
+            password
+          })
+          
+          const { access_token: loginToken } = loginResponse.data
+          
+          // Get user info
+          const userResponse = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${loginToken}` }
+          })
+          
+          // Login with user data and token
+          login(userResponse.data, loginToken)
+        }
       }
       
       navigate('/dashboard')

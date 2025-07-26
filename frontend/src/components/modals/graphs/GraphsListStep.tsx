@@ -24,7 +24,7 @@ const GraphsListStep: React.FC<GraphsListStepProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const response = await graphsAPI.listGraphs();
+      const response = await graphsAPI.getGraphs();
       
       if (response.success) {
         setGraphs(response.graphs);

@@ -2,9 +2,9 @@ import axios from 'axios'
 import type { User } from '../stores/authStore'
 
 // Create axios instance with base configuration
-// Updated for production: removed /api prefixes from all endpoints
+// Updated for production: baseURL includes /api/ for Nginx routing
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
