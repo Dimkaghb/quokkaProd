@@ -50,10 +50,45 @@ except ImportError as e:
     logger.warning(f"New modules not available: {e}")
     NEW_MODULES_AVAILABLE = False
 
+# Import data report router
+try:
+    from src.data_report.api import router as data_report_router
+    DATA_REPORT_AVAILABLE = True
+    logger.info("✅ Data report module loaded successfully")
+except ImportError as e:
+    logger.warning(f"Data report module not available: {e}")
+    DATA_REPORT_AVAILABLE = False
+
+# Import contact router
+try:
+    from src.contact.api import router as contact_router
+    CONTACT_AVAILABLE = True
+    logger.info("✅ Contact module loaded successfully")
+except ImportError as e:
+    logger.warning(f"Contact module not available: {e}")
+    CONTACT_AVAILABLE = False
+
+# Import graphs router
+try:
+    from src.graphs.api import router as graphs_router
+    GRAPHS_AVAILABLE = True
+    logger.info("✅ Graphs module loaded successfully")
+except ImportError as e:
+    logger.warning(f"Graphs module not available: {e}")
+    GRAPHS_AVAILABLE = False
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up application...")
+    
+    # Validate file system setup
+    try:
+        from src.utils.startup_validation import log_validation_results
+        log_validation_results()
+    except Exception as e:
+        logger.warning(f"Could not run startup validation: {e}")
+    
     if AUTH_AVAILABLE:
         await connect_to_mongo()
         logger.info("✅ MongoDB Atlas connected successfully!")
@@ -148,6 +183,27 @@ if NEW_MODULES_AVAILABLE:
     logger.info("✅ New module routers (documents, chat) included")
 else:
     logger.warning("New module routers not included")
+
+# Include data report router
+if DATA_REPORT_AVAILABLE:
+    app.include_router(data_report_router)
+    logger.info("✅ Data report router included")
+else:
+    logger.warning("Data report router not included")
+
+# Include contact router
+if CONTACT_AVAILABLE:
+    app.include_router(contact_router)
+    logger.info("✅ Contact router included")
+else:
+    logger.warning("Contact router not included")
+
+# Include graphs router
+if GRAPHS_AVAILABLE:
+    app.include_router(graphs_router)
+    logger.info("✅ Graphs router included")
+else:
+    logger.warning("Graphs router not included")
 
 # Mount static files for visualizations
 visualization_dir = Path("data/visualizations")

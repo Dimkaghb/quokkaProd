@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useThreadStore } from '../stores/threadStore'
 import { useAuthStore } from '../stores/authStore'
+import { useLanguageStore } from '../stores/languageStore'
 import DocumentUploadModal from './DocumentUploadModal'
 import DocumentSelectionModal from './DocumentSelectionModal'
 import { documentsAPI } from '../api/documentsAPI'
@@ -15,6 +16,7 @@ interface ChatSidebarProps {
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const { t } = useLanguageStore()
   const {
     threads,
     currentThread,
@@ -98,7 +100,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
   const handleDeleteThread = async (threadId: string, event: React.MouseEvent) => {
     event.stopPropagation()
     
-    if (confirm('Are you sure you want to delete this chat?')) {
+    if (confirm(t('chatSidebar.deleteChatConfirm'))) {
       await deleteThread(threadId)
     }
   }
@@ -113,7 +115,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
     if (diffDays === 0) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     } else if (diffDays === 1) {
-      return 'Yesterday'
+      return t('chatSidebar.yesterday')
     } else if (diffDays < 7) {
       return date.toLocaleDateString([], { weekday: 'short' })
     } else {
@@ -130,7 +132,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
   const handleDeleteDocument = async (documentId: string, event: React.MouseEvent) => {
     event.stopPropagation()
     
-    if (!confirm('Are you sure you want to delete this document?')) {
+    if (!confirm(t('chatSidebar.deleteDocumentConfirm'))) {
       return
     }
 
@@ -140,7 +142,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
       loadDocuments()
     } catch (error) {
       console.error('Delete failed:', error)
-      alert('Failed to delete document')
+      alert(t('chatSidebar.failedToDeleteDocument'))
     }
   }
 
@@ -203,7 +205,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 <span>
-                  {isCreatingThread ? 'Creating...' : isLoading ? 'Loading...' : 'New Chat'}
+                  {isCreatingThread ? t('chatSidebar.creating') : isLoading ? t('chatSidebar.loading') : t('chatSidebar.newChat')}
                 </span>
               </button>
               
@@ -218,13 +220,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <span>Upload Documents</span>
+                <span>{t('chatSidebar.uploadDocuments')}</span>
               </button>
               
               {documents.length > 0 && (
                 <div className="space-y-2">
                   <div className="text-xs text-gray-400 text-center">
-                    {documents.length} document{documents.length > 1 ? 's' : ''} in library
+                    {documents.length} {t('chatSidebar.documentsInLibrary')}
                   </div>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {documents.slice(0, 5).map((doc) => (
@@ -235,7 +237,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                         <button
                           onClick={(e) => handleDeleteDocument(doc.id, e)}
                           className="text-gray-400 hover:text-red-400 transition-colors"
-                          title="Delete document"
+                          title={t('chatSidebar.deleteDocument')}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -246,7 +248,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                     ))}
                     {documents.length > 5 && (
                       <div className="text-xs text-gray-500 text-center">
-                        +{documents.length - 5} more documents
+                        +{documents.length - 5} {t('chatSidebar.moreDocuments')}
                       </div>
                     )}
                   </div>
@@ -258,7 +260,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
               <textarea
                 value={newChatMessage}
                 onChange={(e) => setNewChatMessage(e.target.value)}
-                placeholder="Start a new conversation..."
+                placeholder={t('chatSidebar.startNewConversation')}
                 className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg 
                          text-white placeholder-gray-400 resize-none focus:outline-none 
                          focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -284,7 +286,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                            text-white rounded text-sm transition-colors"
                   title="Create chat with document selection"
                 >
-                  📄 With Docs
+                  📄 {t('chatSidebar.withDocs')}
                 </button>
                 <button
                   onClick={handleQuickCreateChat}
@@ -294,7 +296,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                            text-white rounded text-sm transition-colors"
                   title="Create quick chat without documents"
                 >
-                  💬 Quick
+                  💬 {t('chatSidebar.quick')}
                 </button>
                 <button
                   onClick={() => {
@@ -304,11 +306,11 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                   className="py-2 px-3 bg-gray-700 hover:bg-gray-600 
                            text-white rounded text-sm transition-colors"
                 >
-                  Cancel
+                  {t('chatSidebar.cancel')}
                 </button>
               </div>
               <div className="text-xs text-gray-400 text-center">
-                Ctrl+Enter for quick chat
+                {t('chatSidebar.ctrlEnterQuickChat')}
               </div>
             </div>
           )}
@@ -322,7 +324,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
               onClick={clearError}
               className="text-red-400 hover:text-red-300 text-xs mt-1"
             >
-              Dismiss
+              {t('chatSidebar.dismiss')}
             </button>
           </div>
         )}
@@ -332,7 +334,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
           {isLoading && threads.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
               <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-              Loading chats...
+              {t('chatSidebar.loadingChats')}
             </div>
           ) : threads.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
@@ -340,8 +342,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} 
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <p className="text-sm">No chats yet</p>
-              <p className="text-xs text-gray-500 mt-1">Start a new conversation to get started</p>
+              <p className="text-sm">{t('chatSidebar.noChatsYet')}</p>
+              <p className="text-xs text-gray-500 mt-1">{t('chatSidebar.startConversationToGetStarted')}</p>
             </div>
           ) : (
             <div className="py-2">
@@ -371,7 +373,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                         </span>
                         {thread.message_count > 0 && (
                           <span className="text-xs text-gray-500">
-                            {thread.message_count} messages
+                            {thread.message_count} {t('chatSidebar.messages')}
                           </span>
                         )}
                         {thread.selected_documents.length > 0 && (
@@ -387,7 +389,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                       onClick={(e) => handleDeleteThread(thread.id, e)}
                       className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 
                                hover:text-red-400 transition-all"
-                      title="Delete chat"
+                      title={t('chatSidebar.deleteChat')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -429,12 +431,12 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span>Logout</span>
+                <span>{t('chatSidebar.logout')}</span>
               </button>
             </div>
           ) : (
             <div className="text-center text-gray-400">
-              <p className="text-sm">Not signed in</p>
+              <p className="text-sm">{t('chatSidebar.notSignedIn')}</p>
             </div>
           )}
         </div>
@@ -460,4 +462,4 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onToggle }) =>
   )
 }
 
-export default ChatSidebar 
+export default ChatSidebar

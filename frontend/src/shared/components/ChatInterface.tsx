@@ -436,7 +436,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         "mt-4 space-y-2",
                         isMobile && "mt-3"
                       )}>
-                        <p className="text-xs text-gray-600 font-medium mb-2">Quick prompts:</p>
+                        <p className="text-xs text-gray-600 font-medium mb-2">{t('chat.quickPrompts')}</p>
                         <div className="flex flex-wrap gap-2">
                           {message.quick_prompts.map((prompt, index) => (
                             <button
@@ -448,7 +448,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 "hover:shadow-sm active:bg-blue-200 hover:border-blue-300",
                                 isMobile && "text-xs px-2 py-1.5"
                               )}
-                              title="Click to use this prompt"
+                              title={t('chat.clickToUsePrompt')}
                             >
                               {prompt}
                             </button>

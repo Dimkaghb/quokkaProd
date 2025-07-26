@@ -15,9 +15,14 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('quokka-auth-storage')
     if (token) {
-      const authData = JSON.parse(token)
-      if (authData.state?.token) {
-        config.headers.Authorization = `Bearer ${authData.state.token}`
+      try {
+        const authData = JSON.parse(token)
+        if (authData.state?.token) {
+          config.headers.Authorization = `Bearer ${authData.state.token}`
+        }
+      } catch (error) {
+        console.error('Error parsing auth storage:', error)
+        localStorage.removeItem('quokka-auth-storage')
       }
     }
     return config
@@ -27,13 +32,32 @@ api.interceptors.request.use(
   }
 )
 
+// Initialize token on app load
+const initializeToken = () => {
+  const token = localStorage.getItem('quokka-auth-storage')
+  if (token) {
+    try {
+      const authData = JSON.parse(token)
+      if (authData.state?.token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${authData.state.token}`
+      }
+    } catch (error) {
+      console.error('Error initializing token:', error)
+      localStorage.removeItem('quokka-auth-storage')
+    }
+  }
+}
+
+// Initialize token when module loads
+initializeToken()
+
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('quokka-auth-token')
+      localStorage.removeItem('quokka-auth-storage')
       window.location.href = '/auth'
     }
     return Promise.reject(error)

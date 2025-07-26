@@ -62,7 +62,7 @@ export class DocumentViewerService {
 
   private async loadPdfDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
+      const response = await fetch(`/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -92,7 +92,7 @@ export class DocumentViewerService {
 
   private async loadWordDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
+      const response = await fetch(`/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -104,14 +104,10 @@ export class DocumentViewerService {
 
       const arrayBuffer = await response.arrayBuffer();
       
-      // Check if the file is actually a Word document
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const signature = Array.from(uint8Array.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join('');
+      // Log some debug info
+      console.log('Word document arrayBuffer size:', arrayBuffer.byteLength);
       
-      if (!signature.startsWith('504b') && !signature.startsWith('d0cf')) {
-        throw new Error('Invalid Word document format');
-      }
-
+      // Let mammoth library handle format validation instead of manual signature checking
       const result = await mammoth.convertToHtml(
         { arrayBuffer },
         {
@@ -161,26 +157,24 @@ export class DocumentViewerService {
 
   private async loadExcelDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
+      const response = await fetch(`/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Failed to fetch document: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}. ${errorText}`);
       }
 
       const arrayBuffer = await response.arrayBuffer();
       
-      // Check if the file is actually an Excel document
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const signature = Array.from(uint8Array.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join('');
+      // Log some debug info
+      console.log('Excel document arrayBuffer size:', arrayBuffer.byteLength);
       
-      if (!signature.startsWith('504b') && !signature.startsWith('d0cf')) {
-        throw new Error('Invalid Excel document format');
-      }
-
+      // Let XLSX library handle format validation instead of manual signature checking
       const workbook = XLSX.read(arrayBuffer, { 
         type: 'array',
         cellText: true,
@@ -232,7 +226,13 @@ export class DocumentViewerService {
               ['- Network connectivity issues'],
               ['- Invalid Excel file format'],
               ['- File corruption'],
-              ['- Authentication problems']
+              ['- Authentication problems'],
+              ['- Backend file path resolution issues'],
+              ['', ''],
+              ['Debug Info:'],
+              ['- API URL:', '/api (proxied)'],
+              ['- Document ID:', document.id],
+              ['- File Type:', document.file_type]
             ]
           },
           sheetNames: ['Error']
@@ -243,7 +243,7 @@ export class DocumentViewerService {
 
   private async loadTextDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
+      const response = await fetch(`/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -303,7 +303,7 @@ export class DocumentViewerService {
 
   private async loadCsvDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${document.id}/content`, {
+      const response = await fetch(`/api/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -368,4 +368,4 @@ export class DocumentViewerService {
       };
     }
   }
-} 
+}

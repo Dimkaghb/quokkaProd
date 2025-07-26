@@ -1,13 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguageStore } from '../shared/stores/languageStore';
 import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
+import { ProSubscriptionModal } from '../shared/components/ProSubscriptionModal';
+import { EnterpriseContactModal } from '../shared/components/EnterpriseContactModal';
 import logo3 from '../assets/logo3.png';
 
 export const Landing = () => {
     const { t } = useLanguageStore();
+    const navigate = useNavigate();
     const [scrollY, setScrollY] = useState(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isProModalOpen, setIsProModalOpen] = useState(false);
+    const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
 
     useEffect(() => {
@@ -44,6 +49,20 @@ export const Landing = () => {
             block: 'start'
         });
         setMobileMenuOpen(false);
+    };
+
+    const handlePricingClick = (planType: 'free' | 'pro' | 'enterprise') => {
+        switch (planType) {
+            case 'free':
+                navigate('/auth');
+                break;
+            case 'pro':
+                setIsProModalOpen(true);
+                break;
+            case 'enterprise':
+                setIsEnterpriseModalOpen(true);
+                break;
+        }
     };
 
     return (
@@ -255,7 +274,10 @@ export const Landing = () => {
                             <Link to="/chat" className="bg-black text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
                                 {t('landing.hero.getStarted')}
                         </Link>
-                            <button className="text-gray-600 hover:text-black transition-colors px-5 py-2.5">
+                            <button 
+                                onClick={() => setIsEnterpriseModalOpen(true)}
+                                className="text-gray-600 hover:text-black transition-colors px-5 py-2.5"
+                            >
                                 {t('landing.hero.talkToSales')}
                         </button>
                     </div>
@@ -283,7 +305,7 @@ export const Landing = () => {
                                                 className="w-2 h-2 md:w-3 md:h-3 object-contain"
                                             />
                                 </div>
-                                        <span className="text-xs md:text-sm font-medium text-gray-700">quokkaAI - Data Analysis Assistant</span>
+                                        <span className="text-xs md:text-sm font-medium text-gray-700">{t('dashboard.title')}</span>
                                     </div>
                                         </div>
                                     </div>
@@ -380,13 +402,13 @@ export const Landing = () => {
                                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 md:p-4 mb-3 md:mb-6">
                                         <div className="flex items-start space-x-2">
                                             <span className="text-yellow-600">💡</span>
-                                            <p className="text-xs md:text-sm text-gray-800">Можете попросить изменить тип графика, сортировку, фильтры и т.д.</p>
+                                            <p className="text-xs md:text-sm text-gray-800">{t('dashboard.ready')}</p>
                                         </div>
                                             </div>
 
                                     {/* Chart */}
                                     <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-6">
-                                        <h4 className="text-sm md:text-lg font-semibold text-black mb-3 md:mb-4">Количество операторов по группам</h4>
+                                        <h4 className="text-sm md:text-lg font-semibold text-black mb-3 md:mb-4">{t('dashboard.operatorsByGroups')}</h4>
                                         
                                         {/* Chart Area */}
                                         <div className="h-32 md:h-64 relative">
@@ -423,11 +445,11 @@ export const Landing = () => {
                                             
                                             {/* X-axis labels - Simplified for mobile */}
                                             <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-4 md:px-12">
-                                                <span className="hidden md:inline">ДГД/КАЗ,РУ - ЭКО</span>
-                                                <span className="md:hidden">ЭКО</span>
-                                                <span className="hidden md:inline">ДГД/КАЗ,РУ - г.Алматы</span>
-                                                <span className="md:hidden">Алматы</span>
-                                                <span className="hidden md:inline">ДГД/КАЗ/РУ - Павлодарская обл</span>
+                                                <span className="hidden md:inline">{t('dashboard.dgdKazRuEco')}</span>
+                                <span className="md:hidden">ЭКО</span>
+                                <span className="hidden md:inline">{t('dashboard.dgdKazRuAlmaty')}</span>
+                                <span className="md:hidden">Алматы</span>
+                                <span className="hidden md:inline">{t('dashboard.dgdKazRuPavlodar')}</span>
                                                 <span className="md:hidden">Павлодар</span>
                                         </div>
                                     </div>
@@ -436,7 +458,7 @@ export const Landing = () => {
                                         <div className="flex items-center justify-center mt-2 md:mt-4">
                                             <div className="flex items-center space-x-2">
                                                 <div className="w-3 h-0.5 bg-purple-500"></div>
-                                                <span className="text-xs md:text-sm text-gray-600">Количество операторов</span>
+                                                <span className="text-xs md:text-sm text-gray-600">{t('dashboard.operatorsCount')}</span>
                                 </div>
                             </div>
                         </div>
@@ -461,7 +483,7 @@ export const Landing = () => {
                                 {t('features.automationDesc')}
                             </p>
                             <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center space-x-2">
-                                <span>Explore automations</span>
+                                <span>{t('features.exploreAutomations')}</span>
                                 <span>→</span>
                             </button>
                         </div>
@@ -479,7 +501,7 @@ export const Landing = () => {
                                         <div className="flex-1">
                                             <div className="bg-white rounded-lg p-3 border border-gray-200">
                                                 <div className="text-sm font-medium text-black">{t('automation.trigger')}</div>
-                                                <div className="text-xs text-gray-500">Trigger when new data is uploaded</div>
+                                                <div className="text-xs text-gray-500">{t('features.triggerDataUpload')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -491,8 +513,8 @@ export const Landing = () => {
                                             </div>
                                         <div className="flex-1">
                                             <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                                <div className="text-sm font-medium text-black">Switch</div>
-                                                <div className="text-xs text-gray-500">Route to specific analysis</div>
+                                                <div className="text-sm font-medium text-black">{t('features.switch')}</div>
+                                                <div className="text-xs text-gray-500">{t('features.routeAnalysis')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -502,13 +524,13 @@ export const Landing = () => {
                                         <div className="flex items-center space-x-3">
                                             <div className="w-4 h-4 bg-purple-500 rounded"></div>
                                             <div className="bg-white rounded-lg p-2 border border-gray-200 flex-1">
-                                                <div className="text-xs font-medium text-black">Create visualization</div>
+                                                <div className="text-xs font-medium text-black">{t('features.createVisualization')}</div>
                                             </div>
                                             </div>
                                         <div className="flex items-center space-x-3">
                                             <div className="w-4 h-4 bg-orange-500 rounded"></div>
                                             <div className="bg-white rounded-lg p-2 border border-gray-200 flex-1">
-                                                <div className="text-xs font-medium text-black">Generate insights</div>
+                                                <div className="text-xs font-medium text-black">{t('features.generateInsights')}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -535,7 +557,7 @@ export const Landing = () => {
                                 {/* Chart 1 - Revenue */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Total Revenue</h4>
+                                        <h4 className="font-semibold text-black">{t('charts.revenue')}</h4>
                                         <div className="text-2xl font-bold text-black">$15,231.89</div>
                                         <div className="text-sm text-green-600">+20.1% from last month</div>
                                     </div>
@@ -556,7 +578,7 @@ export const Landing = () => {
                                 {/* Chart 2 - Subscriptions */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Subscriptions</h4>
+                                        <h4 className="font-semibold text-black">{t('charts.subscriptions')}</h4>
                                         <div className="text-2xl font-bold text-black">+2,350</div>
                                         <div className="text-sm text-green-600">+180.1% from last month</div>
                                             </div>
@@ -577,9 +599,9 @@ export const Landing = () => {
                                 {/* Chart 3 - Bar Chart */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Sales by Region</h4>
-                                        <div className="text-2xl font-bold text-black">4 regions</div>
-                                        <div className="text-sm text-blue-600">Updated now</div>
+                                        <h4 className="font-semibold text-black">{t('charts.salesByRegion')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.regions')}</div>
+                                        <div className="text-sm text-blue-600">{t('charts.updatedNow')}</div>
                                     </div>
                                     <div className="h-20 flex items-end space-x-2">
                                         <div className="w-8 h-16 bg-black rounded-t"></div>
@@ -594,9 +616,9 @@ export const Landing = () => {
                                 {/* Chart 4 - Pie Chart */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">User Distribution</h4>
-                                        <div className="text-2xl font-bold text-black">100%</div>
-                                        <div className="text-sm text-gray-600">Active users</div>
+                                        <h4 className="font-semibold text-black">{t('charts.userDistribution')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.percentage')}</div>
+                                        <div className="text-sm text-gray-600">{t('charts.activeUsers')}</div>
                                             </div>
                                     <div className="h-20 flex items-center justify-center">
                                         <svg className="w-16 h-16" viewBox="0 0 64 64">
@@ -610,9 +632,9 @@ export const Landing = () => {
                                 {/* Chart 5 - Area Chart */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Growth Trend</h4>
-                                        <div className="text-2xl font-bold text-black">↗ 24.5%</div>
-                                        <div className="text-sm text-green-600">Trending up</div>
+                                        <h4 className="font-semibold text-black">{t('charts.growthTrend')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.growthPercentage')}</div>
+                                        <div className="text-sm text-green-600">{t('charts.trendingUp')}</div>
                                     </div>
                                     <div className="h-20">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
@@ -631,9 +653,9 @@ export const Landing = () => {
                                 {/* Chart 6 - Scatter Plot */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Data Points</h4>
-                                        <div className="text-2xl font-bold text-black">847</div>
-                                        <div className="text-sm text-gray-600">Analyzed</div>
+                                        <h4 className="font-semibold text-black">{t('charts.dataPoints')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.dataPointsCount')}</div>
+                                        <div className="text-sm text-gray-600">{t('charts.analyzed')}</div>
                         </div>
                                     <div className="h-20 relative">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
@@ -661,7 +683,7 @@ export const Landing = () => {
                                 {/* Duplicate set for seamless loop */}
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Total Revenue</h4>
+                                        <h4 className="font-semibold text-black">{t('charts.revenue')}</h4>
                                         <div className="text-2xl font-bold text-black">$15,231.89</div>
                                         <div className="text-sm text-green-600">+20.1% from last month</div>
                                 </div>
@@ -681,7 +703,7 @@ export const Landing = () => {
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Subscriptions</h4>
+                                        <h4 className="font-semibold text-black">{t('charts.subscriptions')}</h4>
                                         <div className="text-2xl font-bold text-black">+2,350</div>
                                         <div className="text-sm text-green-600">+180.1% from last month</div>
                                     </div>
@@ -701,9 +723,9 @@ export const Landing = () => {
                         
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Sales by Region</h4>
-                                        <div className="text-2xl font-bold text-black">4 regions</div>
-                                        <div className="text-sm text-blue-600">Updated now</div>
+                                        <h4 className="font-semibold text-black">{t('charts.salesByRegion')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.regions')}</div>
+                                        <div className="text-sm text-blue-600">{t('charts.updatedNow')}</div>
                                     </div>
                                     <div className="h-20 flex items-end space-x-2">
                                         <div className="w-8 h-16 bg-black rounded-t"></div>
@@ -717,9 +739,9 @@ export const Landing = () => {
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">User Distribution</h4>
-                                        <div className="text-2xl font-bold text-black">100%</div>
-                                        <div className="text-sm text-gray-600">Active users</div>
+                                        <h4 className="font-semibold text-black">{t('charts.userDistribution')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.percentage')}</div>
+                                        <div className="text-sm text-gray-600">{t('charts.activeUsers')}</div>
                                     </div>
                                     <div className="h-20 flex items-center justify-center">
                                         <svg className="w-16 h-16" viewBox="0 0 64 64">
@@ -732,9 +754,9 @@ export const Landing = () => {
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Growth Trend</h4>
-                                        <div className="text-2xl font-bold text-black">↗ 24.5%</div>
-                                        <div className="text-sm text-green-600">Trending up</div>
+                                        <h4 className="font-semibold text-black">{t('charts.growthTrend')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.growthPercentage')}</div>
+                                        <div className="text-sm text-green-600">{t('charts.trendingUp')}</div>
                                     </div>
                                     <div className="h-20">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
@@ -752,9 +774,9 @@ export const Landing = () => {
 
                                 <div className="flex-shrink-0 w-80 bg-white rounded-xl border border-gray-200 p-6">
                                     <div className="mb-4">
-                                        <h4 className="font-semibold text-black">Data Points</h4>
-                                        <div className="text-2xl font-bold text-black">847</div>
-                                        <div className="text-sm text-gray-600">Analyzed</div>
+                                        <h4 className="font-semibold text-black">{t('charts.dataPoints')}</h4>
+                                        <div className="text-2xl font-bold text-black">{t('charts.dataPointsCount')}</div>
+                                        <div className="text-sm text-gray-600">{t('charts.analyzed')}</div>
                                 </div>
                                     <div className="h-20 relative">
                                         <svg className="w-full h-full" viewBox="0 0 300 80">
@@ -913,7 +935,7 @@ export const Landing = () => {
 
                             <div className="animate-on-scroll">
                                 <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 relative overflow-hidden">
-                                    <div className="absolute top-6 left-6 text-xs text-gray-500 uppercase tracking-wide">Growth • Analytics</div>
+                                    <div className="absolute top-6 left-6 text-xs text-gray-500 uppercase tracking-wide">{t('charts.growthAnalytics')}</div>
                                     
                                     {/* Chart Header */}
                                     <div className="mt-8 mb-6">
@@ -1016,34 +1038,34 @@ export const Landing = () => {
                                         {/* Interactive Data Points */}
                                         <div className="absolute bottom-12 left-8">
                                             <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg animate-pulse"></div>
-                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Jan</div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">{t('charts.jan')}</div>
                                     </div>
                                         <div className="absolute bottom-16 left-1/4">
                                             <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '0.5s'}}></div>
-                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Mar</div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">{t('charts.mar')}</div>
                                     </div>
                                         <div className="absolute bottom-24 left-2/4">
                                             <div className="w-3 h-3 bg-purple-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '1s'}}></div>
-                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Jun</div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">{t('charts.jun')}</div>
                                 </div>
                                         <div className="absolute bottom-32 right-1/4">
                                             <div className="w-3 h-3 bg-blue-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '1.5s'}}></div>
-                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Sep</div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">{t('charts.sep')}</div>
                                     </div>
                                         <div className="absolute bottom-40 right-8">
                                             <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg animate-pulse" style={{animationDelay: '2s'}}></div>
-                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">Dec</div>
+                                            <div className="absolute -top-8 -left-6 text-xs text-gray-600 font-medium">{t('charts.dec')}</div>
                                     </div>
                                         
                                         {/* Performance Metrics */}
                                         <div className="absolute top-4 right-4 bg-gray-50 rounded-lg p-3">
                                             <div className="text-xs text-gray-500 mb-1">{t('landing.stats.avgResponse')}</div>
-                                            <div className="text-lg font-bold text-green-600">24ms</div>
+                                            <div className="text-lg font-bold text-green-600">{t('charts.responseTime')}</div>
                                     </div>
                                         
                                         <div className="absolute bottom-4 right-4 bg-gray-50 rounded-lg p-3">
                                             <div className="text-xs text-gray-500 mb-1">{t('landing.stats.throughput')}</div>
-                                            <div className="text-lg font-bold text-blue-600">2.4M/s</div>
+                                            <div className="text-lg font-bold text-blue-600">{t('charts.throughput')}</div>
                                     </div>
                                     </div>
                                 </div>
@@ -1161,25 +1183,28 @@ export const Landing = () => {
                                 name: t('pricing.free'),
                                 price: "$0",
                                 period: "",
-                                description: "Perfect for small teams and individuals",
+                                description: t('pricing.perfectForSmallTeams'),
                                 features: [t('pricing.freeFeatures')],
-                                popular: false
+                                popular: false,
+                                planType: 'free' as const
                             },
                             {
                                 name: t('pricing.pro'),
                                 price: "$10",
                                 period: `/${t('pricing.month')}`,
-                                description: "For growing businesses and professionals",
+                                description: t('pricing.forGrowingBusinesses'),
                                 features: [t('pricing.proFeatures')],
-                                popular: true
+                                popular: true,
+                                planType: 'pro' as const
                             },
                             {
                                 name: t('pricing.enterprise'),
                                 price: t('pricing.letsDiscuss'),
                                 period: "",
-                                description: "For large organizations",
+                                description: t('pricing.forLargeOrganizations'),
                                 features: [t('pricing.enterpriseFeatures')],
-                                popular: false
+                                popular: false,
+                                planType: 'enterprise' as const
                             }
                         ].map((plan, index) => (
                             <div key={index} className={`relative bg-white p-8 rounded-xl border transition-all duration-300 hover:shadow-lg animate-on-scroll ${
@@ -1187,7 +1212,7 @@ export const Landing = () => {
                             }`}>
                                 {plan.popular && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                        <span className="bg-black text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                                        <span className="bg-black text-white px-4 py-1 rounded-full text-sm font-medium">{t('pricing.mostPopular')}</span>
                                     </div>
                                 )}
                                 <div className="text-center mb-8">
@@ -1208,11 +1233,14 @@ export const Landing = () => {
                                         </li>
                                     ))}
                                 </ul>
-                                <button className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                                    plan.popular 
-                                        ? 'bg-black text-white hover:bg-gray-800' 
-                                        : 'border border-gray-300 text-black hover:border-gray-400'
-                                }`}>
+                                <button 
+                                    onClick={() => handlePricingClick(plan.planType)}
+                                    className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                                        plan.popular 
+                                            ? 'bg-black text-white hover:bg-gray-800' 
+                                            : 'border border-gray-300 text-black hover:border-gray-400'
+                                    }`}
+                                >
                                     {t('pricing.getStarted')}
                                 </button>
                             </div>
@@ -1249,7 +1277,10 @@ export const Landing = () => {
                             <Link to="/chat" className="bg-black text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors text-lg font-medium">
                                 {t('cta.getStarted')}
                             </Link>
-                            <button className="text-gray-600 hover:text-black transition-colors px-8 py-4 text-lg font-medium border border-gray-300 rounded-lg hover:border-gray-400">
+                            <button 
+                                onClick={() => setIsEnterpriseModalOpen(true)}
+                                className="text-gray-600 hover:text-black transition-colors px-8 py-4 text-lg font-medium border border-gray-300 rounded-lg hover:border-gray-400"
+                            >
                                 {t('cta.talkToSales')}
                     </button>
                         </div>
@@ -1277,6 +1308,16 @@ export const Landing = () => {
                     </div>
                 </footer>
             </div>
+            
+            {/* Modals */}
+            <ProSubscriptionModal 
+                isOpen={isProModalOpen} 
+                onClose={() => setIsProModalOpen(false)} 
+            />
+            <EnterpriseContactModal 
+                isOpen={isEnterpriseModalOpen} 
+                onClose={() => setIsEnterpriseModalOpen(false)} 
+            />
         </>
     );
 }

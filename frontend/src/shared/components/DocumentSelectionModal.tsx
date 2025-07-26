@@ -40,11 +40,11 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
       if (response.success) {
         setDocuments(response.documents)
       } else {
-        showToast('Failed to load documents', 'error')
+        showToast(t('documentSelection.failedToLoadDocuments'), 'error')
       }
     } catch (error) {
       console.error('Error loading documents:', error)
-      showToast('Error loading documents', 'error')
+      showToast(t('documentSelection.errorLoadingDocuments'), 'error')
     } finally {
       setIsLoading(false)
     }
@@ -68,13 +68,13 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
       if (response.success && response.document) {
         setDocuments(prev => [response.document!, ...prev])
         setSelectedDocuments(prev => [...prev, response.document!])
-        showToast('Document uploaded successfully', 'success')
+        showToast(t('documentSelection.documentUploadedSuccessfully'), 'success')
       } else {
-        showToast('Failed to upload document', 'error')
+        showToast(t('documentSelection.failedToUploadDocument'), 'error')
       }
     } catch (error) {
       console.error('Error uploading document:', error)
-      showToast('Error uploading document', 'error')
+      showToast(t('documentSelection.errorUploadingDocument'), 'error')
     } finally {
       setIsUploading(false)
     }
@@ -109,10 +109,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
       // Remove from selected documents if it was selected
       setSelectedDocuments(prev => prev.filter(doc => doc.id !== documentId))
       
-      showToast('Document deleted successfully', 'success')
+      showToast(t('documentSelection.documentDeletedSuccessfully'), 'success')
     } catch (error) {
       console.error('Delete failed:', error)
-      showToast('Failed to delete document', 'error')
+      showToast(t('documentSelection.failedToDeleteDocument'), 'error')
     } finally {
       setDeletingDocuments(prev => {
         const newSet = new Set(prev)
@@ -162,7 +162,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-lg border border-gray-200">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">

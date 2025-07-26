@@ -9,8 +9,6 @@ import { cn } from '../lib/utils';
 import { 
   User, 
   Settings, 
-  MessageSquare, 
-  BarChart3, 
   Crown,
   ChevronLeft,
   Save,
@@ -19,7 +17,7 @@ import {
 import { Link } from 'react-router-dom';
 import logo3 from '../assets/logo3.png';
 
-type ProfileSection = 'account' | 'settings' | 'chats' | 'charts' | 'subscription';
+type ProfileSection = 'account' | 'settings' | 'subscription';
 
 export const Profile: React.FC = () => {
   const { user, updateUser } = useAuthStore();
@@ -105,18 +103,6 @@ export const Profile: React.FC = () => {
       description: 'App settings and preferences'
     },
     {
-      id: 'chats' as ProfileSection,
-      label: t('profile.chatHistory'),
-      icon: MessageSquare,
-      description: 'View and manage your chats'
-    },
-    {
-      id: 'charts' as ProfileSection,
-      label: t('profile.chartsAnalytics'),
-      icon: BarChart3,
-      description: 'Your visualization history'
-    },
-    {
       id: 'subscription' as ProfileSection,
       label: t('profile.subscription'),
       icon: Crown,
@@ -171,7 +157,7 @@ export const Profile: React.FC = () => {
                       value={formData.firstName}
                       onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                       disabled={!isEditing}
-                      placeholder="Enter first name"
+                      placeholder={t('profile.firstNamePlaceholder')}
                     />
                   </div>
                   <div>
@@ -182,7 +168,7 @@ export const Profile: React.FC = () => {
                       value={formData.lastName}
                       onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                       disabled={!isEditing}
-                      placeholder="Enter last name"
+                      placeholder={t('profile.lastNamePlaceholder')}
                     />
                   </div>
                   <div>
@@ -204,7 +190,7 @@ export const Profile: React.FC = () => {
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       disabled={!isEditing}
-                      placeholder="Enter phone number"
+                      placeholder={t('profile.phonePlaceholder')}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -215,7 +201,7 @@ export const Profile: React.FC = () => {
                       value={formData.company}
                       onChange={(e) => setFormData({...formData, company: e.target.value})}
                       disabled={!isEditing}
-                      placeholder="Enter company name"
+                      placeholder={t('profile.companyPlaceholder')}
                     />
                   </div>
                 </div>
@@ -239,43 +225,13 @@ export const Profile: React.FC = () => {
       case 'settings':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Preferences</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('profile.preferences')}</h2>
             <Card>
               <CardHeader>
-                <CardTitle>App Settings</CardTitle>
+                <CardTitle>{t('profile.appSettings')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Settings panel coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 'chats':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Chat History</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Chats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Chat history coming soon...</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 'charts':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Charts & Analytics</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Visualizations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Analytics dashboard coming soon...</p>
+                <p className="text-gray-600">{t('profile.settingsComingSoon')}</p>
               </CardContent>
             </Card>
           </div>
@@ -284,40 +240,40 @@ export const Profile: React.FC = () => {
       case 'subscription':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Subscription</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('profile.subscription')}</h2>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Crown className="w-5 h-5 text-yellow-500" />
-                  <span>Current Plan</span>
+                  <span>{t('profile.currentPlan')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <h3 className="font-semibold text-gray-900">Free Plan</h3>
-                      <p className="text-sm text-gray-600">3 queries remaining this month</p>
+                      <h3 className="font-semibold text-gray-900">{t('profile.freePlan')}</h3>
+                      <p className="text-sm text-gray-600">3 {t('profile.queriesRemaining')}</p>
                     </div>
                     <Button className="bg-black hover:bg-gray-800">
-                      Upgrade Plan
+                      {t('profile.upgradePlan')}
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900">Free</h4>
+                      <h4 className="font-semibold text-gray-900">{t('profile.subscription.free')}</h4>
                       <p className="text-2xl font-bold text-gray-900 my-2">$0</p>
-                      <p className="text-sm text-gray-600">20MB storage</p>
+                      <p className="text-sm text-gray-600">{t('profile.storage20MB')}</p>
                     </div>
                     <div className="text-center p-4 border-2 border-black rounded-lg">
-                      <h4 className="font-semibold text-gray-900">Pro</h4>
+                      <h4 className="font-semibold text-gray-900">{t('profile.subscription.pro')}</h4>
                       <p className="text-2xl font-bold text-gray-900 my-2">$10</p>
-                      <p className="text-sm text-gray-600">500MB storage</p>
+                      <p className="text-sm text-gray-600">{t('profile.storage500MB')}</p>
                     </div>
                     <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900">Enterprise</h4>
-                      <p className="text-2xl font-bold text-gray-900 my-2">Custom</p>
-                      <p className="text-sm text-gray-600">Unlimited storage</p>
+                      <h4 className="font-semibold text-gray-900">{t('profile.subscription.enterprise')}</h4>
+                      <p className="text-2xl font-bold text-gray-900 my-2">{t('profile.subscription.custom')}</p>
+                      <p className="text-sm text-gray-600">{t('profile.subscription.unlimitedStorage')}</p>
                     </div>
                   </div>
                 </div>
@@ -343,7 +299,7 @@ export const Profile: React.FC = () => {
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
-                <span>Back to Chat</span>
+                <span>{t('profile.backToChat')}</span>
               </Link>
             </div>
             <div className="flex items-center space-x-3">
@@ -406,4 +362,4 @@ export const Profile: React.FC = () => {
       </div>
     </div>
   );
-};   
+};

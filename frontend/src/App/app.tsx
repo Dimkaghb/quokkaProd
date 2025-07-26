@@ -11,6 +11,7 @@ import { useMemo } from 'react'
 import { Profile } from '../modules/profile'
 import { ToastContainer } from '../shared/components/Toast'
 import QuickPromptsTest from '../shared/components/QuickPromptsTest'
+import { DataReportsPage } from '../shared/components/DataReportsPage'
 
 export const App = () => {
   const queryClient = useMemo(() => new QueryClient(), [])
@@ -60,6 +61,14 @@ export const App = () => {
             element={
               <ProtectedRoute>
                 <ChatViewer />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/data-reports" 
+            element={
+              <ProtectedRoute>
+                <DataReportsPage />
               </ProtectedRoute>
             } 
           />

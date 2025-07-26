@@ -81,28 +81,28 @@ export const Auth = () => {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = t('auth.emailRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email'
+      newErrors.email = t('auth.emailInvalid')
     }
 
     // Password validation
     if (!formData.password.trim()) {
-      newErrors.password = 'Password is required'
+      newErrors.password = t('auth.passwordRequired')
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+      newErrors.password = t('auth.passwordMinLength')
     }
 
     // Signup specific validations
     if (!isLogin) {
       if (!formData.name.trim()) {
-        newErrors.name = 'Name is required'
+        newErrors.name = t('auth.nameRequired')
       }
       
       if (!formData.confirmPassword.trim()) {
-        newErrors.confirmPassword = 'Please confirm your password'
+        newErrors.confirmPassword = t('auth.confirmPasswordRequired')
       } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match'
+        newErrors.confirmPassword = t('auth.passwordsDoNotMatch')
       }
     }
 
@@ -131,7 +131,7 @@ export const Auth = () => {
         // Login with user data and token
         login(user, token)
         
-        navigate('/dashboard')
+        navigate('/chat')
         
       } else {
         // Signup with OTP verification
@@ -155,15 +155,15 @@ export const Auth = () => {
     } catch (err) {
       console.error('Auth error:', err)
       
-      let errorMessage = 'An error occurred'
+      let errorMessage = t('auth.errorOccurred')
       if (err instanceof Error && 'response' in err) {
         const axiosError = err as any; // Type assertion for axios error
         if (axiosError.response?.data?.detail) {
           errorMessage = axiosError.response.data.detail
         } else if (axiosError.response?.status === 401) {
-          errorMessage = 'Invalid email or password'
+          errorMessage = t('auth.invalidCredentials')
         } else if (axiosError.response?.status === 422) {
-          errorMessage = 'Please check your input and try again'
+          errorMessage = t('auth.checkInputAndRetry')
         }
       }
       
@@ -272,9 +272,9 @@ export const Auth = () => {
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-xl animate-float">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">ENGAGEMENT</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('charts.engagement')}</div>
                   <div className="text-2xl font-bold text-gray-900">+78,12%</div>
-                  <div className="text-xs text-gray-500">last month</div>
+                  <div className="text-xs text-gray-500">{t('charts.lastMonth')}</div>
                 </div>
               </div>
               {/* Bar Chart */}
@@ -289,9 +289,9 @@ export const Auth = () => {
             
             {/* Sales Chart */}
             <div className="absolute top-6 right-0 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg animate-float-delayed">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">TOTAL SALES</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('charts.totalSales')}</div>
               <div className="text-xl font-bold text-gray-900 mb-1">$527.8K</div>
-              <div className="text-xs text-gray-500 mb-2">+32% last month</div>
+              <div className="text-xs text-gray-500 mb-2">+32% {t('charts.lastMonth')}</div>
               {/* Line Chart */}
               <svg className="w-24 h-12" viewBox="0 0 100 50" preserveAspectRatio="none">
                 <path 
@@ -316,7 +316,7 @@ export const Auth = () => {
             
             {/* Analytics Chart */}
             <div className="absolute top-40 left-4 bg-white/85 backdrop-blur-sm rounded-lg p-3 shadow-lg animate-float-slow">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">ANALYTICS</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('charts.analytics')}</div>
               <div className="flex space-x-1">
                 <div className="w-2 h-8 bg-gray-400 rounded"></div>
                 <div className="w-2 h-6 bg-gray-500 rounded"></div>
@@ -327,9 +327,9 @@ export const Auth = () => {
             
             {/* Revenue Chart */}
             <div className="absolute top-12 left-6 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg animate-float">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">REVENUE</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('charts.revenue')}</div>
               <div className="text-lg font-bold text-gray-900">$1.2M</div>
-              <div className="text-xs text-gray-500 mb-2">+45% growth</div>
+              <div className="text-xs text-gray-500 mb-2">{t('charts.growth')}</div>
               <div className="flex items-end space-x-1 h-6">
                 <div className="w-1.5 h-2 bg-gray-400 rounded"></div>
                 <div className="w-1.5 h-4 bg-gray-500 rounded"></div>
@@ -341,9 +341,9 @@ export const Auth = () => {
             
             {/* Users Chart */}
             <div className="absolute top-26 right-20 bg-white/85 backdrop-blur-sm rounded-lg p-3 shadow-lg animate-float-delayed">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">USERS</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('charts.users')}</div>
               <div className="text-lg font-bold text-gray-900">24.5K</div>
-              <div className="text-xs text-gray-500 mb-2">+12% this week</div>
+              <div className="text-xs text-gray-500 mb-2">{t('charts.thisWeek')}</div>
               <div className="w-14 h-1.5 bg-gray-200 rounded-full">
                 <div className="w-3/4 h-1.5 bg-gray-600 rounded-full"></div>
               </div>
@@ -351,11 +351,11 @@ export const Auth = () => {
             
             {/* Performance Chart */}
             <div className="absolute top-52 right-6 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg animate-bounce-slow">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">PERFORMANCE</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('charts.performance')}</div>
               <div className="text-base font-bold text-gray-900">95.2%</div>
               <div className="flex items-center space-x-2 mt-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-600">Optimal</span>
+                <span className="text-xs text-gray-600">{t('charts.optimal')}</span>
               </div>
             </div>
             
@@ -363,7 +363,7 @@ export const Auth = () => {
             <div className="absolute top-66 left-28 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg animate-bounce-slow">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700">Live Data</span>
+                <span className="text-sm font-medium text-gray-700">{t('charts.liveData')}</span>
               </div>
             </div>
           </div>

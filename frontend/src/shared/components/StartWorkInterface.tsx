@@ -6,16 +6,15 @@ import {
   Upload, 
   MessageSquare, 
   Brain, 
-  Zap, 
-  BarChart3, 
-  TrendingUp, 
-  FileText, 
-  Search
+  Zap,
+  Network
 } from 'lucide-react';
 import logo3 from '../../assets/logo3.png';
 import { useLanguageStore } from '../stores/languageStore';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { DataCleaningModal } from './DataCleaningModal';
+import { QuickDataReportModal } from './QuickDataReportModal';
+import GraphsModal from '../../components/modals/GraphsModal';
 
 interface StartWorkInterfaceProps {
   onStartWork: (query?: string) => void;
@@ -25,6 +24,8 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
   const { t } = useLanguageStore();
   const [isMobile, setIsMobile] = useState(false);
   const [isDataCleaningModalOpen, setIsDataCleaningModalOpen] = useState(false);
+  const [isQuickDataReportModalOpen, setIsQuickDataReportModalOpen] = useState(false);
+  const [isGraphsModalOpen, setIsGraphsModalOpen] = useState(false);
 
   // Check if we're on mobile
   useEffect(() => {
@@ -39,16 +40,16 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
 
   const quickActions = [
     {
-      icon: Upload,
-      title: t('startWork.uploadData'),
-      description: t('startWork.uploadDataDesc'),
-      onClick: () => onStartWork()
+      icon: Network,
+      title: t('startWork.visualizeManage'),
+      description: t('startWork.visualizeManageDesc'),
+      onClick: () => setIsGraphsModalOpen(true)
     },
     {
       icon: MessageSquare,
-      title: t('startWork.askQuestions'),
-      description: t('startWork.askQuestionsDesc'),
-      onClick: () => onStartWork('Generate charts and insights')
+      title: t('startWork.quickDataReport'),
+      description: t('startWork.quickDataReportDesc'),
+      onClick: () => setIsQuickDataReportModalOpen(true)
     },
     {
       icon: Brain,
@@ -64,51 +65,7 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
     }
   ];
 
-  const quantitativeTemplates = [
-    {
-      icon: FileText,
-      label: t('startWork.cleanPrepData'),
-      onClick: () => onStartWork('Clean and prepare data')
-    },
-    {
-      icon: Search,
-      label: t('startWork.uncoverInsights'),
-      onClick: () => onStartWork('Uncover insights from data')
-    },
-    {
-      icon: BarChart3,
-      label: t('startWork.generateCharts'),
-      onClick: () => onStartWork('Generate charts and visualizations')
-    },
-    {
-      icon: TrendingUp,
-      label: t('startWork.identifyCorrelations'),
-      onClick: () => onStartWork('Identify correlations in data')
-    }
-  ];
 
-  const qualitativeTemplates = [
-    {
-      icon: Brain,
-      label: t('startWork.sentimentAnalysis'),
-      onClick: () => onStartWork('Perform sentiment analysis')
-    },
-    {
-      icon: MessageSquare,
-      label: t('startWork.textClassification'),
-      onClick: () => onStartWork('Classify text data')
-    },
-    {
-      icon: Search,
-      label: t('startWork.extractEntities'),
-      onClick: () => onStartWork('Extract entities from text')
-    },
-    {
-      icon: TrendingUp,
-      label: t('startWork.topicModeling'),
-      onClick: () => onStartWork('Perform topic modeling')
-    }
-  ];
 
   return (
     <div className={cn(
@@ -242,94 +199,6 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
           ))}
         </div>
 
-        {/* Templates Section */}
-        <div className="text-center">
-          <p className={cn(
-            "text-gray-600 mb-4",
-            isMobile ? "text-sm" : "mb-6"
-          )}>
-            {t('startWork.orGetStarted')}{' '}
-            <span className="font-semibold text-gray-900">{t('startWork.oneClickTemplate')}</span>
-          </p>
-          
-          <div className={cn(
-            "grid gap-4",
-            isMobile ? "grid-cols-1 gap-4" : "grid-cols-1 lg:grid-cols-2 gap-6"
-          )}>
-            {/* Quantitative */}
-            <Card className="border-gray-200">
-              <CardContent className={cn(
-                isMobile ? "p-4" : "p-8"
-              )}>
-                <h3 className={cn(
-                  "font-semibold text-gray-900 mb-3",
-                  isMobile ? "text-lg" : "text-xl mb-4"
-                )}>{t('startWork.quantitativeAnalysis')}</h3>
-                <p className={cn(
-                  "text-gray-600 mb-4",
-                  isMobile ? "text-sm" : "mb-6"
-                )}>{t('startWork.quantitativeDesc')}</p>
-                
-                <div className="space-y-2">
-                  {quantitativeTemplates.map((template, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start touch-manipulation",
-                        isMobile ? "h-10 text-sm" : ""
-                      )}
-                      onClick={template.onClick}
-                    >
-                      <template.icon className={cn(
-                        "mr-2",
-                        isMobile ? "w-3 h-3" : "w-4 h-4"
-                      )} />
-                      {template.label}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Qualitative */}
-            <Card className="border-gray-200">
-              <CardContent className={cn(
-                isMobile ? "p-4" : "p-8"
-              )}>
-                <h3 className={cn(
-                  "font-semibold text-gray-900 mb-3",
-                  isMobile ? "text-lg" : "text-xl mb-4"
-                )}>{t('startWork.qualitativeAnalysis')}</h3>
-                <p className={cn(
-                  "text-gray-600 mb-4",
-                  isMobile ? "text-sm" : "mb-6"
-                )}>{t('startWork.qualitativeDesc')}</p>
-                
-                <div className="space-y-2">
-                  {qualitativeTemplates.map((template, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start touch-manipulation",
-                        isMobile ? "h-10 text-sm" : ""
-                      )}
-                      onClick={template.onClick}
-                    >
-                      <template.icon className={cn(
-                        "mr-2",
-                        isMobile ? "w-3 h-3" : "w-4 h-4"
-                      )} />
-                      {template.label}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
         {/* Footer */}
         <div className={cn(
           "pt-4 border-t border-gray-200",
@@ -348,6 +217,18 @@ export const StartWorkInterface: React.FC<StartWorkInterfaceProps> = ({ onStartW
       <DataCleaningModal
         isOpen={isDataCleaningModalOpen}
         onClose={() => setIsDataCleaningModalOpen(false)}
+      />
+      
+      {/* Quick Data Report Modal */}
+       <QuickDataReportModal
+         isOpen={isQuickDataReportModalOpen}
+         onClose={() => setIsQuickDataReportModalOpen(false)}
+       />
+       
+      {/* Graphs Modal */}
+      <GraphsModal
+        isOpen={isGraphsModalOpen}
+        onClose={() => setIsGraphsModalOpen(false)}
       />
     </div>
   );

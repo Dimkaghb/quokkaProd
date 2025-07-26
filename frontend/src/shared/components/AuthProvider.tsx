@@ -7,20 +7,27 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { user, refreshAuth, setLoading } = useAuthStore()
+  const { user, token, isAuthenticated, refreshAuth, setLoading } = useAuthStore()
   const { clearAll } = useThreadStore()
   const previousUserIdRef = useRef<string | null>(null)
+  const hasInitialized = useRef(false)
 
   useEffect(() => {
-    const persistedToken = localStorage.getItem('token')
-    
-    if (persistedToken) {
-      // Token found in localStorage, user should be authenticated
-      refreshAuth()
-    } else {
-      setLoading(false)
+    // Only initialize once when the component mounts
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      
+      // Check if we have a token in the auth store (from persistence)
+      if (token && !isAuthenticated) {
+        // Token found but not authenticated, verify it with the backend
+        console.log('Found token, validating with backend...')
+        refreshAuth()
+      } else {
+        // No token or already authenticated, stop loading
+        setLoading(false)
+      }
     }
-  }, [refreshAuth, setLoading])
+  }, []) // Empty dependency array to run only once
 
   // Clear thread data when user changes
   useEffect(() => {
@@ -38,4 +45,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <>{children}</>
 }
 
-export default AuthProvider 
+export default AuthProvider

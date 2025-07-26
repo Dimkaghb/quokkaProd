@@ -17,7 +17,9 @@ import {
   Clock, 
   Trash2, 
   Menu, 
-  X
+  X,
+  FolderOpen,
+  Network
 } from 'lucide-react';
 import logo3 from '../../assets/logo3.png';
 
@@ -46,6 +48,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [activeView, setActiveView] = useState<'chats' | 'files' | 'graphs'>('chats');
 
   // Check if we're on mobile
   const [isMobile, setIsMobile] = useState(false);
@@ -366,6 +369,50 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           )}
         </div>
 
+        {/* Navigation Tabs */}
+        {(!isCollapsed || isMobile) && (
+          <div className={cn(isMobile ? "px-4 pb-2" : "px-6 pb-2")}>
+            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setActiveView('chats')}
+                className={cn(
+                  "flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  activeView === 'chats'
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                )}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Чаты</span>
+              </button>
+              <button
+                onClick={() => setActiveView('files')}
+                className={cn(
+                  "flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  activeView === 'files'
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                )}
+              >
+                <FolderOpen className="w-4 h-4" />
+                <span>Файлы</span>
+              </button>
+              <button
+                onClick={() => setActiveView('graphs')}
+                className={cn(
+                  "flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  activeView === 'graphs'
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                )}
+              >
+                <Network className="w-4 h-4" />
+                <span>Графы</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto">
           {isCollapsed && !isMobile ? (
@@ -376,7 +423,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-10 h-10 hover:bg-gray-100 rounded-lg"
+                  onClick={() => setActiveView('chats')}
+                  className={cn(
+                    "w-10 h-10 hover:bg-gray-100 rounded-lg",
+                    activeView === 'chats' && "bg-gray-100"
+                  )}
                   title={`${threads.length} ${t('sidebar.recentChats')}`}
                 >
                   <div className="relative">
@@ -389,24 +440,44 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
                   </div>
                 </Button>
 
-                {/* Analytics Icon */}
+                {/* Files Icon */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-10 h-10 hover:bg-gray-100 rounded-lg"
-                  title={`${dashboardStats.totalAnalyses} ${t('dashboard.analyses')}`}
+                  onClick={() => setActiveView('files')}
+                  className={cn(
+                    "w-10 h-10 hover:bg-gray-100 rounded-lg",
+                    activeView === 'files' && "bg-gray-100"
+                  )}
+                  title={`${documents.length} ${t('dashboard.documents')}`}
                 >
                   <div className="relative">
-                    <BarChart3 className="w-5 h-5 text-gray-600" />
-                    {dashboardStats.activeToday > 0 && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <FolderOpen className="w-5 h-5 text-gray-600" />
+                    {documents.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {documents.length > 9 ? '9+' : documents.length}
+                      </span>
                     )}
                   </div>
+                </Button>
+
+                {/* Graphs Icon */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveView('graphs')}
+                  className={cn(
+                    "w-10 h-10 hover:bg-gray-100 rounded-lg",
+                    activeView === 'graphs' && "bg-gray-100"
+                  )}
+                  title="Графы"
+                >
+                  <Network className="w-5 h-5 text-gray-600" />
                 </Button>
               </div>
 
               {/* Recent Thread Indicators */}
-              {threads.slice(0, 3).map((thread) => (
+              {activeView === 'chats' && threads.slice(0, 3).map((thread) => (
                 <Button
                   key={thread.id}
                   variant="ghost"
@@ -424,119 +495,139 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             </div>
           ) : (
             <div className={cn(isMobile ? "px-4 py-2" : "px-6 py-2")}>
-              <div className={cn(isMobile ? "mb-4" : "mb-6")}>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  {t('sidebar.recentChats')}
-                </h3>
-                
-                <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
-                  {threads.length === 0 ? (
-                    <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
-                      <MessageSquare className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
-                      <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noAnalyses')}</p>
-                      <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.createFirstAnalysis')}</p>
-                    </div>
-                  ) : (
-                    threads.map((thread) => (
-                      <div
-                        key={thread.id}
-                        onClick={() => handleThreadSelect(thread.id)}
-                        className={cn(
-                          "group relative rounded-lg cursor-pointer transition-all duration-200 border touch-manipulation",
-                          isMobile ? "p-2.5" : "p-3",
-                          selectedThreadId === thread.id
-                            ? 'bg-gray-50 border-gray-300'
-                            : 'hover:bg-gray-50 border-transparent hover:border-gray-200 active:bg-gray-100'
-                        )}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className={cn("flex items-center space-x-2", isMobile ? "mb-0.5" : "mb-1")}>
-                              <MessageSquare className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
-                              <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
-                                {formatThreadTitle(thread)}
-                              </p>
-                            </div>
-                            <div className={cn("flex items-center space-x-2 text-gray-500", isMobile ? "text-xs" : "text-xs")}>
-                              <Clock className={cn(isMobile ? "w-3 h-3" : "w-3 h-3")} />
-                              <span>{new Date(thread.updated_at).toLocaleDateString()}</span>
-                              {thread.message_count && !isMobile && (
-                                <span className="text-gray-400">• {thread.message_count} {t('workspaceLayout.messages')}</span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => handleDeleteThread(thread.id, e)}
-                            disabled={deletingThreadId === thread.id}
-                            className={cn(
-                              "opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 touch-manipulation",
-                              isMobile ? "h-7 w-7" : "h-8 w-8"
-                            )}
-                          >
-                            {deletingThreadId === thread.id ? (
-                              <LoadingDots />
-                            ) : (
-                              <Trash2 className={cn(isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Documents Section */}
-              <div className={cn(isMobile ? "mb-4" : "mb-6")}>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  {t('dashboard.documents')}
-                </h3>
-                
-                {isLoadingDocuments ? (
-                  <div className={cn("text-center", isMobile ? "py-3" : "py-4")}>
-                    <LoadingDots />
-                  </div>
-                ) : documents.length === 0 ? (
-                  <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
-                    <FileText className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
-                    <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noDocuments')}</p>
-                    <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.uploadToStart')}</p>
-                  </div>
-                ) : (
+              {/* Chats View */}
+              {activeView === 'chats' && (
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    {t('sidebar.recentChats')}
+                  </h3>
+                  
                   <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
-                    {documents.slice(0, 5).map((doc) => {
-                      const IconComponent = getFileIcon(doc.file_type);
-                      return (
+                    {threads.length === 0 ? (
+                      <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
+                        <MessageSquare className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
+                        <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noAnalyses')}</p>
+                        <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.createFirstAnalysis')}</p>
+                      </div>
+                    ) : (
+                      threads.map((thread) => (
                         <div
-                          key={doc.id}
+                          key={thread.id}
+                          onClick={() => handleThreadSelect(thread.id)}
                           className={cn(
-                            "flex items-center space-x-3 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation",
-                            isMobile ? "p-2" : "p-2"
+                            "group relative rounded-lg cursor-pointer transition-all duration-200 border touch-manipulation",
+                            isMobile ? "p-2.5" : "p-3",
+                            selectedThreadId === thread.id
+                              ? 'bg-gray-50 border-gray-300'
+                              : 'hover:bg-gray-50 border-transparent hover:border-gray-200 active:bg-gray-100'
                           )}
                         >
-                          <IconComponent className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
-                          <div className="flex-1 min-w-0">
-                            <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
-                              {doc.original_filename}
-                            </p>
-                            <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-xs")}>
-                              {formatFileSize(doc.file_size)}
-                            </p>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className={cn("flex items-center space-x-2", isMobile ? "mb-0.5" : "mb-1")}>
+                                <MessageSquare className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                                <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
+                                  {formatThreadTitle(thread)}
+                                </p>
+                              </div>
+                              <div className={cn("flex items-center space-x-2 text-gray-500", isMobile ? "text-xs" : "text-xs")}>
+                                <Clock className={cn(isMobile ? "w-3 h-3" : "w-3 h-3")} />
+                                <span>{new Date(thread.updated_at).toLocaleDateString()}</span>
+                                {thread.message_count && !isMobile && (
+                                  <span className="text-gray-400">• {thread.message_count} {t('workspaceLayout.messages')}</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => handleDeleteThread(thread.id, e)}
+                              disabled={deletingThreadId === thread.id}
+                              className={cn(
+                                "opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 touch-manipulation",
+                                isMobile ? "h-7 w-7" : "h-8 w-8"
+                              )}
+                            >
+                              {deletingThreadId === thread.id ? (
+                                <LoadingDots />
+                              ) : (
+                                <Trash2 className={cn(isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                              )}
+                            </Button>
                           </div>
                         </div>
-                      );
-                    })}
-                    {documents.length > 5 && (
-                      <p className={cn("text-gray-500 text-center", isMobile ? "text-xs pt-1" : "text-xs pt-2")}>
-                        {t('workspaceLayout.moreFiles', { count: (documents.length - 5).toString() })}
-                      </p>
+                      ))
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Files View */}
+              {activeView === 'files' && (
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    {t('dashboard.documents')}
+                  </h3>
+                  
+                  {isLoadingDocuments ? (
+                    <div className={cn("text-center", isMobile ? "py-3" : "py-4")}>
+                      <LoadingDots />
+                    </div>
+                  ) : documents.length === 0 ? (
+                    <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
+                      <FileText className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
+                      <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>{t('workspaceLayout.noDocuments')}</p>
+                      <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>{t('workspaceLayout.uploadToStart')}</p>
+                    </div>
+                  ) : (
+                    <div className={cn(isMobile ? "space-y-1.5" : "space-y-2")}>
+                      {documents.map((doc) => {
+                        const IconComponent = getFileIcon(doc.file_type);
+                        return (
+                          <div
+                            key={doc.id}
+                            className={cn(
+                              "flex items-center space-x-3 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation",
+                              isMobile ? "p-2" : "p-2"
+                            )}
+                          >
+                            <IconComponent className={cn("text-gray-400 flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                            <div className="flex-1 min-w-0">
+                              <p className={cn("font-medium text-gray-900 truncate", isMobile ? "text-xs" : "text-sm")}>
+                                {doc.original_filename}
+                              </p>
+                              <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-xs")}>
+                                {formatFileSize(doc.file_size)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {documents.length > 10 && (
+                        <p className={cn("text-gray-500 text-center", isMobile ? "text-xs pt-1" : "text-xs pt-2")}>
+                          {t('workspaceLayout.moreFiles', { count: (documents.length - 10).toString() })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Graphs View */}
+              {activeView === 'graphs' && (
+                <div className={cn(isMobile ? "mb-4" : "mb-6")}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Мои графы
+                  </h3>
+                  
+                  <div className={cn("text-center", isMobile ? "py-6" : "py-8")}>
+                    <Network className={cn("text-gray-300 mx-auto mb-3", isMobile ? "w-6 h-6" : "w-8 h-8")} />
+                    <p className={cn("text-gray-500", isMobile ? "text-xs" : "text-sm")}>Пока нет созданных графов</p>
+                    <p className={cn("text-gray-400 mt-1", isMobile ? "text-xs" : "text-xs")}>Создайте свой первый граф для анализа данных</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

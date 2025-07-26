@@ -51,10 +51,18 @@ async def process_uploaded_file(
     with open(file_path, "wb") as f:
         f.write(file_content)
     
-    # Store relative path for database
+    # Store relative path for database (consistent with current working directory)
     relative_path = f"data/documents/user_{user_id}/{unique_filename}"
     
+    # Ensure the file actually exists at the expected location
+    absolute_path = Path.cwd() / relative_path
+    if not absolute_path.exists():
+        logger.error(f"File was not saved correctly. Expected at: {absolute_path.absolute()}")
+        raise Exception(f"Failed to save file to expected location: {absolute_path.absolute()}")
+    
     logger.info(f"File saved to: {file_path.absolute()}, stored path: {relative_path}")
+    logger.info(f"Verified file exists at: {absolute_path.absolute()}")
+    logger.info(f"Current working directory: {Path.cwd()}")
     
     # Create document record (without processing summary for now)
     document = await create_document(
@@ -208,4 +216,4 @@ async def validate_document_access(user_id: str, document_ids: List[str]) -> boo
     accessible_docs = await get_documents_by_ids(user_id, document_ids)
     accessible_ids = {doc.id for doc in accessible_docs}
     
-    return all(doc_id in accessible_ids for doc_id in document_ids) 
+    return all(doc_id in accessible_ids for doc_id in document_ids)

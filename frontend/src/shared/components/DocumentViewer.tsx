@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../lib/utils';
 import { useLanguageStore } from '../stores/languageStore';
 import type { UserDocument } from '../api/documentsAPI';
@@ -46,13 +46,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && document) {
-      loadDocument();
-    }
-  }, [isOpen, document]);
-
-  const loadDocument = async () => {
+  const loadDocument = useCallback(async () => {
     setLoading(true);
     setDocumentContent(null);
 
@@ -68,7 +62,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [document, documentService, t]);
+
+  useEffect(() => {
+    if (isOpen && document) {
+      loadDocument();
+    }
+  }, [isOpen, document, loadDocument]);
 
   const getFileIcon = (fileType: string) => {
     switch (fileType.toLowerCase()) {
@@ -330,4 +330,4 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       </div>
     </div>
   );
-}; 
+};

@@ -1,0 +1,32 @@
+{
+  "report_id": "eda89d0f-331c-425f-a0b5-c05471f3acce",
+  "user_id": "0878e96f-3a41-45fb-998f-60e62bf0a919",
+  "preview_file_info": {
+    "file_path": "backend\\uploads\\data_reports\\0878e96f-3a41-45fb-998f-60e62bf0a919\\preview\\84a4c272-7707-4269-ac47-79bcdf493e79.csv",
+    "file_name": "84a4c272-7707-4269-ac47-79bcdf493e79.csv",
+    "file_size": 403
+  },
+  "data_file_info": {
+    "file_path": "backend\\uploads\\data_reports\\0878e96f-3a41-45fb-998f-60e62bf0a919\\data\\2d245cf0-582a-452d-a088-e17495945e6a.csv",
+    "file_name": "2d245cf0-582a-452d-a088-e17495945e6a.csv",
+    "file_size": 403
+  },
+  "analysis_config": {
+    "llm_provider": "openai",
+    "model_name": null,
+    "temperature": 0.7,
+    "max_tokens": null,
+    "include_visualizations": true,
+    "analysis_depth": "comprehensive"
+  },
+  "generation_stats": {
+    "status": "completed",
+    "start_time": "2025-07-25T16:47:57.619425",
+    "progress": 100,
+    "end_time": "2025-07-25T16:48:21.381778"
+  },
+  "created_at": "2025-07-25 16:47:57.619425",
+  "completed_at": "2025-07-25 16:48:21.381778",
+  "file_path": "backend\\data\\reports\\0878e96f-3a41-45fb-998f-60e62bf0a919\\data_report_2d245cf0-582a-452d-a088-e17495945e6a_20250725_164821.docx",
+  "file_size": 38146
+}

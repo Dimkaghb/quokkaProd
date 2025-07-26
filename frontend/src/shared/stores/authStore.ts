@@ -18,6 +18,7 @@ interface AuthState {
   setError: (error: string | null) => void
   setLoading: (loading: boolean) => void
   clearError: () => void
+  clearAuthData: () => void
   refreshAuth: () => Promise<void>
   updateUser: (userData: Partial<User>) => void
 }
@@ -68,17 +69,37 @@ export const useAuthStore = create<AuthState>()(
         set({ error: null })
       },
 
+      // Debug function to clear all auth data
+      clearAuthData: () => {
+        localStorage.removeItem('quokka-auth-storage')
+        localStorage.removeItem('quokka-chat-session')
+        localStorage.removeItem('quokka-uploaded-files')
+        localStorage.removeItem('quokka-thread-storage')
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          error: null,
+          isLoading: false
+        })
+        console.log('Auth data cleared')
+      },
+
       refreshAuth: async () => {
         const { token } = get()
-        if (!token) return
+        if (!token) {
+          set({ isLoading: false })
+          return
+        }
 
         try {
           set({ isLoading: true })
           
-          // Verify token with backend
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/auth/me`, {
+          // Verify token with backend using the correct endpoint
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/auth/profile`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           })
 
@@ -90,13 +111,22 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               error: null
             })
+            console.log('Token validation successful')
           } else {
             // Token is invalid, logout
-            get().logout()
+            console.log('Token validation failed, status:', response.status)
+            if (response.status === 401) {
+              get().logout()
+            } else {
+              // For other errors, just stop loading but don't logout
+              set({ isLoading: false })
+            }
           }
         } catch (error) {
           console.error('Auth refresh failed:', error)
-          get().logout()
+          // Only logout on network errors if we're sure the token is invalid
+          set({ isLoading: false })
+          // Don't automatically logout on network errors
         }
       },
 

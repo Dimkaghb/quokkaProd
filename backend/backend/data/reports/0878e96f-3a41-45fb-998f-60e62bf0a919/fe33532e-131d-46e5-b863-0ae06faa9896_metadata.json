@@ -1,0 +1,34 @@
+{
+  "report_id": "fe33532e-131d-46e5-b863-0ae06faa9896",
+  "user_id": "0878e96f-3a41-45fb-998f-60e62bf0a919",
+  "preview_file_info": {
+    "file_path": "backend\\uploads\\data_reports\\0878e96f-3a41-45fb-998f-60e62bf0a919\\preview\\e54f9c21-f3a1-4ada-8a25-d2c7c5c9585e.csv",
+    "file_name": "e54f9c21-f3a1-4ada-8a25-d2c7c5c9585e.csv",
+    "file_size": 403
+  },
+  "data_file_info": {
+    "file_path": "backend\\uploads\\data_reports\\0878e96f-3a41-45fb-998f-60e62bf0a919\\data\\731edfc5-a013-49b2-95bb-e91d40421727.csv",
+    "file_name": "731edfc5-a013-49b2-95bb-e91d40421727.csv",
+    "file_size": 403
+  },
+  "analysis_config": {
+    "llm_provider": "openai",
+    "model_name": null,
+    "temperature": 0.7,
+    "max_tokens": null,
+    "include_visualizations": true,
+    "analysis_depth": "comprehensive"
+  },
+  "generation_stats": {
+    "status": "failed",
+    "end_time": "2025-07-25T16:41:04.974653",
+    "error": "name 'logger' is not defined"
+  },
+  "created_at": "2025-07-25 16:41:04.643922",
+  "completed_at": null,
+  "file_path": null,
+  "file_size": null,
+  "status": "failed",
+  "error": "name 'logger' is not defined",
+  "failed_at": "2025-07-25T16:41:04.974653"
+}

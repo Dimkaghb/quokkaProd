@@ -1,0 +1,19 @@
+
+DATA ANALYSIS REPORT
+====================
+Report ID: test_report_001
+Generated: 2025-07-25 17:02:21
+User ID: test_user
+
+OpenAI API Error: 401 - {
+    "error": {
+        "message": "Incorrect API key provided: test_api_key. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+
+
+====================
+End of Report
