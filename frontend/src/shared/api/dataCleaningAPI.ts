@@ -186,8 +186,7 @@ export const dataCleaningAPI = {
 
   // Add cleaned file to documents library
   addCleanedFileToDocuments: async (
-    filename: string,
-    tags?: string[]
+    filename: string
   ): Promise<{ success: boolean; message: string; document_id?: string }> => {
     const response = await api.post(`/api/data-cleaning/add-to-docs/${filename}`)
     return response.data
