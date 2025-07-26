@@ -99,8 +99,8 @@ export interface VisualizationResult {
 }
 
 export const dataAnalysisAPI = {
-  // Upload file and create automatic visualization with optional user query
-  uploadFile: async (file: File, userQuery?: string): Promise<VisualizationResult> => {
+  // Upload file and create visualization
+  uploadAndVisualize: async (file: File, userQuery?: string): Promise<VisualizationResult> => {
     const formData = new FormData()
     formData.append('file', file)
     if (userQuery) {
@@ -115,47 +115,39 @@ export const dataAnalysisAPI = {
     return response.data
   },
 
-  // Analyze data file for recommendations
-  analyzeDataFile: async (filePath: string, userQuery?: string): Promise<DataAnalysisResult> => {
+  // Analyze data without visualization
+  analyzeData: async (filePath: string, userQuery?: string): Promise<DataAnalysisResult> => {
     const response = await api.post<DataAnalysisResult>('/data-analysis/analyze', {
       file_path: filePath,
-      user_query: userQuery || ''
+      user_query: userQuery || '',
     })
     return response.data
   },
 
   // Create custom visualization based on user query
-  // Now supports both file-based and data-based customization
-  createCustomVisualization: async (
-    userQuery: string,
-    filePath?: string,
-    selectedColumns?: string[],
-    currentData?: any[]
-  ): Promise<VisualizationResult> => {
-    const requestData: any = {
-      user_query: userQuery,
-      selected_columns: selectedColumns
-    }
-
-    // Either file path or current data must be provided
-    if (filePath) {
-      requestData.file_path = filePath
-    } else if (currentData) {
-      requestData.current_data = currentData
-    } else {
-      throw new Error('Either filePath or currentData must be provided')
+  createCustomVisualization: async (request: {
+    file_path?: string
+    user_query: string
+    selected_columns?: string[]
+    current_data?: any[]
+  }): Promise<VisualizationResult> => {
+    const requestData = {
+      file_path: request.file_path,
+      user_query: request.user_query,
+      selected_columns: request.selected_columns,
+      current_data: request.current_data,
     }
 
     const response = await api.post<VisualizationResult>('/data-analysis/custom-visualization', requestData)
     return response.data
   },
 
-  // Create visualization from existing file
+  // Create visualization from file path
   createVisualization: async (filePath: string, chartType?: string, query?: string): Promise<VisualizationResult> => {
     const response = await api.post<VisualizationResult>('/data-analysis/visualize', {
       file_path: filePath,
       chart_type: chartType,
-      query: query || ''
+      query: query || '',
     })
     return response.data
   },
@@ -165,11 +157,10 @@ export const dataAnalysisAPI = {
     success: boolean
     files: Array<{
       filename: string
+      upload_time: string
       size: number
-      modified: string
-      path: string
+      type: string
     }>
-    total_count: number
   }> => {
     const response = await api.get('/data-analysis/files')
     return response.data
@@ -188,7 +179,7 @@ export const dataAnalysisAPI = {
   getSupportedFormats: async (): Promise<{
     success: boolean
     formats: string[]
-    descriptions: Record<string, string>
+    max_size_mb: number
   }> => {
     const response = await api.get('/data-analysis/supported-formats')
     return response.data
@@ -208,7 +199,10 @@ export const dataAnalysisAPI = {
     currentData: any[],
     userQuery: string
   ): Promise<VisualizationResult> => {
-    return dataAnalysisAPI.createCustomVisualization(userQuery, undefined, undefined, currentData)
+    return dataAnalysisAPI.createCustomVisualization({
+      user_query: userQuery,
+      current_data: currentData
+    })
   }
 }
 

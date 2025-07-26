@@ -24,7 +24,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className = 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('/api/health', { method: 'HEAD' });
+        const response = await fetch('/health', { method: 'HEAD' });
         setIsConnected(response.ok);
       } catch {
         setIsConnected(false);
@@ -47,4 +47,4 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className = 
       <span className="text-xs text-gray-500">{statusText}</span>
     </div>
   );
-}; 
+};

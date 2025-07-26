@@ -102,11 +102,10 @@ export interface SupportedFormatsResponse {
 
 // API functions
 export const dataReportAPI = {
-  // Upload files
-  uploadFile: async (file: File, fileType: 'preview' | 'data'): Promise<FileUploadResponse> => {
+  // Upload file for data report
+  uploadFile: async (file: File): Promise<FileUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('file_type', fileType)
 
     const response = await api.post<FileUploadResponse>('/data-report/upload', formData, {
       headers: {
@@ -116,7 +115,7 @@ export const dataReportAPI = {
     return response.data
   },
 
-  // Generate report
+  // Generate data report
   generateReport: async (request: DataReportRequest): Promise<DataReportResponse> => {
     const response = await api.post<DataReportResponse>('/data-report/generate', request)
     return response.data
@@ -128,56 +127,39 @@ export const dataReportAPI = {
     return response.data
   },
 
-  // List user reports
+  // List all reports
   listReports: async (): Promise<ReportListResponse> => {
     const response = await api.get<ReportListResponse>('/data-report/list')
     return response.data
   },
 
   // Download report
-  downloadReport: async (reportId: string): Promise<void> => {
+  downloadReport: async (reportId: string): Promise<Blob> => {
     const response = await api.get(`/data-report/download/${reportId}`, {
       responseType: 'blob',
     })
-    
-    // Create blob URL and trigger download
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    
-    // Get filename from response headers or use default
-    const contentDisposition = response.headers['content-disposition']
-    let filename = `report_${reportId}.pdf`
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
-      if (filenameMatch) {
-        filename = filenameMatch[1]
-      }
-    }
-    
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    return response.data
   },
 
   // Delete report
   deleteReport: async (reportId: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete<{ success: boolean; message: string }>(`/data-report/delete/${reportId}`)
+    const response = await api.delete(`/data-report/delete/${reportId}`)
     return response.data
   },
 
-  // Cleanup temporary files
-  cleanupTempFiles: async (): Promise<{ success: boolean; message: string }> => {
-    const response = await api.post<{ success: boolean; message: string }>('/data-report/cleanup')
+  // Cleanup old reports
+  cleanupReports: async (): Promise<{ success: boolean; message: string; deleted_count: number }> => {
+    const response = await api.post('/data-report/cleanup')
     return response.data
   },
 
-  // Get supported file formats
-  getSupportedFormats: async (): Promise<SupportedFormatsResponse> => {
-    const response = await api.get<SupportedFormatsResponse>('/data-report/supported-formats')
+  // Get supported formats
+  getSupportedFormats: async (): Promise<{
+    success: boolean
+    formats: string[]
+    max_size_mb: number
+  }> => {
+    const response = await api.get('/data-report/supported-formats')
     return response.data
   },
 }

@@ -23,7 +23,7 @@ const QuickPromptsTest: React.FC<QuickPromptsTestProps> = ({ onPromptSelect }) =
     setError('');
 
     try {
-      const response = await fetch('/api/chat/quick-prompts/generate', {
+      const response = await fetch('/chat/quick-prompts/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ const QuickPromptsTest: React.FC<QuickPromptsTestProps> = ({ onPromptSelect }) =
         <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
           <h4 className="font-semibold text-gray-700 mb-1">🔗 {t('quickPromptsTest.apiEndpoint')}</h4>
           <code className="text-xs text-gray-600">
-            POST /api/chat/quick-prompts/generate
+            POST /chat/quick-prompts/generate
           </code>
         </div>
       </div>

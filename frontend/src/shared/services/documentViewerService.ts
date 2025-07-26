@@ -62,7 +62,7 @@ export class DocumentViewerService {
 
   private async loadPdfDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`/api/documents/${document.id}/content`, {
+      const response = await fetch(`/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -92,7 +92,7 @@ export class DocumentViewerService {
 
   private async loadWordDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`/api/documents/${document.id}/content`, {
+      const response = await fetch(`/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -157,7 +157,7 @@ export class DocumentViewerService {
 
   private async loadExcelDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`/api/documents/${document.id}/content`, {
+      const response = await fetch(`/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -230,7 +230,7 @@ export class DocumentViewerService {
               ['- Backend file path resolution issues'],
               ['', ''],
               ['Debug Info:'],
-              ['- API URL:', '/api (proxied)'],
+              ['- API URL:', '/documents (proxied)'],
               ['- Document ID:', document.id],
               ['- File Type:', document.file_type]
             ]
@@ -243,7 +243,7 @@ export class DocumentViewerService {
 
   private async loadTextDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`/api/documents/${document.id}/content`, {
+      const response = await fetch(`/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }
@@ -303,7 +303,7 @@ export class DocumentViewerService {
 
   private async loadCsvDocument(document: UserDocument): Promise<DocumentContent> {
     try {
-      const response = await fetch(`/api/documents/${document.id}/content`, {
+      const response = await fetch(`/documents/${document.id}/content`, {
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`
         }

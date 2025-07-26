@@ -31,7 +31,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/data-analysis", tags=["data-analysis"])
+router = APIRouter(prefix="/api/data-analysis", tags=["data-analysis"])
 
 # Configuration
 DOCUMENTS_BASE_FOLDER = Path("data/documents")

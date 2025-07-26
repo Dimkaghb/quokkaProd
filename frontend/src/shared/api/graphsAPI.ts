@@ -133,29 +133,29 @@ export interface GraphListResponse {
 export const graphsAPI = {
   // Create a new graph
   createGraph: async (graphData: GraphCreateRequest): Promise<GraphResponse> => {
-    const response = await api.post('/graphs/', graphData)
+    const response = await api.post<GraphResponse>('/graphs/', graphData)
     return response.data
   },
 
-  // Get user's graphs (summary view)
-  getUserGraphs: async (skip = 0, limit = 100): Promise<GraphListResponse> => {
-    const response = await api.get(`/graphs/?skip=${skip}&limit=${limit}`)
+  // List all graphs
+  listGraphs: async (): Promise<GraphListResponse> => {
+    const response = await api.get<GraphListResponse>('/graphs/')
     return response.data
   },
 
-  // Get a specific graph by ID
+  // Get graph by ID
   getGraph: async (graphId: string): Promise<GraphResponse> => {
-    const response = await api.get(`/graphs/${graphId}`)
+    const response = await api.get<GraphResponse>(`/graphs/${graphId}`)
     return response.data
   },
 
-  // Update an existing graph
-  updateGraph: async (graphId: string, updateData: GraphUpdateRequest): Promise<GraphResponse> => {
-    const response = await api.put(`/graphs/${graphId}`, updateData)
+  // Update graph
+  updateGraph: async (graphId: string, updates: GraphUpdateRequest): Promise<GraphResponse> => {
+    const response = await api.put<GraphResponse>(`/graphs/${graphId}`, updates)
     return response.data
   },
 
-  // Delete a graph
+  // Delete graph
   deleteGraph: async (graphId: string): Promise<{ success: boolean; message: string }> => {
     const response = await api.delete(`/graphs/${graphId}`)
     return response.data
@@ -163,7 +163,7 @@ export const graphsAPI = {
 
   // Health check
   healthCheck: async (): Promise<{ status: string; service: string }> => {
-    const response = await api.get('/graphs/health/check')
+    const response = await api.get('/graphs/health')
     return response.data
   }
 }

@@ -219,6 +219,11 @@ async def health_check():
     """Health endpoint for deployment checks."""
     return {"status": "ok"}
 
+@app.get("/api/health")
+async def api_health_check():
+    """Health endpoint with /api prefix for frontend connectivity checks."""
+    return {"status": "ok", "service": "QuokkaAI API"}
+
 @app.get("/test")
 async def test_endpoint():
     """Test endpoint to check routing."""

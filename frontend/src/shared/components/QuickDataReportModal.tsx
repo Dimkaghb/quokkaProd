@@ -52,8 +52,8 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         const formats = await dataReportAPI.getSupportedFormats();
         if (formats.success) {
           setSupportedFormats({
-            preview_formats: formats.preview_formats,
-            data_formats: formats.data_formats
+            preview_formats: formats.formats,
+            data_formats: formats.formats
           });
         }
       } catch (error) {
@@ -116,7 +116,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
       setPreviewFile(file);
       setIsUploading(true);
       try {
-        const response = await dataReportAPI.uploadFile(file, 'preview');
+        const response = await dataReportAPI.uploadFile(file);
         if (response.success) {
           setPreviewFileId(response.file_id);
           showToast(t('quickDataReport.previewFileUploadedSuccessfully'), 'success');
@@ -142,7 +142,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
       setDataFile(file);
       setIsUploading(true);
       try {
-        const response = await dataReportAPI.uploadFile(file, 'data');
+        const response = await dataReportAPI.uploadFile(file);
         if (response.success) {
           setDataFileId(response.file_id);
           showToast(t('quickDataReport.dataFileUploadedSuccessfully'), 'success');

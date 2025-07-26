@@ -148,37 +148,39 @@ export const chatAPI = {
     return response.data
   },
 
-  // Get thread details
+  // Get thread by ID
   getThread: async (threadId: string): Promise<ThreadResponse> => {
     const response = await api.get<ThreadResponse>(`/chat/threads/${threadId}`)
     return response.data
   },
 
   // Update thread (title or documents)
-  updateThread: async (
-    threadId: string, 
-    updates: { title?: string; selected_documents?: string[] }
-  ): Promise<ThreadResponse> => {
+  updateThread: async (threadId: string, updates: {
+    title?: string
+    selected_documents?: string[]
+  }): Promise<ThreadResponse> => {
     const response = await api.put<ThreadResponse>(`/chat/threads/${threadId}`, updates)
     return response.data
   },
 
   // Delete thread
-  deleteThread: async (threadId: string): Promise<{ success: boolean; message: string }> => {
+  deleteThread: async (threadId: string): Promise<void> => {
     const response = await api.delete(`/chat/threads/${threadId}`)
     return response.data
   },
 
   // ===== MESSAGE MANAGEMENT =====
-
+  
   // Get thread messages
-  getMessages: async (threadId: string, limit?: number): Promise<MessagesListResponse> => {
-    const params = limit ? { limit } : {}
+  getMessages: async (threadId: string, params?: {
+    page?: number
+    page_size?: number
+  }): Promise<MessagesListResponse> => {
     const response = await api.get<MessagesListResponse>(`/chat/threads/${threadId}/messages`, { params })
     return response.data
   },
 
-  // Send message to thread (with AI response)
+  // Send message to thread
   sendMessage: async (threadId: string, request: SendMessageRequest): Promise<MessageResponse> => {
     const response = await api.post<MessageResponse>(`/chat/threads/${threadId}/messages`, request)
     return response.data

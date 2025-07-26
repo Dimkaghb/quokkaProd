@@ -76,12 +76,13 @@ export interface DocumentUpdateRequest {
 }
 
 export const documentsAPI = {
-  // Upload document to user's global library
+  // Upload document
   uploadDocument: async (file: File, tags?: string[]): Promise<DocumentUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
+    
     if (tags && tags.length > 0) {
-      formData.append('tags', tags.join(','))
+      formData.append('tags', JSON.stringify(tags))
     }
 
     const response = await api.post<DocumentUploadResponse>('/documents/upload', formData, {
@@ -92,21 +93,21 @@ export const documentsAPI = {
     return response.data
   },
 
-  // Get all documents in user's library
-  getUserDocuments: async (): Promise<DocumentListResponse> => {
+  // List all documents
+  listDocuments: async (): Promise<DocumentListResponse> => {
     const response = await api.get<DocumentListResponse>('/documents/')
     return response.data
   },
 
-  // Get document details by ID
-  getDocument: async (documentId: string): Promise<DocumentUploadResponse> => {
-    const response = await api.get<DocumentUploadResponse>(`/documents/${documentId}`)
-    return response.data
+  // Get document by ID
+  getDocument: async (documentId: string): Promise<UserDocument> => {
+    const response = await api.get<{ success: boolean; document: UserDocument; message: string }>(`/documents/${documentId}`)
+    return response.data.document
   },
 
-  // Update document metadata
-  updateDocument: async (documentId: string, updates: DocumentUpdateRequest): Promise<DocumentUploadResponse> => {
-    const response = await api.put<DocumentUploadResponse>(`/documents/${documentId}`, updates)
+  // Update document
+  updateDocument: async (documentId: string, updates: DocumentUpdateRequest): Promise<{ success: boolean; document: UserDocument; message: string }> => {
+    const response = await api.put<{ success: boolean; document: UserDocument; message: string }>(`/documents/${documentId}`, updates)
     return response.data
   },
 
@@ -117,8 +118,8 @@ export const documentsAPI = {
   },
 
   // Health check
-  healthCheck: async (): Promise<{ status: string }> => {
-    const response = await api.get('/documents/health/check')
+  healthCheck: async (): Promise<{ status: string; service: string }> => {
+    const response = await api.get('/documents/health')
     return response.data
   },
 }

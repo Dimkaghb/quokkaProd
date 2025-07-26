@@ -31,7 +31,7 @@ from src.auth.models import User
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/graphs", tags=["graphs"])
+router = APIRouter(prefix="/api/graphs", tags=["graphs"])
 
 
 @router.post("/", response_model=GraphResponse)

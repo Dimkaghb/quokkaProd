@@ -123,7 +123,7 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
     setCleaningResult(null);
 
     try {
-      const result = await dataCleaningAPI.uploadAndClean(file, selectedOperations);
+      const result = await dataCleaningAPI.uploadFile(file);
 
       if (result.success) {
         setCleaningResult({

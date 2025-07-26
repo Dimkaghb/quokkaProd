@@ -69,36 +69,28 @@ export interface SupportedOperationsResult {
 }
 
 export const dataCleaningAPI = {
-  // Upload file and perform cleaning operations
-  uploadAndClean: async (
-    file: File, 
-    operations: string[]
-  ): Promise<DataCleaningResult> => {
+  // Upload file for data cleaning
+  uploadFile: async (file: File): Promise<DataCleaningResult> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('operations', JSON.stringify(operations))
 
-    const response = await api.post<DataCleaningResult>(
-      '/data-cleaning/upload-and-clean', 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
+    const response = await api.post<DataCleaningResult>('/data-cleaning/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     return response.data
   },
 
   // Download cleaned file
-  downloadCleanedFile: async (filename: string): Promise<Blob> => {
+  downloadFile: async (filename: string): Promise<Blob> => {
     const response = await api.get(`/data-cleaning/download/${filename}`, {
       responseType: 'blob',
     })
     return response.data
   },
 
-  // Get supported cleaning operations
+  // Get supported operations
   getSupportedOperations: async (): Promise<SupportedOperationsResult> => {
     const response = await api.get<SupportedOperationsResult>('/data-cleaning/supported-operations')
     return response.data
@@ -106,7 +98,21 @@ export const dataCleaningAPI = {
 
   // Health check
   healthCheck: async (): Promise<{ status: string; service: string }> => {
-    const response = await api.get<{ status: string; service: string }>('/data-cleaning/health')
+    const response = await api.get('/data-cleaning/health')
+    return response.data
+  },
+
+  // Cancel operation
+  cancelOperation: async (operationId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post(`/data-cleaning/cancel/${operationId}`)
+    return response.data
+  },
+
+  // Add cleaned file to documents
+  addToDocuments: async (filename: string): Promise<{ success: boolean; message: string; document_id?: string }> => {
+    const response = await api.post('/data-cleaning/add-to-docs', {
+      filename: filename,
+    })
     return response.data
   },
 
@@ -119,7 +125,7 @@ export const dataCleaningAPI = {
   // Download file directly by triggering browser download
   triggerDownload: async (filename: string, originalName?: string): Promise<void> => {
     try {
-      const blob = await dataCleaningAPI.downloadCleanedFile(filename)
+      const blob = await dataCleaningAPI.downloadFile(filename)
       
       // Create download link
       const url = window.URL.createObjectURL(blob)
@@ -150,7 +156,7 @@ export const dataCleaningAPI = {
   },
 
   // Add cleaned file to documents
-  addToDocuments: async (filename: string): Promise<{
+  addToDocumentsWithMetadata: async (filename: string): Promise<{
     message: string
     document_name: string
     original_name: string

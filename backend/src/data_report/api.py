@@ -30,7 +30,7 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 # Initialize router
-router = APIRouter(prefix="/data-report", tags=["data-report"])
+router = APIRouter(prefix="/api/data-report", tags=["data-report"])
 
 # Security
 security = HTTPBearer()

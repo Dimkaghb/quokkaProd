@@ -36,7 +36,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   const loadDocuments = async () => {
     try {
       setIsLoading(true)
-      const response = await documentsAPI.getUserDocuments()
+      const response = await documentsAPI.listDocuments()
       if (response.success) {
         setDocuments(response.documents)
       } else {

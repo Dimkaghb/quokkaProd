@@ -96,123 +96,82 @@ export interface AuthError {
 export const authAPI = {
   // Login user
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    try {
-      const response = await api.post<LoginResponse>('/auth/login', {
-        email,
-        password,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.post<LoginResponse>('/auth/login', {
+      email,
+      password,
+    })
+    return response.data
   },
 
   // Register new user
   signup: async (name: string, email: string, password: string): Promise<SignupResponse> => {
-    try {
-      const response = await api.post<SignupResponse>('/auth/signup', {
-        name,
-        email,
-        password,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.post<SignupResponse>('/auth/signup', {
+      name,
+      email,
+      password,
+    })
+    return response.data
   },
 
-  // Request OTP for email verification
-  requestOTP: async (email: string, name: string, password: string): Promise<OTPRequestResponse> => {
-    try {
-      const response = await api.post<OTPRequestResponse>('/auth/request-otp', {
-        email,
-        name,
-        password,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+  // Request OTP for registration
+  requestOTP: async (name: string, email: string, password: string): Promise<OTPRequestResponse> => {
+    const response = await api.post<OTPRequestResponse>('/auth/request-otp', {
+      name,
+      email,
+      password,
+    })
+    return response.data
   },
 
-  // Verify OTP and create account
-  verifyOTP: async (email: string, otpCode: string): Promise<OTPVerifyResponse> => {
-    try {
-      const response = await api.post<OTPVerifyResponse>('/auth/verify-otp', {
-        email,
-        otp_code: otpCode,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+  // Verify OTP and complete registration
+  verifyOTP: async (email: string, otp_code: string): Promise<OTPVerifyResponse> => {
+    const response = await api.post<OTPVerifyResponse>('/auth/verify-otp', {
+      email,
+      otp_code,
+    })
+    return response.data
   },
 
   // Get current user profile
   getProfile: async (): Promise<User> => {
-    try {
-      const response = await api.get<User>('/auth/profile')
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.get<User>('/auth/profile')
+    return response.data
   },
 
   // Update user profile
   updateProfile: async (name: string): Promise<User> => {
-    try {
-      const response = await api.put<User>('/auth/profile', {
-        name,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.put<User>('/auth/profile', {
+      name,
+    })
+    return response.data
   },
 
   // Refresh token
   refreshToken: async (): Promise<{ token: string }> => {
-    try {
-      const response = await api.post<{ token: string }>('/auth/refresh')
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.post<{ token: string }>('/auth/refresh')
+    return response.data
   },
 
-  // Logout (optional API call for server-side logout)
+  // Logout user
   logout: async (): Promise<void> => {
-    try {
-      await api.post('/auth/logout')
-    } catch (error: any) {
-      // Ignore logout errors
-      console.warn('Logout API call failed:', error)
-    }
+    await api.post('/auth/logout')
   },
 
   // Forgot password
   forgotPassword: async (email: string): Promise<{ message: string }> => {
-    try {
-      const response = await api.post<{ message: string }>('/auth/forgot-password', {
-        email,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    const response = await api.post<{ message: string }>('/auth/forgot-password', {
+      email,
+    })
+    return response.data
   },
 
   // Reset password
-  resetPassword: async (token: string, password: string): Promise<{ message: string }> => {
-    try {
-        const response = await api.post<{ message: string }>('/auth/reset-password', {
-        token,
-        password,
-      })
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+  resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/auth/reset-password', {
+      token,
+      new_password: newPassword,
+    })
+    return response.data
   },
 
   // Utility functions
