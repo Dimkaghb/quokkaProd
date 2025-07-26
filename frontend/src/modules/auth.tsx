@@ -9,9 +9,9 @@ import logo3 from '../assets/logo3.png'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-// Create axios instance with /api prefix for production Nginx routing
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

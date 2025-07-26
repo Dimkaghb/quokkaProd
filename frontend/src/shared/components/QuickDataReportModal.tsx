@@ -52,8 +52,8 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         const formats = await dataReportAPI.getSupportedFormats();
         if (formats.success) {
           setSupportedFormats({
-            preview_formats: formats.input_formats,
-            data_formats: formats.output_formats
+            preview_formats: formats.formats,
+            data_formats: formats.formats
           });
         }
       } catch (error) {

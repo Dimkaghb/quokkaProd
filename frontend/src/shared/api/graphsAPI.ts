@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 // Create axios instance for graphs API
-// Production ready: baseURL includes /api/ for Nginx routing
+// Production ready: uses direct paths without /api prefixes
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -132,42 +132,39 @@ export interface GraphListResponse {
 
 // API functions
 export const graphsAPI = {
-  // Create new graph
-  createGraph: async (graphData: any) => {
-    const response = await api.post('/graphs', graphData)
+  // Create a new graph
+  createGraph: async (graphData: GraphCreateRequest): Promise<GraphResponse> => {
+    const response = await api.post<GraphResponse>('/graphs/', graphData)
     return response.data
   },
 
-  // Get all graphs
-  getGraphs: async () => {
-    const response = await api.get('/graphs')
+  // List all graphs
+  listGraphs: async (): Promise<GraphListResponse> => {
+    const response = await api.get<GraphListResponse>('/graphs/')
     return response.data
   },
 
   // Get graph by ID
-  getGraph: async (graphId: string) => {
-    const response = await api.get(`/graphs/${graphId}`)
+  getGraph: async (graphId: string): Promise<GraphResponse> => {
+    const response = await api.get<GraphResponse>(`/graphs/${graphId}`)
     return response.data
   },
 
   // Update graph
-  updateGraph: async (graphId: string, graphData: any) => {
-    const response = await api.put(`/graphs/${graphId}`, graphData)
+  updateGraph: async (graphId: string, updates: GraphUpdateRequest): Promise<GraphResponse> => {
+    const response = await api.put<GraphResponse>(`/graphs/${graphId}`, updates)
     return response.data
   },
 
   // Delete graph
-  deleteGraph: async (graphId: string) => {
+  deleteGraph: async (graphId: string): Promise<{ success: boolean; message: string }> => {
     const response = await api.delete(`/graphs/${graphId}`)
     return response.data
   },
 
-  // Generate graph from data
-  generateGraph: async (data: any, chartType: string) => {
-    const response = await api.post('/graphs/generate', {
-      data,
-      chart_type: chartType
-    })
+  // Health check
+  healthCheck: async (): Promise<{ status: string; service: string }> => {
+    const response = await api.get('/graphs/health')
     return response.data
   }
 }

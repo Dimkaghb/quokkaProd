@@ -80,8 +80,8 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
     try {
       setIsUploading(true)
-      const tagString = tags.trim() || undefined
-      const response = await documentsAPI.uploadDocument(file, tagString)
+      const tagList = tags.trim() ? tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : undefined
+      const response = await documentsAPI.uploadDocument(file, tagList)
       
       if (response.success) {
         showToast(t('upload.documentUploaded'), 'success')
@@ -208,4 +208,4 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
   )
 }
 
-export default DocumentUploadModal
+export default DocumentUploadModal 

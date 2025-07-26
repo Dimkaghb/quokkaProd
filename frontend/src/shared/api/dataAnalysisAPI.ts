@@ -1,9 +1,8 @@
 import axios from 'axios'
 
 // Create axios instance for data analysis API
-// Production ready: baseURL includes /api/ for Nginx routing
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -100,15 +99,12 @@ export interface VisualizationResult {
 }
 
 export const dataAnalysisAPI = {
-  // Upload file for analysis
-  uploadFile: async (
-    file: File,
-    analysisType?: string
-  ): Promise<VisualizationResult> => {
+  // Upload file and create visualization
+  uploadAndVisualize: async (file: File, userQuery?: string): Promise<VisualizationResult> => {
     const formData = new FormData()
     formData.append('file', file)
-    if (analysisType) {
-      formData.append('analysis_type', analysisType)
+    if (userQuery) {
+      formData.append('user_query', userQuery)
     }
 
     const response = await api.post<VisualizationResult>('/data-analysis/upload', formData, {
@@ -119,61 +115,51 @@ export const dataAnalysisAPI = {
     return response.data
   },
 
-  // Analyze data with specific parameters
-  analyzeData: async (request: {
-    filename: string
-    analysis_type: string
-    parameters?: Record<string, any>
-  }): Promise<DataAnalysisResult> => {
+  // Analyze data without visualization
+  analyzeData: async (filePath: string, userQuery?: string): Promise<DataAnalysisResult> => {
     const response = await api.post<DataAnalysisResult>('/data-analysis/analyze', {
-      filename: request.filename,
-      analysis_type: request.analysis_type,
-      parameters: request.parameters || {},
+      file_path: filePath,
+      user_query: userQuery || '',
     })
     return response.data
   },
 
-  // Create custom visualization
+  // Create custom visualization based on user query
   createCustomVisualization: async (request: {
-    filename: string
-    chart_type: string
-    x_column: string
-    y_column?: string
-    color_column?: string
-    title?: string
-    parameters?: Record<string, any>
+    file_path?: string
+    user_query: string
+    selected_columns?: string[]
+    current_data?: any[]
   }): Promise<VisualizationResult> => {
     const requestData = {
-      filename: request.filename,
-      chart_type: request.chart_type,
-      x_column: request.x_column,
-      y_column: request.y_column,
-      color_column: request.color_column,
-      title: request.title,
-      parameters: request.parameters || {},
+      file_path: request.file_path,
+      user_query: request.user_query,
+      selected_columns: request.selected_columns,
+      current_data: request.current_data,
     }
+
     const response = await api.post<VisualizationResult>('/data-analysis/custom-visualization', requestData)
     return response.data
   },
 
-  // Generate visualization
-  generateVisualization: async (request: { filename: string; chart_type: string; parameters?: Record<string, any> }): Promise<VisualizationResult> => {
+  // Create visualization from file path
+  createVisualization: async (filePath: string, chartType?: string, query?: string): Promise<VisualizationResult> => {
     const response = await api.post<VisualizationResult>('/data-analysis/visualize', {
-      filename: request.filename,
-      chart_type: request.chart_type,
-      parameters: request.parameters || {},
+      file_path: filePath,
+      chart_type: chartType,
+      query: query || '',
     })
     return response.data
   },
 
-  // Get uploaded files
+  // Get list of uploaded files
   getUploadedFiles: async (): Promise<{
     success: boolean
     files: Array<{
       filename: string
       upload_time: string
       size: number
-      columns?: string[]
+      type: string
     }>
   }> => {
     const response = await api.get('/data-analysis/files')
@@ -193,26 +179,31 @@ export const dataAnalysisAPI = {
   getSupportedFormats: async (): Promise<{
     success: boolean
     formats: string[]
-    max_file_size: string
+    max_size_mb: number
   }> => {
     const response = await api.get('/data-analysis/supported-formats')
     return response.data
   },
 
   // Health check
-  healthCheck: async (): Promise<{ status: string }> => {
+  healthCheck: async (): Promise<{
+    status: string
+    service: string
+  }> => {
     const response = await api.get('/data-analysis/health')
     return response.data
   },
 
-  // Quick analysis helper
-  quickAnalysis: async (file: File, chartType: string = 'auto'): Promise<VisualizationResult> => {
+  // Convenience method for customizing existing visualizations
+  customizeExistingVisualization: async (
+    currentData: any[],
+    userQuery: string
+  ): Promise<VisualizationResult> => {
     return dataAnalysisAPI.createCustomVisualization({
-      filename: file.name,
-      chart_type: chartType,
-      x_column: 'auto',
+      user_query: userQuery,
+      current_data: currentData
     })
-  },
+  }
 }
 
 export default dataAnalysisAPI

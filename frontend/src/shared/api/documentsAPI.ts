@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 // Create axios instance for documents API
-// Production ready: baseURL includes /api/ for Nginx routing
+// Production ready: uses direct paths without /api prefixes
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -78,14 +78,15 @@ export interface DocumentUpdateRequest {
 
 export const documentsAPI = {
   // Upload document
-  uploadDocument: async (file: File, name?: string) => {
+  uploadDocument: async (file: File, tags?: string[]): Promise<DocumentUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
-    if (name) {
-      formData.append('name', name)
+    
+    if (tags && tags.length > 0) {
+      formData.append('tags', JSON.stringify(tags))
     }
 
-    const response = await api.post('/documents/upload', formData, {
+    const response = await api.post<DocumentUploadResponse>('/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -93,35 +94,35 @@ export const documentsAPI = {
     return response.data
   },
 
-  // Get all documents
-  getDocuments: async () => {
-    const response = await api.get('/documents')
+  // List all documents
+  listDocuments: async (): Promise<DocumentListResponse> => {
+    const response = await api.get<DocumentListResponse>('/documents/')
     return response.data
   },
 
   // Get document by ID
-  getDocument: async (documentId: string) => {
-    const response = await api.get(`/documents/${documentId}`)
+  getDocument: async (documentId: string): Promise<UserDocument> => {
+    const response = await api.get<{ success: boolean; document: UserDocument; message: string }>(`/documents/${documentId}`)
+    return response.data.document
+  },
+
+  // Update document
+  updateDocument: async (documentId: string, updates: DocumentUpdateRequest): Promise<{ success: boolean; document: UserDocument; message: string }> => {
+    const response = await api.put<{ success: boolean; document: UserDocument; message: string }>(`/documents/${documentId}`, updates)
     return response.data
   },
 
   // Delete document
-  deleteDocument: async (documentId: string) => {
+  deleteDocument: async (documentId: string): Promise<{ success: boolean; message: string }> => {
     const response = await api.delete(`/documents/${documentId}`)
     return response.data
   },
 
-  // Update document
-  updateDocument: async (documentId: string, updates: { name?: string }) => {
-    const response = await api.put(`/documents/${documentId}`, updates)
+  // Health check
+  healthCheck: async (): Promise<{ status: string; service: string }> => {
+    const response = await api.get('/documents/health')
     return response.data
   },
-
-  // Get document content/preview
-  getDocumentContent: async (documentId: string) => {
-    const response = await api.get(`/documents/${documentId}/content`)
-    return response.data
-  }
 }
 
 export default documentsAPI

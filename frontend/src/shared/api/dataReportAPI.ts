@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 // Create axios instance for data report API
-// Production ready: baseURL includes /api/ for Nginx routing
+// Production ready: uses direct paths without /api prefixes
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -103,7 +103,7 @@ export interface SupportedFormatsResponse {
 
 // API functions
 export const dataReportAPI = {
-  // Upload file for report generation
+  // Upload file for data report
   uploadFile: async (file: File): Promise<FileUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
@@ -157,8 +157,8 @@ export const dataReportAPI = {
   // Get supported formats
   getSupportedFormats: async (): Promise<{
     success: boolean
-    input_formats: string[]
-    output_formats: string[]
+    formats: string[]
+    max_size_mb: number
   }> => {
     const response = await api.get('/data-report/supported-formats')
     return response.data

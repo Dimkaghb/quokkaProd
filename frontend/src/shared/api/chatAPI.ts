@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 // Create axios instance for chat API
-// Production ready: baseURL includes /api/ for Nginx routing
+// Production ready: uses direct paths without /api prefixes
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -191,7 +191,7 @@ export const chatAPI = {
 
   // Get user documents library
   getDocuments: async (): Promise<DocumentListResponse> => {
-    const response = await api.get<DocumentListResponse>('/api/documents')
+    const response = await api.get<DocumentListResponse>('/documents')
     return response.data
   },
 
@@ -207,7 +207,7 @@ export const chatAPI = {
       formData.append('tags', tags.join(','))
     }
 
-    const response = await api.post('/api/documents/upload', formData, {
+    const response = await api.post('/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -224,7 +224,7 @@ export const chatAPI = {
     document?: UserDocument
     message: string
   }> => {
-    const response = await api.put(`/api/documents/${documentId}`, updates)
+    const response = await api.put(`/documents/${documentId}`, updates)
     return response.data
   },
 
@@ -233,7 +233,7 @@ export const chatAPI = {
     success: boolean
     message: string
   }> => {
-    const response = await api.delete(`/api/documents/${documentId}`)
+    const response = await api.delete(`/documents/${documentId}`)
     return response.data
   },
 
@@ -248,7 +248,7 @@ export const chatAPI = {
     selected_documents: string[]
     status: string
   }> => {
-    const response = await api.post(`/api/chat/threads/${threadId}/documents`, {
+    const response = await api.post(`/chat/threads/${threadId}/documents`, {
       selected_documents: selectedDocuments
     })
     return response.data
@@ -266,7 +266,7 @@ export const chatAPI = {
       max_inactive_minutes: number
     }
   }> => {
-    const response = await api.get(`/api/chat/threads/${threadId}/agent/stats`)
+    const response = await api.get(`/chat/threads/${threadId}/agent/stats`)
     return response.data
   },
 
@@ -284,7 +284,7 @@ export const chatAPI = {
     }>
     message: string
   }> => {
-    const response = await api.get(`/api/chat/threads/${threadId}/context`)
+    const response = await api.get(`/chat/threads/${threadId}/context`)
     return response.data
   },
 
@@ -296,7 +296,7 @@ export const chatAPI = {
     total_count: number
     message: string
   }> => {
-    const response = await api.get(`/api/chat/threads/${threadId}/documents`)
+    const response = await api.get(`/chat/threads/${threadId}/documents`)
     return response.data
   },
 }

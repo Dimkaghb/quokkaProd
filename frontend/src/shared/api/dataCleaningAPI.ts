@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 // Create axios instance for data cleaning API
-// Production ready: baseURL includes /api/ for Nginx routing
+// Production ready: uses direct paths without /api prefixes
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -70,37 +70,7 @@ export interface SupportedOperationsResult {
 }
 
 export const dataCleaningAPI = {
-  // Clean data
-  cleanData: async (data: any, options?: any) => {
-    const response = await api.post('/data-cleaning/clean', {
-      data,
-      options
-    })
-    return response.data
-  },
-
-  // Get cleaning suggestions
-  getCleaningSuggestions: async (data: any) => {
-    const response = await api.post('/data-cleaning/suggestions', { data })
-    return response.data
-  },
-
-  // Apply cleaning rules
-  applyCleaningRules: async (data: any, rules: any[]) => {
-    const response = await api.post('/data-cleaning/apply-rules', {
-      data,
-      rules
-    })
-    return response.data
-  },
-
-  // Validate data quality
-  validateDataQuality: async (data: any) => {
-    const response = await api.post('/data-cleaning/validate', { data })
-    return response.data
-  },
-
-  // Upload file for cleaning
+  // Upload file for data cleaning
   uploadFile: async (file: File): Promise<DataCleaningResult> => {
     const formData = new FormData()
     formData.append('file', file)
@@ -128,33 +98,32 @@ export const dataCleaningAPI = {
   },
 
   // Health check
-  healthCheck: async (): Promise<{ status: string }> => {
+  healthCheck: async (): Promise<{ status: string; service: string }> => {
     const response = await api.get('/data-cleaning/health')
     return response.data
   },
 
   // Cancel operation
   cancelOperation: async (operationId: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.post(`/api/data-cleaning/cancel/${operationId}`)
+    const response = await api.post(`/data-cleaning/cancel/${operationId}`)
     return response.data
   },
 
-  // Add to documents
-  addToDocuments: async (filename: string, tags?: string[]): Promise<{ success: boolean; message: string }> => {
-    const response = await api.post('/api/data-cleaning/add-to-docs', {
-      filename,
-      tags: tags || [],
+  // Add cleaned file to documents
+  addToDocuments: async (filename: string): Promise<{ success: boolean; message: string; document_id?: string }> => {
+    const response = await api.post('/data-cleaning/add-to-docs', {
+      filename: filename,
     })
     return response.data
   },
 
-  // Get download URL
+  // Generate download URL for cleaned file
   getDownloadUrl: (filename: string): string => {
     const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    return `${baseURL}/api/data-cleaning/download/${filename}`
+    return `${baseURL}/data-cleaning/download/${filename}`
   },
 
-  // Trigger download
+  // Download file directly by triggering browser download
   triggerDownload: async (filename: string, originalName?: string): Promise<void> => {
     try {
       const blob = await dataCleaningAPI.downloadFile(filename)
@@ -178,19 +147,26 @@ export const dataCleaningAPI = {
     }
   },
 
-  // Delete file
-  deleteFile: async (filename: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete(`/api/data-cleaning/cancel/${filename}`)
+  // Cancel operation and delete files
+  cancelAndCleanup: async (filename: string): Promise<{
+    message: string
+    deleted_files: string[]
+  }> => {
+    const response = await api.delete(`/data-cleaning/cancel/${filename}`)
     return response.data
   },
 
-  // Add cleaned file to documents library
-  addCleanedFileToDocuments: async (
-    filename: string
-  ): Promise<{ success: boolean; message: string; document_id?: string }> => {
-    const response = await api.post(`/api/data-cleaning/add-to-docs/${filename}`)
+  // Add cleaned file to documents
+  addToDocumentsWithMetadata: async (filename: string): Promise<{
+    message: string
+    document_name: string
+    original_name: string
+    document_path: string
+    deleted_temp_files: string[]
+  }> => {
+    const response = await api.post(`/data-cleaning/add-to-docs/${filename}`)
     return response.data
-  },
+  }
 }
 
 export default dataCleaningAPI
