@@ -58,7 +58,7 @@ const floatingAnimations = `
 
 export const Auth = () => {
   const { t } = useLanguageStore()
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(false)
   const [showOTP, setShowOTP] = useState(false)
   const [otpData, setOtpData] = useState({
     email: '',

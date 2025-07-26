@@ -186,16 +186,17 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
     if (cleaningResult?.fileName) {
       try {
         setIsUploading(true);
-        const result = await dataCleaningAPI.addToDocuments(cleaningResult.fileName);
+        // Show development message instead of actual API call
+        alert(t('dataCleaning.featureUnderDevelopment'));
         
-        // Show success message
-        alert(`${t('Add to Documents Success')}: ${result.original_name}`);
+        // Simulate API call for now
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Close modal after successful addition
+        // Close modal after showing message
         handleClose();
       } catch (error) {
         console.error('Failed to add to documents:', error);
-        alert(t('Add to Documents Error'));
+        alert(t('dataCleaning.addToDocumentsError'));
       } finally {
         setIsUploading(false);
       }
@@ -206,14 +207,17 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
     if (cleaningResult?.fileName) {
       try {
         setIsUploading(true);
-        await dataCleaningAPI.cancelAndCleanup(cleaningResult.fileName);
+        // Show development message instead of actual API call
+        alert(t('dataCleaning.featureUnderDevelopment'));
+        
+        // Simulate API call for now
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Show success message and close modal
-        alert(t('Cancel Success'));
         handleClose();
       } catch (error) {
         console.error('Failed to cancel and cleanup:', error);
-        alert(t('Cancel Error'));
+        alert(t('dataCleaning.cancelError'));
       } finally {
         setIsUploading(false);
       }

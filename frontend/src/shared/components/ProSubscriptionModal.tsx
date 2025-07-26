@@ -37,7 +37,8 @@ export const ProSubscriptionModal: React.FC<ProSubscriptionModalProps> = ({
       // TODO: Implement actual API call to save email for pro subscription
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
-      alert(t('proModal.successMessage'));
+      // Show development message instead of success for now
+      alert(t('proModal.apiNotImplemented'));
       setEmail('');
       onClose();
     } catch (error) {
