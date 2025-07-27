@@ -3,14 +3,13 @@ services:
       build:
         context: ./frontend
         dockerfile: Dockerfile
-        # args:
-        #   - VITE_API_URL=${VITE_API_URL}
       ports:
         - "3000:3000"
       depends_on:
         - backend
-      # environment:
-      #   - NODE_ENV=production
+      environment:
+        - NODE_ENV=production
+      # Frontend will use its own .env file during build
 
   backend:
       build:
@@ -21,8 +20,9 @@ services:
       environment:
         - PYTHONPATH=/app/src
         - PYTHONUNBUFFERED=1
-        - ENVIRONMENT=development
-        - DEBUG=True
+        - ENVIRONMENT=production
+        - DEBUG=False
+        # Backend environment variables from .env files
         - OPENAI_API_KEY=${OPENAI_API_KEY}
         - MONGODB_URL=${MONGODB_URL}
         - SECRET_KEY=${SECRET_KEY}
@@ -31,9 +31,18 @@ services:
         - SERPER_API_KEY=${SERPER_API_KEY}
         - GROQ_API_KEY=${GROQ_API_KEY}
         - GROK_API_KEY=${GROK_API_KEY}
+        - VITE_API_URL=${VITE_API_URL}
+        - SYSTEM_EMAIL=${SYSTEM_EMAIL}
+        - SMTP_HOST=${SMTP_HOST}
+        - SMTP_PORT=${SMTP_PORT}
+        - SMTP_USERNAME=${SMTP_USERNAME}
+        - SMTP_PASSWORD=${SMTP_PASSWORD}
+        - SMTP_USE_TLS=${SMTP_USE_TLS}
       volumes:
         - backend_data:/data
         - ./backend/data:/app/data
+        # Mount root .env file for additional configuration
+        - ./.env:/app/.env.root:ro
       healthcheck:
         test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
         interval: 30s

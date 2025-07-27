@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code (backend application)
 COPY src/ ./src/
 
+# Copy backend .env file if it exists
+COPY .env* ./
+
 # Create necessary data directories for persistence
 RUN mkdir -p /data/chroma /data/uploads /data/rag /data/visualizations
 
