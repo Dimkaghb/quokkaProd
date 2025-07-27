@@ -1,8 +1,10 @@
 import axios from 'axios'
 
 // Create axios instance for data cleaning API
-// Production ready: nginx handles API routing, no baseURL needed
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const api = axios.create({
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -118,8 +120,7 @@ export const dataCleaningAPI = {
 
   // Get download URL for a file
   getDownloadUrl: (filename: string): string => {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-    return `${baseURL}/data-cleaning/download/${filename}`
+    return `${API_URL}/data-cleaning/download/${filename}`
   },
 
   // Get file info

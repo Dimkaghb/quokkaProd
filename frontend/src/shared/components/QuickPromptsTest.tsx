@@ -23,7 +23,8 @@ const QuickPromptsTest: React.FC<QuickPromptsTestProps> = ({ onPromptSelect }) =
     setError('');
 
     try {
-      const response = await fetch('/chat/quick-prompts/generate', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/chat/quick-prompts/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

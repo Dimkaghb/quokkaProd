@@ -24,7 +24,8 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ className = 
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('/health', { method: 'HEAD' });
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_URL}/health`, { method: 'HEAD' });
         setIsConnected(response.ok);
       } catch {
         setIsConnected(false);

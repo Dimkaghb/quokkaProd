@@ -75,8 +75,8 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     setIsSubmitting(true)
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/contact/support`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/contact/support`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
