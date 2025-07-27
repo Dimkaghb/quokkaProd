@@ -555,6 +555,8 @@ const translations = {
     // Quick Data Report
     'quickDataReport.title': 'Quick Data Report',
     'quickDataReport.description': 'Upload your files to generate a comprehensive data report quickly.',
+    'quickDataReport.generateDataReport': 'Generate Data Report',
+    'quickDataReport.uploadPreviewAndDataFile': 'Upload a preview file and data file to generate an AI-powered data analysis report using OpenAI.',
     'quickDataReport.previewFile': 'Preview File',
     'quickDataReport.dataFile': 'Data for Data Report',
     'quickDataReport.clickToUploadPreview': 'Click to upload preview file',

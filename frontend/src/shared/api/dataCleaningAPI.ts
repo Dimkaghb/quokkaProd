@@ -72,11 +72,12 @@ export interface SupportedOperationsResult {
 
 export const dataCleaningAPI = {
   // Upload file for data cleaning
-  uploadFile: async (file: File): Promise<DataCleaningResult> => {
+  uploadFile: async (file: File, operations: string[] = []): Promise<DataCleaningResult> => {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('operations', JSON.stringify(operations))
 
-    const response = await api.post<DataCleaningResult>('/data-cleaning/upload', formData, {
+    const response = await api.post<DataCleaningResult>('/data-cleaning/upload-and-clean', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
