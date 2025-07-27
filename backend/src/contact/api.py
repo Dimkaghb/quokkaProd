@@ -10,7 +10,7 @@ from .support_models import SupportFormData, SupportFormResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/contact", tags=["contact"])
+router = APIRouter(prefix="/contact", tags=["contact"])
 
 class ContactFormRequest(BaseModel):
     """Request model for contact form submission."""

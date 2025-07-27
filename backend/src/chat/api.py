@@ -24,7 +24,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/chat", tags=["chat"])
+router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.get("/threads", response_model=ThreadListResponse)

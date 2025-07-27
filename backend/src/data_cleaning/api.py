@@ -40,7 +40,7 @@ from .service import DataCleaningService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/data-cleaning", tags=["data-cleaning"])
+router = APIRouter(prefix="/data-cleaning", tags=["data-cleaning"])
 
 # Configuration
 DOCUMENTS_BASE_FOLDER = Path("data/documents")

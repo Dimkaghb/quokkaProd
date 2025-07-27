@@ -23,7 +23,7 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/documents", tags=["documents"])
+router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 @router.post("/upload", response_model=DocumentResponse)
