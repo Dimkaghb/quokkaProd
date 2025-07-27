@@ -158,8 +158,8 @@ export const dataReportAPI = {
   // Get supported formats
   getSupportedFormats: async (): Promise<{
     success: boolean
-    formats: string[]
-    max_size_mb: number
+    preview_formats: string[]
+    data_formats: string[]
   }> => {
     const response = await api.get('/data-report/supported-formats')
     return response.data

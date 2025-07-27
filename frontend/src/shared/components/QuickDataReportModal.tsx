@@ -52,8 +52,8 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         const formats = await dataReportAPI.getSupportedFormats();
         if (formats.success) {
           setSupportedFormats({
-            preview_formats: formats.formats,
-            data_formats: formats.formats
+            preview_formats: formats.preview_formats,
+            data_formats: formats.data_formats
           });
         }
       } catch (error) {
@@ -337,7 +337,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                       {t('quickDataReport.clickToUploadPreview')}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {supportedFormats?.preview_formats.join(', ') || 'PDF, DOCX, TXT'}
+                      {supportedFormats?.preview_formats?.join(', ') || 'PDF, DOCX, TXT'}
                     </p>
                   </div>
                 ) : (
@@ -367,7 +367,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                 <input
                   ref={previewFileInputRef}
                   type="file"
-                  accept={supportedFormats?.preview_formats.map(f => `.${f}`).join(',') || '.pdf,.docx,.txt'}
+                  accept={supportedFormats?.preview_formats?.map(f => `.${f}`).join(',') || '.pdf,.docx,.txt'}
                   onChange={handlePreviewFileSelect}
                   className="hidden"
                   disabled={isUploading}
@@ -391,7 +391,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                       {t('quickDataReport.clickToUploadData')}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {supportedFormats?.data_formats.join(', ') || 'CSV, XLSX, JSON'}
+                      {supportedFormats?.data_formats?.join(', ') || 'CSV, XLSX, JSON'}
                     </p>
                   </div>
                 ) : (
@@ -421,7 +421,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                 <input
                   ref={dataFileInputRef}
                   type="file"
-                  accept={supportedFormats?.data_formats.map(f => `.${f}`).join(',') || '.csv,.xlsx,.json'}
+                  accept={supportedFormats?.data_formats?.map(f => `.${f}`).join(',') || '.csv,.xlsx,.json'}
                   onChange={handleDataFileSelect}
                   className="hidden"
                   disabled={isUploading}
