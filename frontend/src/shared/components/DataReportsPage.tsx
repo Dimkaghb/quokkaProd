@@ -68,7 +68,18 @@ export const DataReportsPage: React.FC<DataReportsPageProps> = () => {
     setDownloadingIds(prev => new Set(prev).add(reportId));
     
     try {
-      await dataReportAPI.downloadReport(reportId);
+      const blob = await dataReportAPI.downloadReport(reportId);
+      
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `data_report_${reportId}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       showToast('Report downloaded successfully', 'success');
     } catch (error) {
       console.error('Error downloading report:', error);

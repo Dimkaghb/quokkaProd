@@ -627,7 +627,7 @@ File being analyzed: {file_name}
         }
         
         data = {
-            "model": "gpt-4",
+            "model": "gpt-4o-mini",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -1111,7 +1111,7 @@ class DataAnalysisTool:
         print("-" * 30)
         
         print("Available API providers:")
-        print("1. OpenAI (GPT-4)")
+        print("1. OpenAI (GPT-4o-mini)")
         print("2. Anthropic (Claude)")
         print("3. Ollama (Local)")
         

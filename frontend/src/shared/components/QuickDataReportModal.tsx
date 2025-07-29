@@ -25,6 +25,8 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
   const [dataFileId, setDataFileId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDraggingPreview, setIsDraggingPreview] = useState(false);
+  const [isDraggingData, setIsDraggingData] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [supportedFormats, setSupportedFormats] = useState<{
     preview_formats: string[];
@@ -35,10 +37,18 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportStatus, setReportStatus] = useState<'pending' | 'processing' | 'completed' | 'failed' | null>(null);
   const [reportProgress, setReportProgress] = useState<number>(0);
+  // @ts-ignore - Used in resetForm function
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
+  // @ts-ignore - Used in resetForm function
+  const [reportError, setReportError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   
-  // Simplified LLM Configuration - OpenAI only
-  const [llmModel, setLlmModel] = useState<string>('');
+  // LLM Configuration
+  // @ts-ignore - Used in resetForm function
+  const [llmProvider, setLlmProvider] = useState<string>('openai');
+  const [llmModel, setLlmModel] = useState<string>('gpt-4o-mini');
+  // @ts-ignore - Used in resetForm function
+  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState<string>('');
   
   const previewFileInputRef = useRef<HTMLInputElement>(null);
@@ -116,7 +126,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
       setPreviewFile(file);
       setIsUploading(true);
       try {
-        const response = await dataReportAPI.uploadFile(file);
+        const response = await dataReportAPI.uploadFile(file, 'preview');
         if (response.success) {
           setPreviewFileId(response.file_id);
           showToast(t('quickDataReport.previewFileUploadedSuccessfully'), 'success');
@@ -127,6 +137,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         console.error('Error uploading preview file:', error);
         showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadPreviewFile'), 'error');
         setPreviewFile(null);
+        setPreviewFileId(null);
         if (previewFileInputRef.current) {
           previewFileInputRef.current.value = '';
         }
@@ -142,7 +153,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
       setDataFile(file);
       setIsUploading(true);
       try {
-        const response = await dataReportAPI.uploadFile(file);
+        const response = await dataReportAPI.uploadFile(file, 'data');
         if (response.success) {
           setDataFileId(response.file_id);
           showToast(t('quickDataReport.dataFileUploadedSuccessfully'), 'success');
@@ -153,6 +164,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         console.error('Error uploading data file:', error);
         showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadDataFile'), 'error');
         setDataFile(null);
+        setDataFileId(null);
         if (dataFileInputRef.current) {
           dataFileInputRef.current.value = '';
         }
@@ -162,7 +174,101 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
     }
   };
 
-  const handleRemovePreviewFile = () => {
+  // Drag and drop handlers for preview file
+  const handlePreviewDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handlePreviewDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPreview(true);
+  };
+
+  const handlePreviewDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPreview(false);
+  };
+
+  const handlePreviewDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPreview(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0];
+      setPreviewFile(file);
+      setIsUploading(true);
+      try {
+        const response = await dataReportAPI.uploadFile(file, 'preview');
+        if (response.success) {
+          setPreviewFileId(response.file_id);
+          showToast(t('quickDataReport.previewFileUploadedSuccessfully'), 'success');
+        } else {
+          throw new Error(response.message);
+        }
+      } catch (error: any) {
+        console.error('Error uploading preview file:', error);
+        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadPreviewFile'), 'error');
+        setPreviewFile(null);
+        setPreviewFileId(null);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  // Drag and drop handlers for data file
+  const handleDataDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDataDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingData(true);
+  };
+
+  const handleDataDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingData(false);
+  };
+
+  const handleDataDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingData(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      const file = files[0];
+      setDataFile(file);
+      setIsUploading(true);
+      try {
+        const response = await dataReportAPI.uploadFile(file, 'data');
+        if (response.success) {
+          setDataFileId(response.file_id);
+          showToast(t('quickDataReport.dataFileUploadedSuccessfully'), 'success');
+        } else {
+          throw new Error(response.message);
+        }
+      } catch (error: any) {
+        console.error('Error uploading data file:', error);
+        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadDataFile'), 'error');
+        setDataFile(null);
+        setDataFileId(null);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const removePreviewFile = () => {
     setPreviewFile(null);
     setPreviewFileId(null);
     if (previewFileInputRef.current) {
@@ -170,7 +276,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
     }
   };
 
-  const handleRemoveDataFile = () => {
+  const removeDataFile = () => {
     setDataFile(null);
     setDataFileId(null);
     if (dataFileInputRef.current) {
@@ -215,7 +321,19 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
     if (!reportId) return;
     
     try {
-      await dataReportAPI.downloadReport(reportId);
+      const blob = await dataReportAPI.downloadReport(reportId);
+      
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `data_report_${reportId}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showToast(t('quickDataReport.reportDownloadedSuccessfully'), 'success');
     } catch (error: any) {
       console.error('Error downloading report:', error);
       showToast(t('quickDataReport.failedToDownloadReport'), 'error');
@@ -224,22 +342,29 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
 
   const resetForm = () => {
     setPreviewFile(null);
-    setDataFile(null);
     setPreviewFileId(null);
+    setDataFile(null);
     setDataFileId(null);
-    setLlmModel('');
-    setCustomPrompt('');
-    setShowAdvanced(false);
     setReportId(null);
     setReportStatus(null);
     setReportProgress(0);
-    setIsPolling(false);
+    setReportUrl(null);
+    setReportError(null);
     setIsGenerating(false);
-    if (previewFileInputRef.current) previewFileInputRef.current.value = '';
-    if (dataFileInputRef.current) dataFileInputRef.current.value = '';
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
+    setIsUploading(false);
+    setIsDraggingPreview(false);
+    setIsDraggingData(false);
+    setLlmProvider('openai');
+    setLlmModel('gpt-4o-mini');
+    setOpenaiApiKey('');
+    setCustomPrompt('');
+    
+    // Clear file inputs
+    if (previewFileInputRef.current) {
+      previewFileInputRef.current.value = '';
+    }
+    if (dataFileInputRef.current) {
+      dataFileInputRef.current.value = '';
     }
   };
 
@@ -318,7 +443,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
           )}
 
           {/* Only show file upload sections if report is not being generated */}
-          {!isGenerating && !reportStatus && (
+          {!isGenerating && reportStatus !== 'processing' && (
             <>
               {/* Preview File Upload */}
               <div className="space-y-3">
@@ -330,11 +455,19 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                 {!previewFile ? (
                   <div
                     onClick={() => previewFileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                    onDragOver={handlePreviewDragOver}
+                    onDragEnter={handlePreviewDragEnter}
+                    onDragLeave={handlePreviewDragLeave}
+                    onDrop={handlePreviewDrop}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      isDraggingPreview 
+                        ? 'border-blue-400 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
                   >
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">
-                      {t('quickDataReport.clickToUploadPreview')}
+                      {t('quickDataReport.clickToUploadPreview')} or drag and drop
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {supportedFormats?.preview_formats?.join(', ') || 'PDF, DOCX, TXT'}
@@ -355,7 +488,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleRemovePreviewFile}
+                      onClick={removePreviewFile}
                       className="text-gray-400 hover:text-red-500"
                       disabled={isUploading}
                     >
@@ -384,11 +517,19 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                 {!dataFile ? (
                   <div
                     onClick={() => dataFileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                    onDragOver={handleDataDragOver}
+                    onDragEnter={handleDataDragEnter}
+                    onDragLeave={handleDataDragLeave}
+                    onDrop={handleDataDrop}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      isDraggingData 
+                        ? 'border-green-400 bg-green-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
                   >
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">
-                      {t('quickDataReport.clickToUploadData')}
+                      {t('quickDataReport.clickToUploadData')} or drag and drop
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {supportedFormats?.data_formats?.join(', ') || 'CSV, XLSX, JSON'}
@@ -407,12 +548,12 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
                       </div>
                     </div>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRemoveDataFile}
-                      className="text-gray-400 hover:text-red-500"
-                      disabled={isUploading}
-                    >
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeDataFile}
+                        className="text-gray-400 hover:text-red-500"
+                        disabled={isUploading}
+                      >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>

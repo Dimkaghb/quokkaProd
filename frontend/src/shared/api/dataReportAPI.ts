@@ -105,9 +105,10 @@ export interface SupportedFormatsResponse {
 // API functions
 export const dataReportAPI = {
   // Upload file for data report
-  uploadFile: async (file: File): Promise<FileUploadResponse> => {
+  uploadFile: async (file: File, fileType: 'preview' | 'data'): Promise<FileUploadResponse> => {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('file_type', fileType)
 
     const response = await api.post<FileUploadResponse>('/data-report/upload', formData, {
       headers: {
