@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useLanguageStore } from '../stores/languageStore';
 import { dataCleaningAPI } from '../api/dataCleaningAPI';
+import { extractErrorMessage } from '../api/dataReportAPI';
 
 interface DataCleaningModalProps {
   isOpen: boolean;
@@ -142,12 +143,7 @@ export const DataCleaningModal: React.FC<DataCleaningModalProps> = ({ isOpen, on
       console.error('Error cleaning data:', error);
       
       // Better error handling
-      let errorMessage = t('Cleaning Error');
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      const errorMessage = extractErrorMessage(error) || t('Cleaning Error');
       
       setCleaningResult({
         success: false,

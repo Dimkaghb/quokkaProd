@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../shared/stores/authStore'
 import { useLanguageStore } from '../shared/stores/languageStore'
+import { extractErrorMessage } from '../shared/api/authAPI';
 import { LanguageSwitcher } from '../shared/components/LanguageSwitcher'
 import { OTPVerification } from './OTPVerification'
 import axios from 'axios'
@@ -158,9 +159,10 @@ export const Auth = () => {
       let errorMessage = t('auth.errorOccurred')
       if (err instanceof Error && 'response' in err) {
         const axiosError = err as any; // Type assertion for axios error
-        if (axiosError.response?.data?.detail) {
-          errorMessage = axiosError.response.data.detail
-        } else if (axiosError.response?.status === 401) {
+        errorMessage = extractErrorMessage(axiosError) || t('auth.errorOccurred')
+        
+        // Handle specific status codes
+        if (axiosError.response?.status === 401) {
           errorMessage = t('auth.invalidCredentials')
         } else if (axiosError.response?.status === 422) {
           errorMessage = t('auth.checkInputAndRetry')

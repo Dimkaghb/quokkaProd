@@ -1,5 +1,25 @@
 import axios from 'axios'
 
+// Utility function to extract error message from API response
+const extractErrorMessage = (error: any): string => {
+  if (error.response?.data?.detail) {
+    const detail = error.response.data.detail
+    
+    // If detail is an array (validation errors), extract the first message
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail[0].msg || 'Validation error'
+    }
+    
+    // If detail is a string, return it directly
+    if (typeof detail === 'string') {
+      return detail
+    }
+  }
+  
+  // Fallback to error message or generic message
+  return error.response?.data?.message || error.message || 'An error occurred'
+}
+
 // Create axios instance for data report API
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -22,6 +42,12 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${authData.state.token}`
       }
     }
+    
+    // Don't override Content-Type for FormData (multipart/form-data)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
+    
     return config
   },
   (error) => {
@@ -110,11 +136,7 @@ export const dataReportAPI = {
     formData.append('file', file)
     formData.append('file_type', fileType)
 
-    const response = await api.post<FileUploadResponse>('/data-report/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    const response = await api.post<FileUploadResponse>('/data-report/upload', formData)
     return response.data
   },
 
@@ -166,5 +188,8 @@ export const dataReportAPI = {
     return response.data
   },
 }
+
+// Export utility function for error handling
+export { extractErrorMessage }
 
 export default dataReportAPI

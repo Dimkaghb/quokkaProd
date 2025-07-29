@@ -5,7 +5,7 @@ import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { useToast } from './Toast';
 import { Upload, FileText, X, Settings, Download, CheckCircle } from 'lucide-react';
-import { dataReportAPI, type DataReportRequest } from '../api/dataReportAPI';
+import { dataReportAPI, type DataReportRequest, extractErrorMessage } from '../api/dataReportAPI';
 import { useLanguageStore } from '../stores/languageStore';
 
 interface QuickDataReportModalProps {
@@ -135,7 +135,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         }
       } catch (error: any) {
         console.error('Error uploading preview file:', error);
-        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadPreviewFile'), 'error');
+        showToast(extractErrorMessage(error) || t('quickDataReport.failedToUploadPreviewFile'), 'error');
         setPreviewFile(null);
         setPreviewFileId(null);
         if (previewFileInputRef.current) {
@@ -162,7 +162,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         }
       } catch (error: any) {
         console.error('Error uploading data file:', error);
-        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadDataFile'), 'error');
+        showToast(extractErrorMessage(error) || t('quickDataReport.failedToUploadDataFile'), 'error');
         setDataFile(null);
         setDataFileId(null);
         if (dataFileInputRef.current) {
@@ -212,7 +212,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         }
       } catch (error: any) {
         console.error('Error uploading preview file:', error);
-        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadPreviewFile'), 'error');
+        showToast(extractErrorMessage(error) || t('quickDataReport.failedToUploadPreviewFile'), 'error');
         setPreviewFile(null);
         setPreviewFileId(null);
       } finally {
@@ -259,7 +259,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
         }
       } catch (error: any) {
         console.error('Error uploading data file:', error);
-        showToast(error.response?.data?.detail || t('quickDataReport.failedToUploadDataFile'), 'error');
+        showToast(extractErrorMessage(error) || t('quickDataReport.failedToUploadDataFile'), 'error');
         setDataFile(null);
         setDataFileId(null);
       } finally {
@@ -312,7 +312,7 @@ export const QuickDataReportModal: React.FC<QuickDataReportModalProps> = ({
       }
     } catch (error: any) {
       console.error('Error generating data report:', error);
-      showToast(error.response?.data?.detail || t('quickDataReport.failedToGenerateReport'), 'error');
+      showToast(extractErrorMessage(error) || t('quickDataReport.failedToGenerateReport'), 'error');
       setIsGenerating(false);
     }
   };
