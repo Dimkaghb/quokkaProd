@@ -363,6 +363,100 @@ async def get_supported_formats() -> Dict[str, Any]:
     }
 
 
+@router.post("/public/test-visualization", response_model=VisualizationResponse)
+async def public_test_visualization(
+    file: UploadFile = File(...),
+    user_query: str = Form("")
+) -> VisualizationResponse:
+    """
+    Public endpoint for testing visualization without authentication.
+    File is automatically deleted after processing.
+    
+    Args:
+        file: Uploaded file (CSV, Excel, PDF, TXT, DOCX)
+        user_query: Optional user query for customization
+        
+    Returns:
+        Visualization configuration and analysis
+    """
+    temp_file_path = None
+    try:
+        logger.info(f"Public test visualization: {file.filename} with query: '{user_query}'")
+        
+        if not file.filename:
+            raise HTTPException(status_code=400, detail='No file selected')
+        
+        if not allowed_file(file.filename):
+            raise HTTPException(
+                status_code=400, 
+                detail=f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'
+            )
+        
+        # Generate unique ID for this upload
+        file_id = str(uuid.uuid4())
+        
+        # Create temporary directory for public uploads
+        temp_dir = Path("temp_public_uploads")
+        temp_dir.mkdir(exist_ok=True)
+        
+        # Save uploaded file to temporary location
+        temp_file_path = temp_dir / f'{file_id}_{file.filename}'
+        logger.info(f"Saving temporary file to: {temp_file_path}")
+        
+        # Read file content
+        content = await file.read()
+        
+        # Validate file size (limit to 10MB for public testing)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Maximum size for testing is {max_size // (1024*1024)}MB"
+            )
+        
+        # Save file
+        with open(temp_file_path, 'wb') as f:
+            f.write(content)
+        
+        logger.info(f"File saved successfully, creating visualization...")
+        
+        # Create intelligent visualization using the enhanced system
+        chart_config = create_intelligent_visualization(str(temp_file_path), user_query)
+        
+        logger.info(f"Visualization created successfully")
+        
+        # Prepare file info
+        file_info = {
+            'filename': file.filename,
+            'size': len(content),
+            'type': file.filename.split('.')[-1].lower(),
+            'upload_time': datetime.utcnow().isoformat(),
+            'file_id': file_id,
+            'is_public_test': True
+        }
+        
+        return VisualizationResponse(
+            success=True,
+            chart_config=chart_config,
+            analytical_text=chart_config.get('analytical_text', 'Analysis completed successfully'),
+            file_info=file_info
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in public_test_visualization: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    finally:
+        # Always clean up the temporary file
+        if temp_file_path and temp_file_path.exists():
+            try:
+                temp_file_path.unlink()
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temporary file {temp_file_path}: {e}")
+
+
 @router.post("/analyze", response_model=DataAnalysisResponse)
 async def analyze_data(
     request: DataAnalysisRequest,

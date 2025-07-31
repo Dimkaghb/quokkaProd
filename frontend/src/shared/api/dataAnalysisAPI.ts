@@ -196,6 +196,28 @@ export const dataAnalysisAPI = {
     return response.data
   },
 
+  // Public testing endpoint - no authentication required
+  publicTestVisualization: async (file: File, userQuery?: string): Promise<VisualizationResult> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (userQuery) {
+      formData.append('user_query', userQuery)
+    }
+
+    // Create a separate axios instance without auth interceptors for public endpoint
+    const publicApi = axios.create({
+      baseURL: API_URL,
+      timeout: 60000,
+    })
+
+    const response = await publicApi.post<VisualizationResult>('/data-analysis/public/test-visualization', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
   // Convenience method for customizing existing visualizations
   customizeExistingVisualization: async (
     currentData: any[],

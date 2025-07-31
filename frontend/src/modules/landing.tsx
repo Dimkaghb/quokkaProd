@@ -4,6 +4,7 @@ import { useLanguageStore } from '../shared/stores/languageStore';
 import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
 import { ProSubscriptionModal } from '../shared/components/ProSubscriptionModal';
 import { EnterpriseContactModal } from '../shared/components/EnterpriseContactModal';
+import { DataVisualizationTester } from '../shared/components/DataVisualizationTester';
 import logo3 from '../assets/logo3.png';
 
 export const Landing = () => {
@@ -33,8 +34,15 @@ export const Landing = () => {
             { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
         );
 
+        // Only observe elements that are not inside the data-visualization-section
         const animatedElements = document.querySelectorAll('.animate-on-scroll');
-        animatedElements.forEach((el) => observerRef.current?.observe(el));
+        animatedElements.forEach((el) => {
+            // Check if the element is inside the data visualization section
+            const isInDataVizSection = el.closest('.data-visualization-section');
+            if (!isInDataVizSection) {
+                observerRef.current?.observe(el);
+            }
+        });
 
         return () => {
             if (observerRef.current) {
@@ -186,6 +194,18 @@ export const Landing = () => {
                     animation: chart-scroll 35s linear infinite;
                 }
 
+                /* Disable scroll animations for data visualization section */
+                .data-visualization-section .animate-on-scroll {
+                    opacity: 1 !important;
+                    transform: translateY(0) !important;
+                    transition: none !important;
+                }
+
+                .data-visualization-section .animate-on-scroll.in-view {
+                    opacity: 1 !important;
+                    transform: translateY(0) !important;
+                }
+
                 @keyframes chart-scroll {
                     0% {
                         transform: translateX(0);
@@ -284,189 +304,10 @@ export const Landing = () => {
                     </div>
                 </section>
 
-                                {/* Main Dashboard Preview */}
-                <section className="py-8 md:py-16 max-w-6xl mx-auto px-4 md:px-4">
-                    <div className="bg-gray-50 rounded-lg md:rounded-xl p-3 md:p-6 data-grid animate-on-scroll">
-                        {/* macOS Window */}
-                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl md:shadow-2xl border border-gray-200 overflow-hidden max-h-80 md:max-h-none">
-                            {/* macOS Title Bar */}
-                            <div className="bg-gray-100 border-b border-gray-200 p-2 md:p-4 flex items-center">
-                                <div className="flex items-center space-x-1 md:space-x-2">
-                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full"></div>
-                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-yellow-500 rounded-full"></div>
-                                    <div className="w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full"></div>
-                    </div>
-                                <div className="flex-1 text-center">
-                                    <div className="flex items-center justify-center space-x-1 md:space-x-2">
-                                        <div className="w-3 h-3 md:w-4 md:h-4 bg-black rounded flex items-center justify-center">
-                                            <img 
-                                                src={logo3} 
-                                                alt="QuokkaAI Logo" 
-                                                className="w-2 h-2 md:w-3 md:h-3 object-contain"
-                                            />
-                                </div>
-                                        <span className="text-xs md:text-sm font-medium text-gray-700">{t('dashboard.title')}</span>
-                                    </div>
-                                        </div>
-                                    </div>
-                                    
-                            {/* Dashboard Content */}
-                            <div className="flex flex-col md:flex-row overflow-hidden">
-                                {/* Left Sidebar */}
-                                <div className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 p-2 md:p-4">
-                                    <div className="mb-2 md:mb-4">
-                                        <div className="flex items-center space-x-2 mb-2 md:mb-3">
-                                            <div className="w-5 h-5 md:w-6 md:h-6 bg-black rounded-lg flex items-center justify-center">
-                                                <img 
-                                                    src={logo3} 
-                                                    alt="QuokkaAI Logo" 
-                                                    className="w-3 h-3 md:w-4 md:h-4 object-contain"
-                                                />
-                                        </div>
-                                            <div>
-                                                <h3 className="text-xs md:text-sm font-semibold text-black">quokkaAI</h3>
-                                                <p className="text-xs text-gray-600 hidden md:block">Data Analysis Assistant</p>
-                                        </div>
-                                            </div>
-                                            </div>
-
-                                    {/* Stats Grid */}
-                                    <div className="grid grid-cols-4 md:grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-4">
-                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
-                                            <div className="text-sm md:text-base font-bold text-black">5</div>
-                                            <div className="text-xs text-gray-600">{t('dashboard.totalChats')}</div>
-                                        </div>
-                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
-                                            <div className="text-sm md:text-base font-bold text-black">8</div>
-                                            <div className="text-xs text-gray-600">{t('dashboard.documents')}</div>
-                                    </div>
-                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
-                                            <div className="text-sm md:text-base font-bold text-green-600">0</div>
-                                            <div className="text-xs text-gray-600">{t('dashboard.activeToday')}</div>
-                                </div>
-                                        <div className="bg-gray-50 rounded-lg p-1.5 md:p-2">
-                                            <div className="text-sm md:text-base font-bold text-blue-600">52</div>
-                                            <div className="text-xs text-gray-600">{t('dashboard.analyses')}</div>
-                            </div>
-                        </div>
-
-                                    {/* New Analysis Button */}
-                                    <button className="w-full bg-black text-white rounded-lg py-1.5 md:py-2 mb-2 md:mb-4 text-xs md:text-sm font-medium">
-                                        {t('dashboard.newAnalysis')}
-                                    </button>
-
-                                    {/* Recent Analyses - Hidden on mobile */}
-                                    <div className="hidden md:block">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">{t('dashboard.recentAnalyses')}</h4>
-                                        <div className="space-y-2">
-                                            {[
-                                                { title: t('dashboard.ready'), date: "07.07.2025", messages: `10 ${t('dashboard.messages')}` },
-                                                { title: t('dashboard.ready'), date: "07.07.2025", messages: `6 ${t('dashboard.messages')}` }
-                                            ].map((item, index) => (
-                                                <div key={index} className="bg-gray-50 rounded-lg p-2">
-                                                    <div className="flex items-center space-x-2 mb-1">
-                                                        <div className="w-3 h-3 bg-gray-300 rounded"></div>
-                                                        <h5 className="text-xs font-medium text-black truncate">{item.title}</h5>
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">{item.date} • {item.messages}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {/* Main Content Area */}
-                                <div className="flex-1 p-2 md:p-4">
-                                    {/* Header - Hidden on mobile */}
-                                        <div className="hidden md:flex items-center justify-between mb-6">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                                <img 
-                                                    src={logo3} 
-                                                    alt="QuokkaAI Logo" 
-                                                    className="w-6 h-6 object-contain"
-                                                />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-black">quokkaAI</h3>
-                                                <p className="text-sm text-gray-600">Data Analysis Assistant</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span className="text-sm text-gray-600">Live</span>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* AI Message */}
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 md:p-4 mb-3 md:mb-6">
-                                        <div className="flex items-start space-x-2">
-                                            <span className="text-yellow-600">💡</span>
-                                            <p className="text-xs md:text-sm text-gray-800">{t('dashboard.ready')}</p>
-                                        </div>
-                                            </div>
-
-                                    {/* Chart */}
-                                    <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-6">
-                                        <h4 className="text-sm md:text-lg font-semibold text-black mb-3 md:mb-4">{t('dashboard.operatorsByGroups')}</h4>
-                                        
-                                        {/* Chart Area */}
-                                        <div className="h-32 md:h-64 relative">
-                                            <svg className="w-full h-full" viewBox="0 0 600 200">
-                                                {/* Grid lines */}
-                                                <defs>
-                                                    <pattern id="grid" width="60" height="40" patternUnits="userSpaceOnUse">
-                                                        <path d="M 60 0 L 0 0 0 40" fill="none" stroke="#f3f4f6" strokeWidth="1"/>
-                                                    </pattern>
-                                                </defs>
-                                                <rect width="100%" height="100%" fill="url(#grid)" />
-                                                
-                                                {/* Y-axis labels */}
-                                                <text x="30" y="20" className="text-xs fill-gray-500">2.0</text>
-                                                <text x="30" y="60" className="text-xs fill-gray-500">1.5</text>
-                                                <text x="30" y="100" className="text-xs fill-gray-500">1.0</text>
-                                                <text x="30" y="140" className="text-xs fill-gray-500">0.5</text>
-                                                <text x="30" y="180" className="text-xs fill-gray-500">0</text>
-                                                
-                                                {/* Line chart */}
-                                                <path 
-                                                    d="M 60 40 L 200 60 L 400 100 L 540 100" 
-                                                    stroke="#8b5cf6" 
-                                                    strokeWidth="2" 
-                                                    fill="none"
-                                                />
-                                                
-                                                {/* Data points */}
-                                                <circle cx="60" cy="40" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="200" cy="60" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="400" cy="100" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                                <circle cx="540" cy="100" r="3" fill="#8b5cf6" stroke="white" strokeWidth="2"/>
-                                            </svg>
-                                            
-                                            {/* X-axis labels - Simplified for mobile */}
-                                            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-4 md:px-12">
-                                                <span className="hidden md:inline">{t('dashboard.dgdKazRuEco')}</span>
-                                <span className="md:hidden">ЭКО</span>
-                                <span className="hidden md:inline">{t('dashboard.dgdKazRuAlmaty')}</span>
-                                <span className="md:hidden">Алматы</span>
-                                <span className="hidden md:inline">{t('dashboard.dgdKazRuPavlodar')}</span>
-                                                <span className="md:hidden">Павлодар</span>
-                                        </div>
-                                    </div>
-                                        
-                                        {/* Legend */}
-                                        <div className="flex items-center justify-center mt-2 md:mt-4">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="w-3 h-0.5 bg-purple-500"></div>
-                                                <span className="text-xs md:text-sm text-gray-600">{t('dashboard.operatorsCount')}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                                    </div>
-                                </div>
-                            </div>
-                </section>
+                {/* Data Visualization Tester */}
+                <div className="data-visualization-section">
+                    <DataVisualizationTester />
+                </div>
 
                 {/* Features Section */}
                 <section id="features" className="py-20 max-w-7xl mx-auto px-6">

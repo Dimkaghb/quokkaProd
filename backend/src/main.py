@@ -29,7 +29,7 @@ except ImportError:
         logger.info("Database disconnection skipped (auth not available)")
 
 # Import agents router
-from src.data_analize.api import router as agents_router
+from data_analize.api import router as agents_router
 
 # Import data cleaning router
 try:
