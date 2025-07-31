@@ -56,6 +56,7 @@ class CreateThreadRequest(BaseModel):
     
     first_message: str = Field(description="First message to start the conversation")
     selected_documents: Optional[List[str]] = Field(default=None, description="Document IDs to include in thread")
+    language: Optional[str] = Field(default="en", description="User's preferred language (en/ru)")
 
 
 class UpdateThreadRequest(BaseModel):
@@ -122,4 +123,4 @@ class ThreadContextResponse(BaseModel):
     thread: Optional[ChatThread] = None
     messages: List[ChatMessage]
     selected_documents: List[Dict[str, Any]]  # Document metadata
-    message: str 
+    message: str

@@ -92,6 +92,7 @@ export interface UserDocument {
 export interface CreateThreadRequest {
   first_message: string
   selected_documents?: string[]
+  language?: string
 }
 
 export interface SendMessageRequest {

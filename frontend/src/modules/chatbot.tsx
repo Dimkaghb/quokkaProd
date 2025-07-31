@@ -4,6 +4,7 @@ import { ChatInterface } from '../shared/components/ChatInterface';
 import { StartWorkInterface } from '../shared/components/StartWorkInterface';
 import { DocumentSelectionModal } from '../shared/components/DocumentSelectionModal';
 import { useThreadStore } from '../shared/stores/threadStore';
+import { useLanguageStore } from '../shared/stores/languageStore';
 import { useToast } from '../shared/components/Toast';
 import type { UserDocument } from '../shared/api/documentsAPI';
 import { chatAPI } from '../shared/api/chatAPI';
@@ -19,6 +20,7 @@ export const Chatbot: React.FC = () => {
     clearSelectedThread,
     loadDocuments
   } = useThreadStore();
+  const { t, language } = useLanguageStore();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -69,11 +71,12 @@ export const Chatbot: React.FC = () => {
       
       // Create thread with selected documents
       const documentIds = selectedDocuments.map(doc => doc.id);
-      const firstMessage = query || '👋 Привет! Добро пожаловать в QuokkaAI! Ты можешь запрашивать визуализации, анализы и затем настраивать их через чат. Убедись, что ты загрузил подходящие данные для своих запросов, например, статистические данные для графиков.';
+      const firstMessage = query || t('chat.welcome');
       
       const response = await chatAPI.createThread({
         first_message: firstMessage,
-        selected_documents: documentIds
+        selected_documents: documentIds,
+        language: language
       });
       
       if (response.success && response.thread) {

@@ -85,7 +85,8 @@ async def create_thread(
         thread = await create_new_thread(
             user_id=str(current_user.id),
             first_message=request.first_message.strip(),
-            selected_documents=request.selected_documents
+            selected_documents=request.selected_documents,
+            language=request.language or "en"
         )
         
         logger.info(f"User {current_user.email} created thread: {thread.id}")

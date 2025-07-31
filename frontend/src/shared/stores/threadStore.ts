@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { chatAPI, type ChatThread, type ChatMessage, type UserDocument } from '../api/chatAPI'
+import { useLanguageStore } from './languageStore'
 
 // Helper function to generate thread title from message content
 const generateThreadTitle = (message: string): string => {
@@ -132,9 +133,13 @@ export const useThreadStore = create<ThreadState>()(
       createThread: async (firstMessage: string, selectedDocs?: string[]) => {
         set({ isLoading: true, error: null })
         try {
+          // Get current language from language store
+          const currentLanguage = useLanguageStore.getState().language
+          
           const response = await chatAPI.createThread({
             first_message: firstMessage,
-            selected_documents: selectedDocs || []
+            selected_documents: selectedDocs || [],
+            language: currentLanguage
           })
           
           if (response.success && response.thread) {

@@ -1,17 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, FileText, Upload } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { useToast } from './Toast';
+import { useLanguageStore } from '../stores/languageStore';
 import { chatAPI } from '../api/chatAPI';
 import { documentsAPI } from '../api/documentsAPI';
-import { RechartsVisualization } from './RechartsVisualization';
-import { LoadingDots } from './LoadingSpinner';
-import { useToast } from './Toast';
-import { DocumentContextWindow } from './DocumentContextWindow';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { useLanguageStore } from '../stores/languageStore';
-import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
-
-import { Send, Upload, FileText, Paperclip } from 'lucide-react';
+import { LoadingDots } from './LoadingSpinner';
+import { RechartsVisualization } from './RechartsVisualization';
+import { DocumentContextWindow } from './DocumentContextWindow';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import type { UserDocument } from '../api/documentsAPI';
 
 interface Message {
@@ -43,7 +42,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   initialContextOpen = false,
   onDocumentsUpdate
 }) => {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -163,7 +162,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('Creating new thread with message:', firstMessage);
       const response = await chatAPI.createThread({
         first_message: firstMessage,
-        selected_documents: []
+        selected_documents: [],
+        language: language
       });
       
       console.log('Create thread response:', response);

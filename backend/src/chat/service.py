@@ -13,13 +13,24 @@ from .crud import (
 from .models import ChatThread, ChatMessage
 from src.documents.service import validate_document_access, get_documents_for_thread
 
+# Simple translation dictionary for welcome messages
+WELCOME_MESSAGES = {
+    "en": "👋 Welcome to QuokkaAI! You can request visualizations, analyses and then customize them through chat. Make sure you have uploaded suitable data for your requests, for example, statistical data for charts.",
+    "ru": "👋 Привет! Добро пожаловать в QuokkaAI! Ты можешь запрашивать визуализации, анализы и затем настраивать их через чат. Убедись, что ты загрузил подходящие данные для своих запросов, например, статистические данные для графиков."
+}
+
+def get_welcome_message(language: str = "en") -> str:
+    """Get welcome message in the specified language."""
+    return WELCOME_MESSAGES.get(language, WELCOME_MESSAGES["en"])
+
 logger = logging.getLogger(__name__)
 
 
 async def create_new_thread(
     user_id: str,
     first_message: str,
-    selected_documents: Optional[List[str]] = None
+    selected_documents: Optional[List[str]] = None,
+    language: str = "en"
 ) -> ChatThread:
     """
     Create a new chat thread with first user message.
@@ -28,6 +39,7 @@ async def create_new_thread(
         user_id: User ID
         first_message: First message content
         selected_documents: Document IDs to include in thread
+        language: User's preferred language for welcome message
         
     Returns:
         Created ChatThread
@@ -45,8 +57,8 @@ async def create_new_thread(
         selected_documents=selected_documents
     )
     
-    # Add welcome message from system first
-    welcome_message = "👋 Привет! Добро пожаловать в QuokkaAI! Ты можешь запрашивать визуализации, анализы и затем настраивать их через чат. Убедись, что ты загрузил подходящие данные для своих запросов, например, статистические данные для графиков."
+    # Add welcome message from system in user's preferred language
+    welcome_message = get_welcome_message(language)
     await add_message(
         thread_id=thread.id,
         user_id=user_id,
