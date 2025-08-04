@@ -37,6 +37,10 @@ except ImportError:
         id = "test-user"
 
 from .service import DataCleaningService
+from src.utils.file_utils import (
+    validate_file_extension, save_uploaded_file_stream, 
+    get_file_size_mb, MAX_FILE_SIZE_LARGE
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +96,10 @@ async def upload_and_clean_data(
     current_user = Depends(get_current_user_optional if AUTH_AVAILABLE else get_current_user)
 ) -> DataCleaningResponse:
     """
-    Upload a file and perform data cleaning operations.
+    Upload a file and perform data cleaning operations using streaming uploads.
     
     Args:
-        file: Uploaded file (CSV, Excel)
+        file: Uploaded file (CSV, Excel) - up to 200MB supported
         operations: JSON string of cleaning operations to perform
         current_user: Current authenticated user
         
@@ -109,11 +113,8 @@ async def upload_and_clean_data(
         if not file.filename:
             raise HTTPException(status_code=400, detail='No file selected')
         
-        if not allowed_file(file.filename):
-            raise HTTPException(
-                status_code=400, 
-                detail=f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'
-            )
+        # Validate file type early
+        file_ext = validate_file_extension(file.filename, list(ALLOWED_EXTENSIONS))
         
         # Parse operations
         import json
@@ -132,33 +133,25 @@ async def upload_and_clean_data(
         file_id = str(uuid.uuid4())
         logger.info(f"Generated file ID: {file_id} for user {user_id}")
         
-        # Save uploaded file to user's temp folder
+        # Save uploaded file to user's temp folder using streaming
         file_path = user_temp_folder / f'{file_id}_{file.filename}'
-        logger.info(f"Saving file to: {file_path}")
+        logger.info(f"Streaming file to: {file_path}")
         
-        # Read file content
-        content = await file.read()
+        # Stream file to disk (handles size validation automatically)
+        file_size, saved_path = await save_uploaded_file_stream(
+            file=file,
+            destination_path=file_path,
+            max_size=MAX_FILE_SIZE_LARGE  # 200MB limit for data cleaning
+        )
         
-        # Validate file size (limit to 50MB)
-        max_size = 50 * 1024 * 1024  # 50MB
-        if len(content) > max_size:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
-            )
-        
-        # Save file
-        with open(file_path, 'wb') as f:
-            f.write(content)
-        
-        logger.info(f"File saved successfully for user {user_id}, starting data cleaning...")
+        logger.info(f"File streamed successfully for user {user_id} ({get_file_size_mb(file_size)}MB), starting data cleaning...")
         
         # Initialize data cleaning service
         cleaning_service = DataCleaningService()
         
         # Perform cleaning operations (output to same temp folder)
         cleaned_file_path = await cleaning_service.clean_data(
-            str(file_path), 
+            saved_path, 
             operations_list, 
             str(user_temp_folder)
         )
@@ -167,11 +160,12 @@ async def upload_and_clean_data(
         cleaned_filename = Path(cleaned_file_path).name
         download_url = f"/data-cleaning/download/{cleaned_filename}"
         
-        # Prepare file info
+        # Prepare file info with enhanced details
         file_info = {
             'original_filename': file.filename,
             'cleaned_filename': cleaned_filename,
-            'size': len(content),
+            'size': file_size,
+            'size_mb': get_file_size_mb(file_size),
             'type': file.filename.split('.')[-1].lower(),
             'cleaning_time': datetime.utcnow().isoformat(),
             'file_id': file_id,

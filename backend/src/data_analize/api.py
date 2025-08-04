@@ -16,6 +16,10 @@ from pydantic import BaseModel, Field
 
 from src.auth.dependencies import get_current_user
 from src.auth.models import User
+from src.utils.file_utils import (
+    validate_file_extension, save_uploaded_file_stream, 
+    get_file_size_mb, MAX_FILE_SIZE_LARGE, temporary_file_context
+)
 
 from .visualization import create_intelligent_visualization, read_data, customize_visualization, process_data_with_llm
 from .data_analyzer import analyze_data_with_ai, create_visualization_from_query
@@ -109,9 +113,10 @@ async def upload_and_visualize(
 ) -> VisualizationResponse:
     """
     Upload a file and create intelligent visualization with optional user query.
+    Enhanced with streaming uploads for large files.
     
     Args:
-        file: Uploaded file (CSV, Excel, PDF, TXT, DOCX)
+        file: Uploaded file (CSV, Excel, PDF, TXT, DOCX) - up to 200MB
         user_query: Optional user query for customization
         current_user: Current authenticated user
         
@@ -124,11 +129,8 @@ async def upload_and_visualize(
         if not file.filename:
             raise HTTPException(status_code=400, detail='No file selected')
         
-        if not allowed_file(file.filename):
-            raise HTTPException(
-                status_code=400, 
-                detail=f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'
-            )
+        # Validate file type early
+        file_ext = validate_file_extension(file.filename, list(ALLOWED_EXTENSIONS))
         
         # Generate unique ID for this upload
         file_id = str(uuid.uuid4())
@@ -137,29 +139,21 @@ async def upload_and_visualize(
         # Get user-specific documents folder
         user_folder = get_user_documents_folder(str(current_user.id))
         
-        # Save uploaded file to user's documents folder
+        # Save uploaded file to user's documents folder using streaming
         file_path = user_folder / f'{file_id}_{file.filename}'
-        logger.info(f"Saving file to: {file_path}")
+        logger.info(f"Streaming file to: {file_path}")
         
-        # Read file content
-        content = await file.read()
+        # Stream file to disk (handles size validation automatically)
+        file_size, saved_path = await save_uploaded_file_stream(
+            file=file,
+            destination_path=file_path,
+            max_size=MAX_FILE_SIZE_LARGE  # 200MB limit for visualization data
+        )
         
-        # Validate file size (limit to 50MB)
-        max_size = 50 * 1024 * 1024  # 50MB
-        if len(content) > max_size:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size is {max_size // (1024*1024)}MB"
-            )
-        
-        # Save file
-        with open(file_path, 'wb') as f:
-            f.write(content)
-        
-        logger.info(f"File saved successfully, creating visualization...")
+        logger.info(f"File streamed successfully ({get_file_size_mb(file_size)}MB), creating visualization...")
         
         # Create intelligent visualization using the enhanced system
-        chart_config = create_intelligent_visualization(str(file_path), user_query)
+        chart_config = create_intelligent_visualization(saved_path, user_query)
         
         # Check if we need user clarification for large datasets
         if chart_config.get('needs_clarification'):
@@ -168,7 +162,8 @@ async def upload_and_visualize(
             # Prepare file info
             file_info = {
                 'filename': file.filename,
-                'size': len(content),
+                'size': file_size,
+                'size_mb': get_file_size_mb(file_size),
                 'type': file.filename.split('.')[-1].lower(),
                 'upload_time': datetime.utcnow().isoformat(),
                 'file_id': file_id,
@@ -184,10 +179,11 @@ async def upload_and_visualize(
         
         logger.info(f"Visualization created successfully")
         
-        # Prepare file info
+        # Prepare file info with enhanced details
         file_info = {
             'filename': file.filename,
-            'size': len(content),
+            'size': file_size,
+            'size_mb': get_file_size_mb(file_size),
             'type': file.filename.split('.')[-1].lower(),
             'upload_time': datetime.utcnow().isoformat(),
             'file_id': file_id,
@@ -370,91 +366,67 @@ async def public_test_visualization(
 ) -> VisualizationResponse:
     """
     Public endpoint for testing visualization without authentication.
-    File is automatically deleted after processing.
+    Enhanced with streaming uploads. File is automatically deleted after processing.
     
     Args:
-        file: Uploaded file (CSV, Excel, PDF, TXT, DOCX)
+        file: Uploaded file (CSV, Excel, PDF, TXT, DOCX) - up to 50MB for testing
         user_query: Optional user query for customization
         
     Returns:
         Visualization configuration and analysis
     """
-    temp_file_path = None
-    try:
-        logger.info(f"Public test visualization: {file.filename} with query: '{user_query}'")
-        
-        if not file.filename:
-            raise HTTPException(status_code=400, detail='No file selected')
-        
-        if not allowed_file(file.filename):
-            raise HTTPException(
-                status_code=400, 
-                detail=f'Invalid file type. Allowed types: {", ".join(ALLOWED_EXTENSIONS)}'
+    async with temporary_file_context(suffix=f"_{file.filename}") as temp_file_path:
+        try:
+            logger.info(f"Public test visualization: {file.filename} with query: '{user_query}'")
+            
+            if not file.filename:
+                raise HTTPException(status_code=400, detail='No file selected')
+            
+            # Validate file type early
+            file_ext = validate_file_extension(file.filename, list(ALLOWED_EXTENSIONS))
+            
+            # Generate unique ID for this upload
+            file_id = str(uuid.uuid4())
+            
+            logger.info(f"Streaming temporary file to: {temp_file_path}")
+            
+            # Stream file to temporary location (50MB limit for public testing)
+            file_size, saved_path = await save_uploaded_file_stream(
+                file=file,
+                destination_path=temp_file_path,
+                max_size=50 * 1024 * 1024  # 50MB limit for public testing
             )
-        
-        # Generate unique ID for this upload
-        file_id = str(uuid.uuid4())
-        
-        # Create temporary directory for public uploads
-        temp_dir = Path("temp_public_uploads")
-        temp_dir.mkdir(exist_ok=True)
-        
-        # Save uploaded file to temporary location
-        temp_file_path = temp_dir / f'{file_id}_{file.filename}'
-        logger.info(f"Saving temporary file to: {temp_file_path}")
-        
-        # Read file content
-        content = await file.read()
-        
-        # Validate file size (limit to 10MB for public testing)
-        max_size = 10 * 1024 * 1024  # 10MB
-        if len(content) > max_size:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size for testing is {max_size // (1024*1024)}MB"
+            
+            logger.info(f"File streamed successfully ({get_file_size_mb(file_size)}MB), creating visualization...")
+            
+            # Create intelligent visualization using the enhanced system
+            chart_config = create_intelligent_visualization(saved_path, user_query)
+            
+            logger.info(f"Visualization created successfully")
+            
+            # Prepare file info with enhanced details
+            file_info = {
+                'filename': file.filename,
+                'size': file_size,
+                'size_mb': get_file_size_mb(file_size),
+                'type': file.filename.split('.')[-1].lower(),
+                'upload_time': datetime.utcnow().isoformat(),
+                'file_id': file_id,
+                'is_public_test': True
+            }
+            
+            return VisualizationResponse(
+                success=True,
+                chart_config=chart_config,
+                analytical_text=chart_config.get('analytical_text', 'Analysis completed successfully'),
+                file_info=file_info
             )
-        
-        # Save file
-        with open(temp_file_path, 'wb') as f:
-            f.write(content)
-        
-        logger.info(f"File saved successfully, creating visualization...")
-        
-        # Create intelligent visualization using the enhanced system
-        chart_config = create_intelligent_visualization(str(temp_file_path), user_query)
-        
-        logger.info(f"Visualization created successfully")
-        
-        # Prepare file info
-        file_info = {
-            'filename': file.filename,
-            'size': len(content),
-            'type': file.filename.split('.')[-1].lower(),
-            'upload_time': datetime.utcnow().isoformat(),
-            'file_id': file_id,
-            'is_public_test': True
-        }
-        
-        return VisualizationResponse(
-            success=True,
-            chart_config=chart_config,
-            analytical_text=chart_config.get('analytical_text', 'Analysis completed successfully'),
-            file_info=file_info
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in public_test_visualization: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        # Always clean up the temporary file
-        if temp_file_path and temp_file_path.exists():
-            try:
-                temp_file_path.unlink()
-                logger.info(f"Cleaned up temporary file: {temp_file_path}")
-            except Exception as e:
-                logger.warning(f"Failed to clean up temporary file {temp_file_path}: {e}")
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in public_test_visualization: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/analyze", response_model=DataAnalysisResponse)

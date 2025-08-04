@@ -1,5 +1,6 @@
 """
 Business logic for document management and processing.
+Enhanced with streaming file processing for better memory management.
 """
 
 import uuid
@@ -78,6 +79,74 @@ async def process_uploaded_file(
     )
     
     logger.info(f"Document {document.id} uploaded for user {user_id}")
+    return document
+
+
+async def process_uploaded_file_stream(
+    user_id: str,
+    file_path: str,
+    original_filename: str,
+    file_type: str,
+    file_size: int,
+    tags: Optional[List[str]] = None
+) -> UserDocument:
+    """
+    Process uploaded file that was already saved using streaming.
+    
+    Args:
+        user_id: User ID
+        file_path: Path to already saved file
+        original_filename: Original filename
+        file_type: File extension
+        file_size: File size in bytes
+        tags: Optional tags
+        
+    Returns:
+        Created UserDocument
+    """
+    file_path_obj = Path(file_path)
+    
+    # Verify file was saved correctly
+    if not file_path_obj.exists():
+        logger.error(f"File not found after streaming save: {file_path}")
+        raise Exception(f"File verification failed: {file_path}")
+    
+    # Verify file size matches
+    actual_size = file_path_obj.stat().st_size
+    if actual_size != file_size:
+        logger.error(f"File size mismatch: expected {file_size}, got {actual_size}")
+        raise Exception(f"File size verification failed")
+    
+    # Store relative path for database (consistent with current working directory)
+    if file_path_obj.is_absolute():
+        # If absolute path, make it relative to current working directory
+        try:
+            relative_path = str(file_path_obj.relative_to(Path.cwd()))
+        except ValueError:
+            # If can't make relative, use as-is but log warning
+            logger.warning(f"Cannot make path relative to cwd: {file_path_obj}")
+            relative_path = str(file_path_obj)
+    else:
+        # If already relative, use as-is
+        relative_path = str(file_path_obj)
+    
+    logger.info(f"File verified: {file_path} ({file_size} bytes)")
+    logger.info(f"Stored relative path: {relative_path}")
+    
+    # Create document record (without processing summary for now)
+    document = await create_document(
+        user_id=user_id,
+        filename=file_path_obj.name,
+        original_filename=original_filename,
+        file_type=file_type,
+        file_size=file_size,
+        file_path=relative_path,
+        summary="Document uploaded successfully. Processing summary...",
+        chunks_count=0,
+        tags=tags
+    )
+    
+    logger.info(f"Document {document.id} created for user {user_id} (streaming)")
     return document
 
 

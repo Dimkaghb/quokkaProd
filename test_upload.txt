@@ -1,2 +1,0 @@
-image.png test file for data report upload testing.
-It contains some sample text to verify the upload functionality.

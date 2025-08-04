@@ -63,6 +63,9 @@ aiohttp>=3.9.0
 requests>=2.31.0
 httpx>=0.26.0
 
+# Async file operations
+aiofiles>=23.2.0
+
 # Development
 ruff>=0.2.0
 black>=24.1.0

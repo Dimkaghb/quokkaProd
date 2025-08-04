@@ -15,6 +15,11 @@ from fastapi.security import HTTPBearer
 
 from src.auth.dependencies import get_current_user
 from src.auth.models import User
+from src.utils.file_utils import (
+    validate_file_extension, save_uploaded_file_stream, 
+    get_file_size_mb, MAX_FILE_SIZE_LARGE
+)
+from .utils import get_user_upload_dir
 
 from .models import (
     DataReportResponse, ReportListResponse, ReportStatusResponse,
@@ -46,10 +51,10 @@ async def upload_file(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Upload a file for data report generation.
+    Upload a file for data report generation using streaming uploads.
     
     Args:
-        file: The uploaded file
+        file: The uploaded file (up to 50MB for preview, 100MB for data)
         file_type: Type of file ('preview' or 'data')
         current_user: Authenticated user
         
@@ -64,36 +69,35 @@ async def upload_file(
                 detail="file_type must be 'preview' or 'data'"
             )
         
-        # Validate file extension
-        if not validate_file_type(file.filename, file_type):
-            allowed_exts = "PDF, DOCX, TXT, MD" if file_type == 'preview' else "CSV, XLSX, XLS, JSON, TSV"
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type for {file_type} file. Allowed: {allowed_exts}"
-            )
+        # Validate file extension early
+        allowed_exts = ["pdf", "docx", "txt", "md"] if file_type == 'preview' else ["csv", "xlsx", "xls", "json", "tsv"]
+        file_ext = validate_file_extension(file.filename, allowed_exts)
         
-        # Read file content
-        file_content = await file.read()
-        file_size = len(file_content)
+        # Determine file size limit based on type
+        max_size = 100 * 1024 * 1024 if file_type == 'data' else 50 * 1024 * 1024  # 100MB for data, 50MB for preview
         
-        # Validate file size
-        if not validate_file_size(file_size, file_type):
-            max_size = "50MB" if file_type == 'preview' else "100MB"
-            raise HTTPException(
-                status_code=400,
-                detail=f"File too large. Maximum size for {file_type} files: {max_size}"
-            )
+        # Get user uploads directory
+        user_dir = get_user_upload_dir(str(current_user.id))
+        type_dir = user_dir / file_type
+        type_dir.mkdir(exist_ok=True)
         
-        # Save file
-        file_id, file_path = save_uploaded_file(
-            file_content, file.filename, str(current_user.id), file_type
+        # Generate unique filename
+        import uuid
+        file_id = str(uuid.uuid4())
+        file_path = type_dir / f"{file_id}{Path(file.filename).suffix}"
+        
+        # Stream file to disk (handles size validation automatically)
+        file_size, saved_path = await save_uploaded_file_stream(
+            file=file,
+            destination_path=file_path,
+            max_size=max_size
         )
         
-        logger.info(f"File uploaded successfully: {file.filename} -> {file_id}")
+        logger.info(f"File streamed successfully: {file.filename} -> {file_id} ({get_file_size_mb(file_size)}MB)")
         
         return FileUploadResponse(
             success=True,
-            message="File uploaded successfully",
+            message=f"File uploaded successfully ({get_file_size_mb(file_size)}MB)",
             file_id=file_id,
             filename=file.filename,
             file_size=file_size
