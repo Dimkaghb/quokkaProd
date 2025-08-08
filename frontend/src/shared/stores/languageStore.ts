@@ -801,6 +801,16 @@ const translations = {
     // Dialog close
     'dialog.close': 'Close',
     
+    // Landing page file input section
+    'landing.fileInput.dropFileHere': 'Drop your file here',
+    'landing.fileInput.orClickToBrowse': 'or click to browse',
+    'landing.fileInput.supportedFormats': 'Supports CSV, Excel, PDF, TXT, DOCX files',
+    'landing.fileInput.visualizationPrompt': 'What would you like to visualize? (optional)',
+    'landing.fileInput.creatingVisualization': 'Creating Visualization...',
+    'landing.fileInput.createVisualization': 'Create Visualization',
+    'landing.fileInput.createAgain': 'Create Again',
+    'landing.fileInput.analysis': 'Analysis',
+    
     // Auth error messages
     'auth.emailRequired': 'Email is required',
     'auth.emailInvalid': 'Please enter a valid email',
@@ -1694,6 +1704,16 @@ const translations = {
      'dataReports.deleteError': 'Не удалось удалить отчет',
      'dataReports.downloadError': 'Не удалось скачать отчет',
      'dataReports.refreshError': 'Не удалось обновить отчеты',
+     
+     // Landing page file input section
+     'landing.fileInput.dropFileHere': 'Перетащите файл сюда',
+     'landing.fileInput.orClickToBrowse': 'или нажмите для выбора',
+     'landing.fileInput.supportedFormats': 'Поддерживаемые форматы: CSV, Excel, PDF, TXT, DOCX',
+     'landing.fileInput.visualizationPrompt': 'Что вы хотели бы визуализировать? (необязательно)',
+     'landing.fileInput.creatingVisualization': 'Создание визуализации...',
+     'landing.fileInput.createVisualization': 'Создать визуализацию',
+     'landing.fileInput.createAgain': 'Создать снова',
+     'landing.fileInput.analysis': 'Анализ',
   }
 }
 

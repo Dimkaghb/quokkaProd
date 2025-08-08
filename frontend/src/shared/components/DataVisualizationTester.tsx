@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { dataAnalysisAPI, VisualizationResult } from '../api/dataAnalysisAPI';
 import { VisualizationChart } from './VisualizationChart';
+import { useLanguageStore } from '../stores/languageStore';
 
 export const DataVisualizationTester: React.FC = () => {
+  const { t } = useLanguageStore();
   const [file, setFile] = useState<File | null>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,13 +88,13 @@ export const DataVisualizationTester: React.FC = () => {
               
               <div className="space-y-6">
                 <div className="text-2xl font-medium text-black">
-                  {file ? file.name : 'Drop your file here'}
+                  {file ? file.name : t('landing.fileInput.dropFileHere')}
                 </div>
                 <div className="text-lg text-gray-600">
-                  or click to browse
+                  {t('landing.fileInput.orClickToBrowse')}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Supports CSV, Excel, PDF, TXT, DOCX files
+                  {t('landing.fileInput.supportedFormats')}
                 </div>
               </div>
             </div>
@@ -112,7 +114,7 @@ export const DataVisualizationTester: React.FC = () => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="What would you like to visualize? (optional)"
+                placeholder={t('landing.fileInput.visualizationPrompt')}
                 className="w-full px-4 py-3 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                 disabled={loading}
               />
@@ -127,7 +129,7 @@ export const DataVisualizationTester: React.FC = () => {
                 disabled={loading}
                 className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Creating Visualization...' : 'Create Visualization'}
+                {loading ? t('landing.fileInput.creatingVisualization') : t('landing.fileInput.createVisualization')}
               </button>
             </div>
           )}
@@ -151,7 +153,7 @@ export const DataVisualizationTester: React.FC = () => {
           {/* Analytical Text */}
           {visualization.analytical_text && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-              <h3 className="font-medium text-black mb-3">Analysis</h3>
+              <h3 className="font-medium text-black mb-3">{t('landing.fileInput.analysis')}</h3>
               <p className="text-gray-700 leading-relaxed">
                 {visualization.analytical_text}
               </p>
@@ -164,7 +166,7 @@ export const DataVisualizationTester: React.FC = () => {
               onClick={handleCreateAgain}
               className="bg-black text-white py-3 px-8 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200"
             >
-              Create Again
+              {t('landing.fileInput.createAgain')}
             </button>
           </div>
         </div>
